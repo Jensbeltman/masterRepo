@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "dataset/SileaneObject.hpp"
+#include "dataset/SileaneDatasetObject.hpp"
 #include "dataset/SileaneDataset.hpp"
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
@@ -10,14 +10,16 @@
 #include <opencv4/opencv2/viz.hpp>
 #include <chronometer.h>
 #include <ga/ga.hpp>
-#include <ga/utility/pose_noise.hpp>
+#include <dataset/pose_noise.hpp>
 #include <ga/ga_functions.hpp>
+#include <ga/utility/logging.hpp>
+#include <ga/utility/vizualization.hpp>
 
 
 int main() {
     Chronometer chronometer;
     SileaneData sileaneData("/home/jens/masterData/Siléane-Dataset");
-    SileaneObjectPtr sileaneObject = std::static_pointer_cast<SileaneObject>(sileaneData.objects[1]);
+    SileaneObjectPtr sileaneObject = std::static_pointer_cast<SileaneDatasetObject>(sileaneData.objects[1]);
     int sample_n = 4;
     std::cout << "Using sample " << sileaneObject->filenames[sample_n] << " from dataset object folder "
               << sileaneObject->name << std::endl;
@@ -25,9 +27,11 @@ int main() {
     // DatasetObject mesh ply data
     std::shared_ptr<cv::viz::Mesh> meshptr = sileaneObject->get_mesh();
 
-    // DatasetObject sample point cloud
+//    // DatasetObject sample point cloud
     PointCloudT::Ptr pc = sileaneObject->get_pcd(sample_n);
-
+//    pcl::visualization::PCLVisualizer vis;
+//    vis.addPointCloud(pc, "data");
+//    vis.spin();
     // DatasetObject mesh pc data
     PointCloudT::Ptr pcm = sileaneObject->get_mesh_point_cloud();
     NormalCloudT::Ptr ncm = sileaneObject->get_mesh_normal_cloud();
@@ -42,15 +46,16 @@ int main() {
 
     std::cout << object_candidates.size() << " candidates used" << endl;
     // Camera pose for the chosen dataset object
-    T4 camera_pose = sileaneObject->camera_params.T;
+    T4 camera_pose = sileaneObject->sileaneCameraParams.T;
 
     // Initializing the genetic Evaluator
     chronometer.tic();
-    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(object_candidates,
-                                                                                                     pc, pcm, ncm,
-                                                                                                     meshptr,
-                                                                                                     camera_pose,
-                                                                                                     0.001);
+    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(sileaneObject,sample_n,0.001);
+    //std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(object_candidates,
+//                                                                                                     pc, pcm, ncm,
+//                                                                                                     meshptr,
+//                                                                                                     camera_pose,
+//                                                                                                     0.001);
     std::cout << "GeneticEvaluatorOC init elapsed time: " << chronometer.toc() << "s\n";
 
     // GA object initilization, configuration and solution
@@ -68,35 +73,9 @@ int main() {
     GAResult result = ga.solve();
     std::cout << "GA solve elapsed time: " << chronometer.toc() << "s\n";
 
-    // Solution visualization
-    pcl::visualization::PCLVisualizer vis_solution;
-    vis_solution.addPointCloud(pc, "data");
-    PointCloudT::Ptr mesh_pc = sileaneObject->get_mesh_point_cloud();
+    result_write(result, "/home/jens/masterRepo/data/ga_results.json");
 
-    pcl::ExtractIndices<PointT> extractIndices;
-
-    nlohmann::json j = result;
-    ofstream out_file("/home/jens/masterRepo/data/ga_results.json");
-    if (!out_file.is_open())
-        std::cout << "Json file not opened" << std::endl;
-    out_file << j.dump();
-    out_file.close();
-
-    for (int i = 0; i < object_candidates.size(); i++) {
-        if (result.best_chromosome[i]) {
-            PointCloudT::Ptr ocpc(new PointCloudT);
-            extractIndices.setInputCloud(pcm);
-            extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
-            extractIndices.filter(*ocpc);
-            pcl::transformPointCloud(*ocpc, *ocpc, object_candidates[i]);
-            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color(ocpc, 0, 255, 0);
-            vis_solution.addPointCloud<pcl::PointXYZ>(ocpc, color, "oc_" + std::to_string(i));
-            // Todo add camera
-
-            //cout<<"Visible inliers pts for oc "<<i<<" "<<costFunction->oc_visible_pt_idxs[i]->size()<<" "<<costFunction->oc_visible_inlier_pt_idxs[i]->size()<<endl;
-
-        }
-    }
+    result_vis(&ga,std::dynamic_pointer_cast<DatasetObject>(sileaneObject));
 
 //    for (double mr = 0.01; mr<0.5; mr+=0.01){
 //        chronometer.tic();
@@ -112,7 +91,7 @@ int main() {
 //        out_file.close();
 //    }
 
-    vis_solution.spin();
+
 
     return 0;
 }
