@@ -5,14 +5,13 @@
 #ifndef MASTER_SCAPEDATASET_HPP
 #define MASTER_SCAPEDATASET_HPP
 
-#include <dataset/ScapeObject.hpp>
+#include <dataset/ScapeDatasetObject.hpp>
 
 class ScapeDataset {
 public:
     ScapeDataset(std::string) {
 
     }
-
 };
 
 

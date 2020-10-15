@@ -1,7 +1,3 @@
-//
-// Created by jens on 10/12/20.
-//
-
 #ifndef MASTER_DATASETOBJECT_H
 #define MASTER_DATASETOBJECT_H
 
@@ -27,6 +23,7 @@ public:
     std::filesystem::path mesh_pcd_path;
     std::string data_ext;
     std::vector<std::string> filenames;
+    T4 camera_pose;
 
 
     DatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PCD")

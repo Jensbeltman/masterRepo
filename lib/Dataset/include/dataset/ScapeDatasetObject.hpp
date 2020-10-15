@@ -12,7 +12,7 @@ class ScapeObject : public DatasetObject {
     std::filesystem::path recognition_path;
 
 
-    ScapeObject(std::string recognition_path) : recognition_path(recognition_path) {};
+    ScapeObject(std::string path,std::string recognition_path) : DatasetObject(path),recognition_path(recognition_path) {};
 
 
 };

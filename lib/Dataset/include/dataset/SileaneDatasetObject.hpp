@@ -17,13 +17,13 @@
 #include <pcl/common/transforms.h>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/viz/vizcore.hpp>
-#include "ga/utility/typedefinitions.hpp"
-#include <ga/utility/pose_noise.hpp>
+#include <dataset/pose_noise.hpp>
 #include "dataset/SileaneCameraParams.hpp"
 #include <dataset/DatasetObject.hpp>
+#include "dataset/typedefinitions.hpp"
 
 
-class SileaneObject : public DatasetObject {
+class SileaneDatasetObject : public DatasetObject {
 public:
     SileaneCameraParams sileaneCameraParams;
     double mu_noise = 0.01;
@@ -32,7 +32,7 @@ public:
     bool has_depth_gt;
 
 
-    SileaneObject(std::filesystem::path path = ".", std::string data_ext = ".PNG") : DatasetObject(path, data_ext) {
+    SileaneDatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PNG") : DatasetObject(path, data_ext) {
         type = "Sileane";
         get_filenames_with_ext_from_dir(data_ext, path, filenames);
         mesh_path = (path / "mesh").replace_extension(".ply");
