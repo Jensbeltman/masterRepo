@@ -2,29 +2,33 @@
 #define OPENGACUSTOM_SILEANEOBJECT_HPP
 
 #include <iostream>
-#include "SileaneCameraParams.hpp"
-#include "SileaneDepthToPCD.hpp"
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
 #include <vector>
+#include <array>
+#include <typeinfo>
+#include <nlohmann/json.hpp>
+#include <Eigen/Eigen>
 #include <pcl/common/common.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/io/pcd_io.h>
-#include <opencv4/opencv2/imgcodecs.hpp>
-#include <nlohmann/json.hpp>
-#include <typeinfo>
-#include <array>
-#include <Eigen/Eigen>
+#include <pcl/common/transforms.h>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/viz/vizcore.hpp>
 #include "ga/utility/typedefinitions.hpp"
+#include <ga/utility/pose_noise.hpp>
+#include "dataset/SileaneCameraParams.hpp"
 #include <dataset/DatasetObject.hpp>
 
 
 class SileaneObject : public DatasetObject {
 public:
-    SileaneCameraParams camera_params;
+    SileaneCameraParams sileaneCameraParams;
+    double mu_noise = 0.01;
+    double sigma_noise = M_PI / 4;
+    int n_noisy_poses = -1;
     bool has_depth_gt;
 
 
@@ -33,7 +37,8 @@ public:
         get_filenames_with_ext_from_dir(data_ext, path, filenames);
         mesh_path = (path / "mesh").replace_extension(".ply");
         mesh_pcd_path = (path / "mesh").replace_extension(".pcd");
-        camera_params = SileaneCameraParams(path / "camera_params.txt");
+        sileaneCameraParams = SileaneCameraParams(path / "camera_params.txt");
+        camera_pose = sileaneCameraParams.T;
         has_depth_gt = std::filesystem::exists(path / "depth_gt");
         if (!std::filesystem::exists(path / "depth")) {
             std::cout << "No depth directory found object" << "\"name\"" << "might not work as intended" << std::endl;
@@ -54,7 +59,7 @@ public:
             } else {
                 dir /= "depth";
             }
-            return sileane_depth_to_pcd((dir / filenames[n]).replace_extension(data_ext), camera_params);
+            return sileane_depth_to_pcd((dir / filenames[n]).replace_extension(data_ext), sileaneCameraParams);
         } else {
             return nullptr;
         }
@@ -95,7 +100,41 @@ public:
             T(2, 3) = gt["t"][2];
             gt_poses.push_back(T);
         }
+
+        PoseNoise poseNoise(mu_noise,sigma_noise);
+        if (n_noisy_poses == -1)
+            poseNoise.append_noisy_transforms(gt_poses,gt_poses.size());
+        else
+            poseNoise.append_noisy_transforms(gt_poses,n_noisy_poses);
+
         return gt_poses;
+    }
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr sileane_depth_to_pcd(std::string path, SileaneCameraParams &camera_params) {
+        cv::Mat depth = cv::imread(path, cv::IMREAD_UNCHANGED);
+        int width = depth.cols;
+        int height = depth.rows;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
+        auto pc_itt = pc->begin();
+        cv::MatIterator_<u_int16_t> depth_itt = depth.begin<u_int16_t>();
+        double depth_range = camera_params.clip_end - camera_params.clip_start;
+        pcl::PointXYZ p;
+
+        for (int r = 0; r < height; r++) {
+            for (int c = 0; c < width; c++) {
+                u_int16_t d = depth.at<u_int16_t>(r, c);
+                if (d < 65535) {
+                    pcl::PointXYZ p;
+                    p.z = camera_params.clip_start + depth_range * (d / (float) 65535);
+                    p.x = p.z * (c - camera_params.cu) / (double) camera_params.fu;
+                    p.y = p.z * (r - camera_params.cv) / (double) camera_params.fv;
+                    pc->push_back(p);
+                }
+            }
+        }
+        pcl::transformPointCloud(*pc, *pc, camera_params.location, camera_params.rotation);
+
+        return pc;
     }
 
 };
