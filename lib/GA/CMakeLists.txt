@@ -3,7 +3,7 @@ project(GA
         VERSION 1.0
         LANGUAGES CXX)
 
-add_library(GA include/ga/ga_functions.hpp)
+add_library(GA SHARED include/ga/utility/logging.hpp)
 target_sources(GA
         PRIVATE
         src/typedefinitions.cpp
@@ -13,6 +13,6 @@ target_sources(GA
         )
 
 target_include_directories(GA PUBLIC include ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(GA PUBLIC ${OpenCV_LIBS} ${PCL_LIBRARIES} fcl Chronometer)
+target_link_libraries(GA PUBLIC ${OpenCV_LIBS} ${PCL_LIBRARIES} fcl Chronometer Dataset)
 
 

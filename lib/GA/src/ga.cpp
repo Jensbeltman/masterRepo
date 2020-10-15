@@ -28,6 +28,9 @@ GA::GA(int N_genes) :
 }
 
 void GA::initialize() {
+    // Clear results
+    result = GAResult();
+
     // Validate parameters
     assert(N_chromosomes || parent_pool_count);
     assert(elite_count <= N_chromosomes);
@@ -81,9 +84,7 @@ GAResult GA::solve() {
 
     result.best_chromosome = population[population_sorted_indices[0]];
 
-    GAResult retResult = result;
-    result = GAResult();
-    return retResult;
+    return result;
 }
 
 void GA::elite_transfer() {

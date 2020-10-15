@@ -6,7 +6,7 @@
 class GeneticEvaluator {
 public:
     GeneticEvaluator();
-
+    std::string type = "GeneticEvaluator";
     virtual double evaluate_chromosome(chromosomeT &chromosome) = 0;
 };
 
