@@ -9,6 +9,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <opencv2/viz/vizcore.hpp>
 #include <dataset/typedefinitions.hpp>
 
 
@@ -17,22 +18,23 @@ typedef Eigen::Transform<double, 3, Eigen::Affine> T4;
 class DatasetObject {
 public:
     std::string name;
-    std::string type = "BASE";
+    std::string type;
     std::filesystem::path path;
     std::filesystem::path mesh_path;
     std::filesystem::path mesh_pcd_path;
-    std::string data_ext;
+    std::string pc_data_ext;
+    std::string mesh_data_ext;
     std::vector<std::string> filenames;
     T4 camera_pose;
 
 
     DatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PCD")
-            : path(path), data_ext(data_ext) {
+            : path(path), pc_data_ext(data_ext) {
         name = path.stem().string();
     };
 
     // VIRTUAL BASECLASS FUNCTIONS
-    virtual pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n) = 0;
+    virtual pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n){return nullptr;};
 
     virtual std::shared_ptr<cv::viz::Mesh> get_mesh() {
         std::shared_ptr<cv::viz::Mesh> meshptr = std::make_shared<cv::viz::Mesh>(cv::viz::Mesh::load(mesh_path));
@@ -53,14 +55,14 @@ public:
 
     virtual int size() const { return filenames.size(); };
 
-    virtual std::vector<T4> get_gt_poses(unsigned int n) = 0;
+    virtual std::vector<T4> get_object_candidates(unsigned int n) { return std::vector<T4>();};
 
     // UTILITY FUNCTIONS
 
 
 protected:
     void get_filenames_with_ext_from_dir(std::string ext, std::string dir, std::vector<std::string> &vofs) {
-        for (auto &p : std::filesystem::recursive_directory_iterator(dir)) {
+        for (auto &p : std::filesystem::directory_iterator(dir)) {
             if (p.path().extension() == ext)
                 vofs.push_back(p.path().stem().string());
         }
