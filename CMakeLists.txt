@@ -13,6 +13,5 @@ find_package(OpenCV REQUIRED)
 find_package(fcl REQUIRED)
 
 add_subdirectory(lib)
-add_subdirectory(test)
 add_subdirectory(app)
-#enable_testing()
+add_subdirectory(test)
