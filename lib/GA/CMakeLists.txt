@@ -14,5 +14,3 @@ target_sources(GA
 
 target_include_directories(GA PUBLIC include ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(GA PUBLIC ${OpenCV_LIBS} ${PCL_LIBRARIES} fcl Chronometer Dataset)
-
-
