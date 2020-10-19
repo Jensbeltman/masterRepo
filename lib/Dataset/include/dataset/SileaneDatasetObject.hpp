@@ -34,9 +34,11 @@ public:
 
     SileaneDatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PNG") : DatasetObject(path, data_ext) {
         type = "Sileane";
+        pc_data_ext = ".pcd";
+        mesh_data_ext = ".ply";
         get_filenames_with_ext_from_dir(data_ext, path, filenames);
-        mesh_path = (path / "mesh").replace_extension(".ply");
-        mesh_pcd_path = (path / "mesh").replace_extension(".pcd");
+        mesh_path = (path / "mesh").replace_extension(mesh_data_ext);
+        mesh_pcd_path = (path / "mesh").replace_extension(pc_data_ext);
         sileaneCameraParams = SileaneCameraParams(path / "camera_params.txt");
         camera_pose = sileaneCameraParams.T;
         has_depth_gt = std::filesystem::exists(path / "depth_gt");
@@ -59,7 +61,7 @@ public:
             } else {
                 dir /= "depth";
             }
-            return sileane_depth_to_pcd((dir / filenames[n]).replace_extension(data_ext), sileaneCameraParams);
+            return sileane_depth_to_pcd((dir / filenames[n]).replace_extension(pc_data_ext), sileaneCameraParams);
         } else {
             return nullptr;
         }
@@ -67,7 +69,7 @@ public:
 
     cv::Mat get_color(int n, bool gt = false) {
         if (n < filenames.size()) {
-            std::filesystem::path p = (path / "rgb" / filenames[n]).replace_extension(data_ext);
+            std::filesystem::path p = (path / "rgb" / filenames[n]).replace_extension(pc_data_ext);
             if (std::filesystem::exists(p)) {
                 return cv::imread(p, cv::IMREAD_UNCHANGED);
             } else {
@@ -78,7 +80,7 @@ public:
     };
 
 
-    std::vector<T4> get_gt_poses(unsigned int n) {
+    std::vector<T4> get_object_candidates(unsigned int n) {
         std::ifstream i((path / "gt" / filenames[n]).replace_extension(".json"));
         nlohmann::json j;
         i >> j;
