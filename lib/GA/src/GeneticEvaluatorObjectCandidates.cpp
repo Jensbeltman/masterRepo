@@ -15,7 +15,7 @@ GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr doPtr, int sample_n, dou
     pcm = doPtr->get_mesh_point_cloud();
     ncm = doPtr->get_mesh_normal_cloud();
     meshPtr = doPtr->get_mesh();
-    object_candidates = doPtr->get_gt_poses(sample_n);
+    object_candidates = doPtr->get_object_candidates(sample_n);
     camera_pose = doPtr->camera_pose;
     init();
 }
