@@ -1,4 +1,4 @@
-#include <dataset/ScapeDataset.hpp>
+#include <dataset/scape/ScapeDataset.hpp>
 #include <chronometer.h>
 #include <opencv2/viz/vizcore.hpp>
 #include <pcl/common/common.h>
@@ -8,13 +8,24 @@ int main() {
     chronometer.tic();
     ScapeDataset scapeData("/home/jens/masterData/ScapeDataset/Scape/Full Dataset",
                            "/home/jens/masterData/ScapeDataset/Data from Scape Recognition");
-    std::cout << "Scape Dataset Init Load time: " << chronometer.toc() << "s\n";
+    std::cout << "\nScape Dataset Init Load time: " << chronometer.toc() << "s\n";
+
+    std::cout << "Following objects where loaded for the scape dataset" << "\n";
+    for (auto &ob:scapeData.objects) {
+        ScapeDatasetObjectPtr sob = std::dynamic_pointer_cast<ScapeDatasetObject>(ob);
+        std::cout   <<"\t"<<ob->name
+                    <<"\n\t\tnumber of zones: " << ob->size()
+                    <<"\n\t\tnumber of pcd filenames: " << sob->filenames.size()
+                    <<"\n\t\tnumber of recognition paths: " << sob->recognition_paths.size()
+                    <<"\n\n";
+    }
+
 
     chronometer.tic();
     for (auto object:scapeData.objects) {
         ScapeDatasetObjectPtr sobject = std::dynamic_pointer_cast<ScapeDatasetObject>(object);
         for (int i = 0; i < object->size(); i++) {
-            Zone zone = sobject->zones[i];
+            ScapeZone zone = sobject->zones[i];
             PointCloudT::Ptr pc = object->get_pcd(i);
             if (pc->points.empty())
                 std::cout << "Datasample " << i << " pointcloud was empty" << "\n";
@@ -25,17 +36,7 @@ int main() {
                           << sobject->filenames[sobject->zones[i].pc_filename_idx] << "\n";
         }
     }
-    std::cout << "Scape Dataset Traversal of pcs and ocs time: " << chronometer.toc() << "s\n";
-
-
-    std::cout << "Following objects where loaded for the scape dataset" << "\n";
-    for (auto &ob:scapeData.objects) {
-        ScapeDatasetObjectPtr sob = std::dynamic_pointer_cast<ScapeDatasetObject>(ob);
-        std::cout << ob->name << ", Number of zones: " << ob->size()
-                  << " number of recognition paths: " << sob->recognition_paths.size()
-                  << "\n\n";
-    }
-
+    std::cout << "Scape Dataset Traversal of pcs and ocs time: " << chronometer.toc() << "s\n\n";
 
     ScapeDatasetObjectPtr scapeObject = std::static_pointer_cast<ScapeDatasetObject>(scapeData.objects[1]);
 
@@ -46,7 +47,6 @@ int main() {
               << scapeObject->filenames[scapeObject->zones[sample_n].pc_filename_idx] << " from dataset object folder "
               << scapeObject->name << "\n\n";
     PointCloudT::Ptr pc = scapeObject->get_pcd(sample_n);
-
 
 
     // DatasetObject mesh ply data
