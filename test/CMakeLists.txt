@@ -4,8 +4,8 @@ project(test
         LANGUAGES CXX)
 
 add_executable(sileane_test src/sileane_data_set_test.cpp)
-target_include_directories(sileane_test PUBLIC ${OpenCV_INCLUDE_DIRS} )
-target_link_libraries(sileane_test PUBLIC  opencv_core opencv_viz opencv_imgcodecs Chronometer Dataset)
+target_include_directories(sileane_test PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(sileane_test PUBLIC opencv_core opencv_viz opencv_imgcodecs Chronometer Dataset)
 
 add_executable(scape_test src/scape_data_set_test.cpp)
 target_include_directories(scape_test PUBLIC ${OpenCV_INCLUDE_DIRS})

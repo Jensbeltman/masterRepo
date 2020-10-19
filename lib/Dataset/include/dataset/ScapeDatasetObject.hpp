@@ -33,7 +33,7 @@ public:
         }
 
         if (std::all_of(res.begin(), res.end(), [](bool r) { return r; }) ||
-                std::all_of(res.begin(), res.end(), [](bool r) { return !r; })){
+            std::all_of(res.begin(), res.end(), [](bool r) { return !r; })) {
             ocs.push_back(object_candidate);
         }
 
@@ -47,7 +47,7 @@ public:
         projection_vectors[1].normalize();
 
         for (int i = 0; i < 4; i++) {
-            projected_corners[i]=project_to_plane(corners[i]);
+            projected_corners[i] = project_to_plane(corners[i]);
         }
         for (int i = 0; i < 4; i++) {
             projected_corner_vectors[i] = projected_corners[(i + 1) % 4] - projected_corners[i];

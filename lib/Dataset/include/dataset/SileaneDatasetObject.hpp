@@ -32,7 +32,8 @@ public:
     bool has_depth_gt;
 
 
-    SileaneDatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PNG") : DatasetObject(path, data_ext) {
+    SileaneDatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PNG") : DatasetObject(path,
+                                                                                                          data_ext) {
         type = "Sileane";
         pc_data_ext = ".pcd";
         mesh_data_ext = ".ply";
@@ -103,11 +104,11 @@ public:
             gt_poses.push_back(T);
         }
 
-        PoseNoise poseNoise(mu_noise,sigma_noise);
+        PoseNoise poseNoise(mu_noise, sigma_noise);
         if (n_noisy_poses == -1)
-            poseNoise.append_noisy_transforms(gt_poses,gt_poses.size());
+            poseNoise.append_noisy_transforms(gt_poses, gt_poses.size());
         else
-            poseNoise.append_noisy_transforms(gt_poses,n_noisy_poses);
+            poseNoise.append_noisy_transforms(gt_poses, n_noisy_poses);
 
         return gt_poses;
     }

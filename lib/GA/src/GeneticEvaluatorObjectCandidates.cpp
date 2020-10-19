@@ -9,7 +9,8 @@
 
 using namespace std;
 
-GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr doPtr, int sample_n, double inlier_threshold) :inlier_threshold(inlier_threshold){
+GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr doPtr, int sample_n, double inlier_threshold)
+        : inlier_threshold(inlier_threshold) {
 
     pc = doPtr->get_pcd(sample_n);
     pcm = doPtr->get_mesh_point_cloud();
@@ -24,7 +25,8 @@ GeneticEvaluatorOC::GeneticEvaluatorOC(std::vector<T4> &poses, PointCloudT::Ptr 
                                        NormalCloudT::Ptr &ncm, std::shared_ptr<cv::viz::Mesh> &meshptr,
                                        T4 &camera_pose,
                                        double
-                                       inlier_threshold) : pc(pc), pcm(pcm), ncm(ncm),meshPtr(meshptr), object_candidates(poses),
+                                       inlier_threshold) : pc(pc), pcm(pcm), ncm(ncm), meshPtr(meshptr),
+                                                           object_candidates(poses),
                                                            inlier_threshold(inlier_threshold),
                                                            camera_pose(camera_pose) {
     init();
@@ -35,7 +37,7 @@ void GeneticEvaluatorOC::init() {
     type = "GeneticEvaluatorOC";
 
     // KdTree of cloud data
-    std::cout<<(pc->size() > 0)<<std::endl;
+    std::cout << (pc->size() > 0) << std::endl;
     kdtree = pcl::make_shared<pcl::KdTreeFLANN<PointT>>();
     kdtree->setInputCloud(pc);
 

@@ -37,7 +37,7 @@ int main() {
     NormalCloudT::Ptr ncm = sileaneObject->get_mesh_normal_cloud();
 
     // DatasetObject candidates (GT)
-    std::vector<T4> object_candidates = sileaneObject->get_gt_poses(sample_n);
+    std::vector<T4> object_candidates = sileaneObject->get_object_candidates(sample_n);
     int n_gt_poses = object_candidates.size();
 
     // Add noise DatasetObject candidates
@@ -50,7 +50,8 @@ int main() {
 
     // Initializing the genetic Evaluator
     chronometer.tic();
-    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(sileaneObject,sample_n,0.001);
+    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(sileaneObject,
+                                                                                                     sample_n, 0.001);
     //std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(object_candidates,
 //                                                                                                     pc, pcm, ncm,
 //                                                                                                     meshptr,
@@ -75,7 +76,7 @@ int main() {
 
     result_write(result, "/home/jens/masterRepo/data/ga_results.json");
 
-    result_vis(&ga,std::dynamic_pointer_cast<DatasetObject>(sileaneObject));
+    result_vis(&ga, std::dynamic_pointer_cast<DatasetObject>(sileaneObject));
 
 //    for (double mr = 0.01; mr<0.5; mr+=0.01){
 //        chronometer.tic();

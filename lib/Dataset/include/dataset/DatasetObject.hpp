@@ -34,7 +34,7 @@ public:
     };
 
     // VIRTUAL BASECLASS FUNCTIONS
-    virtual pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n){return nullptr;};
+    virtual pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n) { return nullptr; };
 
     virtual std::shared_ptr<cv::viz::Mesh> get_mesh() {
         std::shared_ptr<cv::viz::Mesh> meshptr = std::make_shared<cv::viz::Mesh>(cv::viz::Mesh::load(mesh_path));
@@ -55,7 +55,7 @@ public:
 
     virtual int size() const { return filenames.size(); };
 
-    virtual std::vector<T4> get_object_candidates(unsigned int n) { return std::vector<T4>();};
+    virtual std::vector<T4> get_object_candidates(unsigned int n) { return std::vector<T4>(); };
 
     // UTILITY FUNCTIONS
 

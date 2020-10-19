@@ -1,10 +1,12 @@
 #ifndef MASTER_VIZUALIZATION_HPP
 #define MASTER_VIZUALIZATION_HPP
+
 #include <ga/ga.hpp>
 
-void result_vis(GA* ga,DatasetObjectPtr datasetObjectPtr){
+void result_vis(GA *ga, DatasetObjectPtr datasetObjectPtr) {
     // Solution visualization
-    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::dynamic_pointer_cast<GeneticEvaluatorOC>(ga->geneticEvaluatorPtr);
+    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::dynamic_pointer_cast<GeneticEvaluatorOC>(
+            ga->geneticEvaluatorPtr);
 
     pcl::visualization::PCLVisualizer vis;
     vis.addPointCloud(geneticEvaluatorOCPtr->pc, "data");
@@ -17,7 +19,7 @@ void result_vis(GA* ga,DatasetObjectPtr datasetObjectPtr){
             extractIndices.setInputCloud(geneticEvaluatorOCPtr->pcm);
             extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
             extractIndices.filter(*ocpc);
-            pcl::transformPointCloud(*ocpc, *ocpc,  geneticEvaluatorOCPtr->object_candidates[i]);
+            pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
             pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color(ocpc, 0, 255, 0);
             vis.addPointCloud<pcl::PointXYZ>(ocpc, color, "oc_" + std::to_string(i));
             // Todo add camera

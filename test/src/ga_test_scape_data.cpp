@@ -23,12 +23,14 @@ int main() {
     ScapeDataset scapeData("/home/jens/masterData/ScapeDataset/Scape/Full Dataset",
                            "/home/jens/masterData/ScapeDataset/Data from Scape Recognition");
 
-    ScapeDatasetObjectPtr scapeObject = std::static_pointer_cast<ScapeDatasetObject>(scapeData.get_object_by_name("Ears"));
+    ScapeDatasetObjectPtr scapeObject = std::static_pointer_cast<ScapeDatasetObject>(
+            scapeData.get_object_by_name("Ears"));
 
 
     // DatasetObject sample point cloud
     int sample_n = 2;
-    std::cout << "Testing zone " << sample_n<<" with related point cloud data filename "<<scapeObject->filenames[scapeObject->zones[sample_n].pc_filename_idx] << " from dataset object folder "
+    std::cout << "Testing zone " << sample_n << " with related point cloud data filename "
+              << scapeObject->filenames[scapeObject->zones[sample_n].pc_filename_idx] << " from dataset object folder "
               << scapeObject->name << "\n\n";
     PointCloudT::Ptr pc = scapeObject->get_pcd(sample_n);
 
@@ -40,7 +42,8 @@ int main() {
 
     // Initializing the genetic Evaluator
     chronometer.tic();
-    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(scapeObject,sample_n,1);
+    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(scapeObject,
+                                                                                                     sample_n, 1);
     //std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(object_candidates,
 //                                                                                                     pc, pcm, ncm,
 //                                                                                                     meshptr,
@@ -65,7 +68,7 @@ int main() {
 
     result_write(result, "/home/jens/masterRepo/data/ga_results.json");
 
-    result_vis(&ga,std::dynamic_pointer_cast<DatasetObject>(scapeObject));
+    result_vis(&ga, std::dynamic_pointer_cast<DatasetObject>(scapeObject));
 
     return 0;
 }

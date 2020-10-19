@@ -11,16 +11,18 @@ int main() {
     std::cout << "Scape Dataset Init Load time: " << chronometer.toc() << "s\n";
 
     chronometer.tic();
-    for(auto object:scapeData.objects){
+    for (auto object:scapeData.objects) {
         ScapeDatasetObjectPtr sobject = std::dynamic_pointer_cast<ScapeDatasetObject>(object);
-        for(int i = 0;i<object->size();i++){
+        for (int i = 0; i < object->size(); i++) {
             Zone zone = sobject->zones[i];
             PointCloudT::Ptr pc = object->get_pcd(i);
             if (pc->points.empty())
-                std::cout<<"Datasample "<<i<<" pointcloud was empty"<<"\n";
+                std::cout << "Datasample " << i << " pointcloud was empty" << "\n";
             std::vector<T4> ocs = object->get_object_candidates(i);
             if (ocs.empty())
-                std::cout<<"Object "<<sobject->name<<" candidates were empty for zone "<<sobject->zones[i].zone_idx<<" for pc file " <<sobject->filenames[sobject->zones[i].pc_filename_idx]<<"\n";
+                std::cout << "Object " << sobject->name << " candidates were empty for zone "
+                          << sobject->zones[i].zone_idx << " for pc file "
+                          << sobject->filenames[sobject->zones[i].pc_filename_idx] << "\n";
         }
     }
     std::cout << "Scape Dataset Traversal of pcs and ocs time: " << chronometer.toc() << "s\n";
@@ -40,7 +42,8 @@ int main() {
 
     // DatasetObject sample point cloud
     int sample_n = 2;
-    std::cout << "Testing zone " << sample_n<<" with related point cloud data filename "<<scapeObject->filenames[scapeObject->zones[sample_n].pc_filename_idx] << " from dataset object folder "
+    std::cout << "Testing zone " << sample_n << " with related point cloud data filename "
+              << scapeObject->filenames[scapeObject->zones[sample_n].pc_filename_idx] << " from dataset object folder "
               << scapeObject->name << "\n\n";
     PointCloudT::Ptr pc = scapeObject->get_pcd(sample_n);
 
@@ -67,8 +70,8 @@ int main() {
     // DatasetObject candidates (GT)
     std::vector<T4> object_candidates = scapeObject->get_object_candidates(sample_n);
     int n_oc = object_candidates.size();
-    std::cout<<"Found "<<n_oc<<" oc's First and last one is \n"<<object_candidates[0].matrix()<<"\n"<<object_candidates.back().matrix()<<"\n\n";
-
+    std::cout << "Found " << n_oc << " oc's First and last one is \n" << object_candidates[0].matrix() << "\n"
+              << object_candidates.back().matrix() << "\n\n";
 
 
     return 0;

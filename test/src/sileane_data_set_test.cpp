@@ -7,9 +7,9 @@ int main() {
     Chronometer chronometer;
     SileaneData sileaneData("/home/jens/masterData/Siléane-Dataset");
 
-    std::cout<<"Following objects where loaded for the silean dataset"<<"\n";
-    for(auto & ob:sileaneData.objects){
-        std::cout<<ob->name<<", Number of filenames: "<< ob->filenames.size()<<"\n";
+    std::cout << "Following objects where loaded for the silean dataset" << "\n";
+    for (auto &ob:sileaneData.objects) {
+        std::cout << ob->name << ", Number of filenames: " << ob->filenames.size() << "\n";
     }
 
     SileaneObjectPtr sileaneObject = std::static_pointer_cast<SileaneDatasetObject>(sileaneData.objects[1]);

@@ -20,13 +20,14 @@ typedef std::shared_ptr<cv::viz::Mesh> MeshPtr;
 class GeneticEvaluatorOC : public GeneticEvaluator {
 public:
     GeneticEvaluatorOC(DatasetObjectPtr datasetObjectPtr, int sample_n, double inlier_threshold = 0.001);
+
     GeneticEvaluatorOC(std::vector<T4> &poses, PointCloudT::Ptr &pc, PointCloudT::Ptr &pcm, NormalCloudT::Ptr &ncm,
                        std::shared_ptr<cv::viz::Mesh> &meshptr, T4 &camera_pose, double inlier_threshold = 0.001);
 
 
     PointCloudT::Ptr pc;//point cloud data
     PointCloudT::Ptr pcm;//mesh point cloud
-    NormalCloudT ::Ptr ncm;//mesh normal cloud
+    NormalCloudT::Ptr ncm;//mesh normal cloud
     std::shared_ptr<cv::viz::Mesh> meshPtr;
     CollisionModelPtr collisionModelPtr;
     pcl::KdTreeFLANN<PointT>::Ptr kdtree;
@@ -44,8 +45,11 @@ public:
 
 private:
     void init();
+
     void init_visible_inliers();
+
     void init_collisions();
+
     Chronometer chronometer;
 };
 
