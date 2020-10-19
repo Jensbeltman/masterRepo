@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
-#include "dataset/ScapeDatasetObject.hpp"
-#include "dataset/ScapeDataset.hpp"
+#include "dataset/scape/ScapeDatasetObject.hpp"
+#include "dataset/scape/ScapeDataset.hpp"
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
 #include <pcl-1.10/pcl/visualization/pcl_visualizer.h>
