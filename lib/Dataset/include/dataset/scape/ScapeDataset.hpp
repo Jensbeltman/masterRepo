@@ -6,7 +6,7 @@
 #define MASTER_SCAPEDATASET_HPP
 
 #include <dataset/Dataset.hpp>
-#include <dataset/ScapeDatasetObject.hpp>
+#include <dataset/scape/ScapeDatasetObject.hpp>
 #include <array>
 
 

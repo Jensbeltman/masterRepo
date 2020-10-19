@@ -18,7 +18,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/viz/vizcore.hpp>
 #include <dataset/pose_noise.hpp>
-#include "dataset/SileaneCameraParams.hpp"
+#include "SileaneCameraParams.hpp"
 #include <dataset/DatasetObject.hpp>
 #include "dataset/typedefinitions.hpp"
 
