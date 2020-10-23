@@ -62,7 +62,7 @@ public:
             } else {
                 dir /= "depth";
             }
-            return sileane_depth_to_pcd((dir / filenames[n]).replace_extension(pc_data_ext), sileaneCameraParams);
+            return sileane_depth_to_pcd((dir / filenames[n]).replace_extension(".PNG"), sileaneCameraParams);
         } else {
             return nullptr;
         }
