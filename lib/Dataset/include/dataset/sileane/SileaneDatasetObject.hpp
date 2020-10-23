@@ -37,7 +37,8 @@ public:
         type = "Sileane";
         pc_data_ext = ".pcd";
         mesh_data_ext = ".ply";
-        get_filenames_with_ext_from_dir(data_ext, path, filenames);
+        get_filenames_with_ext_from_dir(data_ext, path.string()+"/depth", filenames);
+        std::sort(filenames.begin(),filenames.end());
         mesh_path = (path / "mesh").replace_extension(mesh_data_ext);
         mesh_pcd_path = (path / "mesh").replace_extension(pc_data_ext);
         sileaneCameraParams = SileaneCameraParams(path / "camera_params.txt");
@@ -52,7 +53,7 @@ public:
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n, bool gt) {
         if (n < filenames.size()) {
-            std::filesystem::path dir = path;
+            std::filesystem::path dir(path);
             if (gt) {
                 if (has_depth_gt) {
                     dir /= "depth_gt";
