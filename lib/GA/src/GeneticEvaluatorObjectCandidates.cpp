@@ -1,6 +1,6 @@
-#include "ga/GeneticEvaluatorObjectCandidates.hpp"
+#include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include "iostream"
-#include "ga/utility/point_cloud_processing.hpp"
+#include "ga/point_cloud_processing/point_cloud_processing.hpp"
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
 #include "chronometer.h"
@@ -168,7 +168,7 @@ CollisionModelPtr GeneticEvaluatorOC::mesh_to_coll_model(MeshPtr meshptr) {
     for (auto itt = meshptr->polygons.begin<cv::Vec3i>(); itt != meshptr->polygons.end<cv::Vec3i>(); ++itt)
         triangles.push_back(fcl::Triangle((*itt)[0], (*itt)[1], (*itt)[2]));
 
-    std::shared_ptr<CollisionModel> collModelPtr = std::make_shared<CollisionModel>();
+    CollisionModelPtr collModelPtr = std::make_shared<CollisionModel>();
 
     // add the mesh data into the BVHModel structure
     collModelPtr->beginModel();

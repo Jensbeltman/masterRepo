@@ -4,7 +4,7 @@
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
 #include <iostream>
-#include "ga/utility/typedefinitions.hpp"
+#include "ga/typedefinitions.hpp"
 
 namespace pp {
     pcl::IndicesPtr get_visible_indices(NormalCloudT::Ptr &nc, T4 &camera_transform) {

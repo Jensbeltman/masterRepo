@@ -1,7 +1,7 @@
 #ifndef MASTER_GENETICEVALUATOR_HPP
 #define MASTER_GENETICEVALUATOR_HPP
 
-#include "ga/utility/typedefinitions.hpp"
+#include "ga/typedefinitions.hpp"
 
 class GeneticEvaluator {
 public:

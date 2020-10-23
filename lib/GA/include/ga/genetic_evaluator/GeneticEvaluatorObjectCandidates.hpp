@@ -8,7 +8,7 @@
 #include <pcl/search/kdtree.h>
 #include <opencv2/viz/types.hpp>
 #include <fcl/fcl.h>
-#include <ga/utility/typedefinitions.hpp>
+#include <ga/typedefinitions.hpp>
 #include <dataset/Dataset.hpp>
 #include <chronometer.h>
 
@@ -37,7 +37,7 @@ public:
     std::vector<pcl::IndicesPtr> oc_visible_inlier_pt_idxs;
     std::vector<std::vector<int>> oc_collision_idxs; // Todo might be more efficient to use bit_and on integer types however scaling might be an issue
 
-    CollisionModelPtr mesh_to_coll_model(MeshPtr meshptr);
+    static CollisionModelPtr mesh_to_coll_model(MeshPtr meshptr);
 
     double inlier_threshold;
 

@@ -12,9 +12,9 @@
 #include <mutex>
 #include <atomic>
 #include <vector>
-#include "GeneticEvaluatorObjectCandidates.hpp"
+#include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include <nlohmann/json.hpp>
-#include "ga/utility/typedefinitions.hpp"
+#include "typedefinitions.hpp"
 
 
 struct GAResult {

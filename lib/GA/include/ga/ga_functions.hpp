@@ -1,7 +1,7 @@
 #ifndef MASTER_GA_FUNCTIONS_HPP
 #define MASTER_GA_FUNCTIONS_HPP
 
-#include <ga/utility/typedefinitions.hpp>
+#include <ga/typedefinitions.hpp>
 #include <ga/ga.hpp>
 
 chromosomeT crossover_uniform(GA *ga, int p1, int p2) {

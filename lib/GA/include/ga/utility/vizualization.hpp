@@ -2,6 +2,12 @@
 #define MASTER_VIZUALIZATION_HPP
 
 #include <ga/ga.hpp>
+#include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
+#include <ga/typedefinitions.hpp>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/filters/extract_indices.h>
+
+
 
 void result_vis(GA *ga, DatasetObjectPtr datasetObjectPtr) {
     // Solution visualization

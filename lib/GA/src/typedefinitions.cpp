@@ -1,4 +1,4 @@
-#include "ga/utility/typedefinitions.hpp"
+#include "ga/typedefinitions.hpp"
 
 std::ostream &operator<<(std::ostream &os, chromosomeT chromosome) {
     for (bool gene:chromosome) {
