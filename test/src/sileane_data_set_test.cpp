@@ -12,7 +12,24 @@ int main() {
         std::cout << ob->name << ", Number of filenames: " << ob->filenames.size() << "\n";
     }
 
-    SileaneObjectPtr sileaneObject = std::static_pointer_cast<SileaneDatasetObject>(sileaneData.objects[1]);
+
+    SileaneDatasetObjectPtr sileaneObject = std::static_pointer_cast<SileaneDatasetObject>(sileaneData.objects[1]);
+
+    chronometer.tic();
+    for (auto object:sileaneData.objects) {
+        for (int i = 0; i < object->size(); i++) {
+            PointCloudT::Ptr pc = object->get_pcd(i);
+            if (pc->points.empty())
+                std::cout << "Datasample " << i << " pointcloud was empty" << "\n";
+            std::vector<T4> ocs = object->get_object_candidates(i);
+            if (ocs.empty())
+                std::cout << "Object " << object->name << " object candidates were empty for pc file "
+                          << object->filenames[i] << "\n";
+        }
+    }
+    std::cout << "Sileane Dataset Traversal of pcs and ocs time: " << chronometer.toc() << "s\n\n";
+
+
     int sample_n = 2;
     std::cout << "Using sample " << sileaneObject->filenames[sample_n] << " from dataset object folder "
               << sileaneObject->name << std::endl;
