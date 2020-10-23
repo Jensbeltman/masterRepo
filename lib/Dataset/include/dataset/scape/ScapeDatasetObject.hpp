@@ -19,7 +19,7 @@ public:
 
     ScapeDatasetObject() {};
 
-    ScapeDatasetObject(std::string _path, std::vector<std::filesystem::path> &recognition_paths) : DatasetObject(_path),
+    ScapeDatasetObject(std::string _path, std::vector<std::filesystem::path> &recognition_paths, bool verbose = false) : DatasetObject(_path),
                                                                                                    recognition_paths(
                                                                                                            recognition_paths) {
         type = "Scape";
@@ -60,12 +60,18 @@ public:
                                     std::string search_string =
                                             filename_without_zoneidx + "_" + std::to_string(itt->zone_idx);
                                     auto itt_fn = std::find(filenames.begin(), filenames.end(), search_string);
+
                                     if (itt_fn == filenames.end())
-                                        std::cout << "Filename not found" << std::endl;
-                                    int test = std::distance(filenames.begin(), itt_fn);
+                                        if(verbose)
+                                            std::cout << "Filename not found" << std::endl;
+
                                     itt->pc_filename_idx = std::distance(filenames.begin(), itt_fn);
                                 }
                             }
+                        }
+                        else{
+                            if(verbose)
+                                std::cout<<"No pcd data match for: "<<p_str<<"\n";
                         }
                     }
                 }
@@ -120,7 +126,6 @@ private:
                         zones.back().corners[i] = Eigen::Vector3d(x, y, z);
                     }
                     zones.back().init_projection_plane();
-
                 }
             }
         }

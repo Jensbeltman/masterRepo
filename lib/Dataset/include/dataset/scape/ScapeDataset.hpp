@@ -14,7 +14,7 @@ typedef std::shared_ptr<ScapeDatasetObject> ScapeDatasetObjectPtr;
 
 class ScapeDataset : public Dataset {
 public:
-    ScapeDataset(std::string path, std::string recognition_path) {
+    ScapeDataset(std::string path, std::string recognition_path,bool verbose = false) {
         for (auto &pdi : std::filesystem::directory_iterator(path)) {
             if (pdi.is_directory()) {
                 std::array<std::string, 2> ignore{"gt", "models"};
@@ -32,7 +32,7 @@ public:
                         }
                     }
                     objects.push_back(std::static_pointer_cast<DatasetObject>(
-                            std::make_shared<ScapeDatasetObject>(pdi.path(), recognition_paths)));
+                            std::make_shared<ScapeDatasetObject>(pdi.path(), recognition_paths,verbose)));
                 }
             }
         }
