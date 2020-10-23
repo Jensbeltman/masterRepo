@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <dataset/Dataset.hpp>
 
-typedef std::shared_ptr<SileaneDatasetObject> SileaneObjectPtr;
+typedef std::shared_ptr<SileaneDatasetObject> SileaneDatasetObjectPtr;
 
 class SileaneData : public Dataset {
 public:
