@@ -29,7 +29,7 @@
 *.app
 
 ### Build 
-cmake-build*/**
+**/cmake-build*/**
 
 ## Data
 data/
