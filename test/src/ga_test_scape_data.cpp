@@ -13,7 +13,7 @@
 #include <dataset/pose_noise.hpp>
 #include <ga/ga_functions.hpp>
 #include <ga/utility/logging.hpp>
-#include <ga/utility/vizualization.hpp>
+#include <ga/utility/visualization.hpp>
 
 
 int main() {
@@ -68,7 +68,8 @@ int main() {
 
     result_write(result, "/home/jens/masterRepo/data/ga_results.json");
 
-    result_vis(&ga, std::dynamic_pointer_cast<DatasetObject>(scapeObject));
+    GAResultVis vis(&ga);
+    vis.vis_result();
 
     return 0;
 }
