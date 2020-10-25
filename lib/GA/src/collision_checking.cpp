@@ -8,7 +8,6 @@ struct CustomCollisionData {
     fcl::CollisionResult<double> result;
     std::vector<std::pair<fcl::CollisionObject<double>*,fcl::CollisionObject<double>*>> final_results;
 
-    /// If `true`, requests that the broadphase evaluation stop.
     bool done{false};
 };
 
