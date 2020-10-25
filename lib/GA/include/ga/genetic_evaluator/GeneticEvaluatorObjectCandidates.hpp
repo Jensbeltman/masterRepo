@@ -12,9 +12,6 @@
 #include <dataset/Dataset.hpp>
 #include <chronometer.h>
 
-
-typedef fcl::BVHModel<fcl::OBBRSSf> CollisionModel;
-typedef std::shared_ptr<CollisionModel> CollisionModelPtr;
 typedef std::shared_ptr<cv::viz::Mesh> MeshPtr;
 
 class GeneticEvaluatorOC : public GeneticEvaluator {
@@ -29,15 +26,12 @@ public:
     PointCloudT::Ptr pcm;//mesh point cloud
     NormalCloudT::Ptr ncm;//mesh normal cloud
     std::shared_ptr<cv::viz::Mesh> meshPtr;
-    CollisionModelPtr collisionModelPtr;
     pcl::KdTreeFLANN<PointT>::Ptr kdtree;
     T4 camera_pose;
     std::vector<T4> object_candidates;//object candidates
     std::vector<pcl::IndicesPtr> oc_visible_pt_idxs;
     std::vector<pcl::IndicesPtr> oc_visible_inlier_pt_idxs;
-    std::vector<std::vector<int>> oc_collision_idxs; // Todo might be more efficient to use bit_and on integer types however scaling might be an issue
-
-    static CollisionModelPtr mesh_to_coll_model(MeshPtr meshptr);
+    std::vector<std::pair<int,int>>  oc_collision_pairs;
 
     double inlier_threshold;
 

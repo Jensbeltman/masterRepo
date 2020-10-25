@@ -1,6 +1,7 @@
-#include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include "iostream"
+#include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include "ga/point_cloud_processing/point_cloud_processing.hpp"
+#include <ga/collision/collision_checking.hpp>
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
 #include "chronometer.h"
@@ -78,53 +79,8 @@ void GeneticEvaluatorOC::init_visible_inliers() {
 }
 
 void GeneticEvaluatorOC::init_collisions() {
-    // Create collision objects
-    collisionModelPtr = mesh_to_coll_model(meshPtr);
-
-    chronometer.tic();
-    // Generation of collision matrix
-    oc_collision_idxs.resize(object_candidates.size());
-
-    fcl::BroadPhaseCollisionManagerf *manager = new fcl::DynamicAABBTreeCollisionManagerf();
-    manager->setup();
-
-    vector<fcl::CollisionObjectf *> collisionObjects;
-    for (int i = 0; i < object_candidates.size(); i++) {
-        collisionObjects.push_back(new fcl::CollisionObjectf(collisionModelPtr, fcl::Transform3f(
-                object_candidates[i].matrix().cast<float>())));
-    }
-    cout << endl;
-    manager->registerObjects(collisionObjects);
-
-    fcl::DefaultCollisionData<float> collision_data;
-    fcl::DefaultDistanceData<float> distance_data;
-
-    manager->collide(&collision_data, fcl::DefaultCollisionFunction);
-
-    std::vector<fcl::Contact<float>> contacts;
-    collision_data.result.getContacts(contacts);
-    cout << contacts.size() << endl;
-    for (auto &val:contacts) {
-        cout << val.pos.x() << " " << val.pos.z() << " " << val.pos.z() << " | ";
-        //        auto it1 = find(collisionObjects.begin(),collisionObjects.end(), val.o1);
-        //        auto it2 = find(collisionObjects.begin(),collisionObjects.end(), val.o2);
-        //        if(it1!=collisionObjects.end()&&it2!=collisionObjects.end()){
-        //            cout<<"("<<distance(collisionObjects.begin(),it1)<<","<<distance(collisionObjects.begin(),it1)<<") ";
-        //        }
-    }
-
-    std::cout << std::endl;
-
-    //    for(int i = object_candidates.size()-1;i >= 0; i--){
-    //        for(int j = i-1;j >= 0; j--){
-    //        fcl::CollisionRequestf request;
-    //        fcl::CollisionResultf result;
-    //        collide(collObjs[i].get(), collObjs[j].get(), request, result);
-    //        oc_collision_idxs[i].push_back(j);
-    //        }
-    //    }
-
-    std::cout << "Collision init elapsed time: " << chronometer.toc() << "s\n";
+    // Detect collisions
+    oc_collision_pairs = get_collisions(object_candidates,meshPtr);
 }
 
 double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
@@ -148,6 +104,8 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
 
         }
     }
+
+
     cost = 0.2 * (pc->points.size() - vis_inlier_pt_cnt_tot) / (float) n_active_genes +
            (vis_pt_cnt_tot - vis_inlier_pt_cnt_tot) / (float) n_active_genes;
 
@@ -156,26 +114,5 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
         cost = std::numeric_limits<double>::max();
 
     return cost;
-}
-
-CollisionModelPtr GeneticEvaluatorOC::mesh_to_coll_model(MeshPtr meshptr) {
-    std::vector<fcl::Vector3f> vertices;
-    std::vector<fcl::Triangle> triangles;
-
-    // Extract mesh data from opencv mesh type
-    for (auto itt = meshptr->cloud.begin<cv::Vec3f>(); itt != meshptr->cloud.end<cv::Vec3f>(); ++itt)
-        vertices.push_back(fcl::Vector3f((*itt)[0], (*itt)[1], (*itt)[2]));
-    for (auto itt = meshptr->polygons.begin<cv::Vec3i>(); itt != meshptr->polygons.end<cv::Vec3i>(); ++itt)
-        triangles.push_back(fcl::Triangle((*itt)[0], (*itt)[1], (*itt)[2]));
-
-    CollisionModelPtr collModelPtr = std::make_shared<CollisionModel>();
-
-    // add the mesh data into the BVHModel structure
-    collModelPtr->beginModel();
-    collModelPtr->addSubModel(vertices, triangles);
-    collModelPtr->endModel();
-
-
-    return collModelPtr;
 }
 
