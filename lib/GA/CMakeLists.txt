@@ -3,7 +3,7 @@ project(GA
         VERSION 1.0
         LANGUAGES CXX)
 
-add_library(GA SHARED include/ga/utility/logging.hpp src/collision_checking.cpp)
+add_library(GA SHARED include/ga/utility/logging.hpp src/collision_checking.cpp src/visualization.cpp)
 target_sources(GA
         PRIVATE
         src/typedefinitions.cpp
