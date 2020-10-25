@@ -93,14 +93,31 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
     int n_active_genes = 0;
     int vis_inlier_pt_cnt_tot = 0;
     int vis_pt_cnt_tot = 0;
+    auto coll_pair_itt =oc_collision_pairs.begin();
+
+    // Check if ocs are in collision
+    std::vector<bool> in_collision(chromosome.size(),false);
+    for(auto &cp:oc_collision_pairs){
+        if(chromosome[cp.first]&& chromosome[cp.second]){
+            in_collision[cp.first] = true;
+            in_collision[cp.second] = true;
+        }
+    }
+
     for (int i = 0; i < object_candidates.size(); i++) {
         if (chromosome[i]) {
             int vis_inlier_pt_cnt = oc_visible_inlier_pt_idxs[i]->size();
             int vis_pt_cnt = oc_visible_pt_idxs[i]->size();
 
-            vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
+            if(in_collision[i]) {
+                vis_inlier_pt_cnt_tot -= vis_inlier_pt_cnt;
+            }
+            else{
+                vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
+                n_active_genes++;
+            }
             vis_pt_cnt_tot += vis_pt_cnt;
-            n_active_genes++;
+
 
         }
     }
