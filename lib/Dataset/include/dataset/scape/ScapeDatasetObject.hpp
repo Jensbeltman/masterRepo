@@ -29,6 +29,9 @@ public:
         mesh_path = ((path.parent_path() /= "models") /= (name_singular + mesh_data_ext));
         mesh_pcd_path = ((path.parent_path() /= "models") /= (name_singular + pc_data_ext));
         camera_pose = T4::Identity();
+        // Rotate camera pose so that z points downwards (for visibility calc)//Todo get camera pose from scape if possible
+        camera_pose(1,1)=-1;
+        camera_pose(2,2)=-1;
 
         get_filenames_with_ext_from_dir(pc_data_ext, path, filenames);
         std::sort(filenames.begin(), filenames.end()); // To make indexing regonition data easyer
