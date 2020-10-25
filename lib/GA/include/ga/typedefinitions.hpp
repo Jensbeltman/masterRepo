@@ -3,6 +3,8 @@
 
 #include <ostream>
 #include <vector>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 
 typedef std::vector<bool> chromosomeT;
 typedef std::vector<chromosomeT> populationT;
@@ -10,10 +12,6 @@ typedef std::vector<chromosomeT> populationT;
 std::ostream &operator<<(std::ostream &os, chromosomeT chromosome);
 
 std::ostream &operator<<(std::ostream &os, populationT population);
-
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
-#include <ostream>
 
 typedef Eigen::Transform<double, 3, Eigen::Affine> T4;
 typedef pcl::PointXYZ PointT;
