@@ -1,4 +1,4 @@
-#ifndef MASTER_VIZUALIZATION_HPP
+#ifndef MASTER_VISUALIZATION_HPP
 #define MASTER_VIZUALIZATION_HPP
 
 
@@ -27,4 +27,4 @@ pcl::visualization::PCLVisualizer::Ptr vis_pc_and_oc(DatasetObjectPtr datasetObj
 }
 
 
-#endif //MASTER_VIZUALIZATION_HPP
+#endif //MASTER_VISUALIZATION_HPP
