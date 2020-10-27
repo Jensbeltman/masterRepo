@@ -31,8 +31,29 @@ CollisionModelPtr get_coll_model(MeshPtr meshptr) {
     // Extract mesh data from opencv mesh type
     for (auto itt = meshptr->cloud.begin<cv::Vec3f>(); itt != meshptr->cloud.end<cv::Vec3f>(); ++itt)
         vertices.emplace_back((*itt)[0], (*itt)[1], (*itt)[2]);
-    for (auto itt = meshptr->polygons.begin<cv::Vec3i>(); itt != meshptr->polygons.end<cv::Vec3i>(); ++itt)
-        triangles.emplace_back((*itt)[0], (*itt)[1], (*itt)[2]);
+
+    auto itt = meshptr->polygons.begin<int32_t>();
+    auto end = meshptr->polygons.end<int32_t>();
+    int non_tris = 0;
+    int n_vert=0;
+    int32_t a,b,c;
+    while (itt != end) {
+        n_vert = *itt++;
+        if (n_vert!=3){
+            non_tris++;
+            itt+=n_vert;
+        }
+        else {
+            a=*itt++;
+            b=*itt++;
+            c=*itt++;
+            triangles.emplace_back(a,b,c);
+        }
+    }
+    if(n_vert)
+        std::cout<<n_vert<<" faces where not tris"<<std::endl;
+
+
 
     CollisionModelPtr collModelPtr = std::make_shared<CollisionModel>();
 
