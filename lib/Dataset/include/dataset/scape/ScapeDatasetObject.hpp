@@ -58,7 +58,7 @@ public:
                                 auto end = zones.end();
 
                                 get_object_candidates(p_str + ".txt", begin, end); // Adds object candidates
-
+                                get_scores(p_str + "_scores.txt", begin, end);
                                 for (auto itt = begin; itt != end; ++itt) {
                                     std::string search_string =
                                             filename_without_zoneidx + "_" + std::to_string(itt->zone_idx);
@@ -95,6 +95,10 @@ public:
         return pc;
     };
 
+    bool has_gt(int n){return !zones[n].gt.empty();}
+    bool has_scores(int n){return !zones[n].scores.empty();}
+    std::vector<T4> get_gt(unsigned int n) {return zones[n].gt; }
+    std::vector<double> get_scores(unsigned int n) { return zones[n].scores;}
 
 private:
 
@@ -137,8 +141,26 @@ private:
     }
 
     void get_scores(std::filesystem::path path, std::vector<ScapeZone>::iterator begin, std::vector<ScapeZone>::iterator end) {
-
+        std::ifstream oc_file(path);
+        std::string word;
+        int global_index=0;
+        int zoneindex = -1;
+        while (oc_file >> word) {
+            if (word.npos != word.find("ZoneIndex")) {
+                oc_file >> zoneindex;
+            } else {
+                double score = std::stod(word);
+                for (auto itt = begin; itt != end; itt++) {
+                    if ( std::find(itt->ocs_global_index.begin(),itt->ocs_global_index.end(),global_index) != itt->ocs_global_index.end()){
+                        itt->scores.push_back(score);
+                    }
+                }
+                global_index++;
+            }
+        }
     }
+
+
 
     void
     get_object_candidates(std::filesystem::path path, std::vector<ScapeZone>::iterator begin,
@@ -146,13 +168,11 @@ private:
         std::ifstream oc_file(path);
 
         T4 oc;
+        int global_index=0;
         std::string word;
         int zoneindex = -1;
         while (oc_file >> word) {
             if (word.npos != word.find("ZoneIndex")) {
-//                if (zoneindex != -1) {// Ensure that the begin is not increased the first time.
-//                    begin++;
-//                }
                 oc_file >> zoneindex;
             } else {
                 oc(0, 0) = std::stod(word);
@@ -162,8 +182,11 @@ private:
                         >> oc(3, 3);
 
                 for (auto itt = begin; itt != end; itt++) {
-                    itt->push_back_oc_if_valid(oc);
+                    if (itt->push_back_oc_if_valid(oc)){
+                        itt->ocs_global_index.push_back(global_index);
+                    }
                 }
+                global_index++;
             }
         }
     };
@@ -183,6 +206,7 @@ private:
         return n_zones;
     }
 };
+
 
 
 #endif //MASTER_SCAPEDATASETOBJECT_HPP

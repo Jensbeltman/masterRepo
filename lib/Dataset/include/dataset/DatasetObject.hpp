@@ -55,7 +55,11 @@ public:
 
     virtual int size() const { return filenames.size(); };
 
-    virtual std::vector<T4> get_object_candidates(unsigned int n) { return std::vector<T4>(); };
+    virtual bool has_gt(int n){return false;}
+    virtual std::vector<T4> get_gt(unsigned int n) { return std::vector<T4>(); }
+    virtual bool has_scores(int n){return false;}
+    virtual std::vector<double> get_scores(unsigned int n) { return std::vector<double>(); }
+    virtual std::vector<T4> get_object_candidates(unsigned int n) { return std::vector<T4>(); }
 
     // UTILITY FUNCTIONS
 

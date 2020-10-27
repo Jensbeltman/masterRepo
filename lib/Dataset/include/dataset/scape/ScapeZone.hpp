@@ -15,7 +15,10 @@ public:
     int zone_idx = 0;
     int pc_filename_idx = 0;
     std::vector<T4> ocs;
+    std::vector<int> ocs_global_index;// The oc index in the recognition files
+    std::vector<T4> gt;
     std::vector<double> scores;
+
 
     // ScapeZone plane information
     std::array<Eigen::Vector3d, 4> corners;
@@ -26,7 +29,7 @@ public:
     std::array<Eigen::Vector2d, 4> projected_corner_vectors_p;
 
 
-    void push_back_oc_if_valid(T4 &object_candidate) {
+    bool push_back_oc_if_valid(T4 &object_candidate) {
         Eigen::Vector3d tvec = object_candidate.matrix().block<3, 1>(0, 3);
         Eigen::Vector2d ptvec = project_to_plane(tvec);
         std::array<bool, 4> res;
@@ -37,7 +40,9 @@ public:
         if (std::all_of(res.begin(), res.end(), [](bool r) { return r; }) ||
             std::all_of(res.begin(), res.end(), [](bool r) { return !r; })) {
             ocs.push_back(object_candidate);
+            return true;
         }
+        return false;
     };
 
     void init_projection_plane() {
