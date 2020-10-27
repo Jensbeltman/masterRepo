@@ -22,9 +22,6 @@ GA::GA(int N_genes) :
 
     if (N_threads == 0) // number of CPU cores not detected.
         N_threads = 8;
-
-    std::cout << "GA initialized with\n";
-    std::cout << "\t N_threads " << N_threads << std::endl;
 }
 
 void GA::initialize() {
@@ -79,8 +76,6 @@ GAResult GA::solve() {
         calculate_population_cost(population_costs);
         last_population = population;
     }
-    std::cout << "Solution cost: " << population_costs[population_sorted_indices[0]] << "\tchromosome: "
-              << population[population_sorted_indices[0]] << std::endl;
 
     result.best_chromosome = population[population_sorted_indices[0]];
 
@@ -129,6 +124,10 @@ void GA::calculate_population_cost(std::vector<double> &costs) {
 
 
 // Compare funcitons and ostream overloads
+std::ostream &operator<<(std::ostream &os, const GAResult& result){
+    os<<"Best chromosome "<<result.best_chromosome<<", Cost "<<result.best_chromosome_cost;
+    return os;
+}
 
 bool GA::cost_comp(int a, int b) {
     return population_costs[a] < population_costs[b];
