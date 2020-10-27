@@ -7,7 +7,6 @@
 #include "chronometer.h"
 #include <fcl/fcl.h>
 
-
 using namespace std;
 
 GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr doPtr, int sample_n, double inlier_threshold)
@@ -43,7 +42,7 @@ void GeneticEvaluatorOC::init() {
     kdtree->setInputCloud(pc);
 
     init_visible_inliers();
-    //init_collisions();
+    init_collisions();
 }
 
 
@@ -123,8 +122,7 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
     }
 
 
-    cost = 0.2 * (pc->points.size() - vis_inlier_pt_cnt_tot) / (float) n_active_genes +
-           (vis_pt_cnt_tot - vis_inlier_pt_cnt_tot) / (float) n_active_genes;
+    cost =  -vis_inlier_pt_cnt_tot;
 
 
     if (isnan(cost) || !n_active_genes)
