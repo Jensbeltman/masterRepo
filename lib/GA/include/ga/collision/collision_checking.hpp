@@ -2,7 +2,7 @@
 #define MASTER_COLLISION_CHECK_HPP
 
 #include <fcl/geometry/bvh/BVH_model.h>
-#include <fcl/narrowphase/collision_object.h>
+
 #include <ga/typedefinitions.hpp>
 #include <opencv2/viz/types.hpp>
 
