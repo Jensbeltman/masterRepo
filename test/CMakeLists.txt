@@ -4,20 +4,19 @@ project(test
         LANGUAGES CXX)
 
 add_executable(sileane_test src/sileane_data_set_test.cpp)
-target_include_directories(sileane_test PUBLIC ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(sileane_test PUBLIC opencv_core opencv_viz opencv_imgcodecs Chronometer Dataset)
+target_link_libraries(sileane_test PUBLIC Chronometer Dataset)
 
 add_executable(scape_test src/scape_data_set_test.cpp)
-target_include_directories(scape_test PUBLIC ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(scape_test PUBLIC opencv_core opencv_viz opencv_imgcodecs Chronometer Dataset)
+target_link_libraries(scape_test PUBLIC Chronometer Dataset)
 
 add_executable(ga_scape_test src/ga_test_scape_data.cpp)
-target_include_directories(ga_scape_test PUBLIC ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(ga_scape_test PUBLIC opencv_core opencv_viz opencv_imgcodecs Chronometer GA Dataset)
+target_link_libraries(ga_scape_test PRIVATE GA)
 
 add_executable(fcl_test src/fcl_test.cpp)
-target_include_directories(fcl_test PUBLIC ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(fcl_test PUBLIC opencv_core opencv_viz opencv_imgcodecs Chronometer GA Dataset fcl)
+target_link_libraries(fcl_test PUBLIC GA)
+
+add_executable(baseline src/baseline.cpp)
+target_link_libraries(baseline PUBLIC GA)
 
 #add_executable(test src/test.cpp)
 #target_compile_features(test PUBLIC cxx_std_17)
