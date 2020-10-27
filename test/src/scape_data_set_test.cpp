@@ -15,7 +15,7 @@ int main() {
         ScapeDatasetObjectPtr sob = std::dynamic_pointer_cast<ScapeDatasetObject>(ob);
         std::cout   <<"\t"<<ob->name
                     <<"\n\t\tnumber of zones: " << ob->size()
-                    <<"\n\t\tnumber of pcd filenames: " << sob->filenames.size()
+                    <<"\n\t\tnumber of pcd filenames: " << ob->filenames.size()
                     <<"\n\t\tnumber of recognition paths: " << sob->recognition_paths.size()
                     <<"\n\n";
     }
@@ -30,10 +30,15 @@ int main() {
             if (pc->points.empty())
                 std::cout << "Datasample " << i << " pointcloud was empty" << "\n";
             std::vector<T4> ocs = object->get_object_candidates(i);
+            std::vector<double> scores = object->get_scores(i);
             if (ocs.empty())
                 std::cout << "Object " << sobject->name << " candidates were empty for zone "
                           << sobject->zones[i].zone_idx << " for pc file "
                           << sobject->filenames[sobject->zones[i].pc_filename_idx] << "\n";
+            if(ocs.size() != scores.size())
+                std::cout << "Object " << sobject->name << " had missmatch between n of ocs and scores for zone "
+                          << sobject->zones[i].zone_idx << "\n";
+
         }
     }
     std::cout << "Scape Dataset Traversal of pcs and ocs time: " << chronometer.toc() << "s\n\n";
