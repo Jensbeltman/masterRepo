@@ -23,6 +23,7 @@ struct GAResult {
     double best_chromosome_cost = std::numeric_limits<double>::max();
     std::vector<double> best_chromosome_cost_history;
 };
+std::ostream &operator<<(std::ostream &os, const GAResult& result);
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GAResult, best_chromosome, best_chromosome_index, best_chromosome_cost,
                                    best_chromosome_cost_history)
