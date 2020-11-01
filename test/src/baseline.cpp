@@ -1,6 +1,8 @@
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/ga_functions.hpp>
 #include <ga/utility/visualization.hpp>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/common/transforms.h>
 #include <dataset/scape/ScapeDataset.hpp>
 #include <chronometer.h>
 #include <utility>
@@ -55,6 +57,23 @@ int main(int argc, char** argv) {
     ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorOCPtr);
     ga.result.best_chromosome=chromosome;
 
-    GAResultVis vis(&ga);
-    vis.vis_result();
+    CustomVisualizer vis;
+    pcl::ExtractIndices<PointT> extractIndices;
+    vis.addPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
+
+    for (int i = 0; i < geneticEvaluatorOCPtr->object_candidates.size(); i++) {
+        std::string id = "oc_" + std::to_string(i);
+        PointCloudT::Ptr ocpc(new PointCloudT);
+        extractIndices.setInputCloud(geneticEvaluatorOCPtr->pcm);
+        extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
+        extractIndices.filter(*ocpc);
+        pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
+
+        if (ga.result.best_chromosome[i]) {
+            vis.addPointCloud(ocpc, id,"Accepted", 0, 255, 0);
+        } else{
+            vis.addPointCloud(ocpc, id,"Rejected", 255, 0, 0);
+        }
+    }
+    vis.spin();
 }
