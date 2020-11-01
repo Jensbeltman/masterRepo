@@ -3,6 +3,7 @@
 #include "dataset/scape/ScapeDatasetObject.hpp"
 #include "dataset/scape/ScapeDataset.hpp"
 #include <pcl/common/common.h>
+#include <pcl/common/transforms.h>
 
 #include <pcl/filters/extract_indices.h>
 #include <opencv4/opencv2/core.hpp>
@@ -66,8 +67,28 @@ int main(int argc, char** argv) {
     std::cout << "Ocs scores "<<scapeObject->get_scores(sample_n)<<std::endl;
     result_write(result, "/home/jens/masterRepo/data/ga_results.json");
 
-    GAResultVis vis(&ga);
-    vis.vis_result();
+    CustomVisualizer vis;
+
+    pcl::ExtractIndices<PointT> extractIndices;
+    for (int i = 0; i < geneticEvaluatorOCPtr->object_candidates.size(); i++) {
+        std::string id = "oc_" + std::to_string(i);
+        PointCloudT::Ptr ocpc(new PointCloudT);
+        extractIndices.setInputCloud(geneticEvaluatorOCPtr->pcm);
+        extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
+        extractIndices.filter(*ocpc);
+        pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
+
+        if (ga.result.best_chromosome[i]) {
+            vis.addPointCloud(ocpc, id, "accepted", 0, 255, 0);
+        } else {
+            vis.addPointCloud(ocpc, id, "rejected", 255, 0, 0);
+        }
+    }
+
+    vis.addPointCloud(geneticEvaluatorOCPtr->pc, "pc");
+    PointCloudT::Ptr mesh_pc = geneticEvaluatorOCPtr->pcm;
+
+    vis.spin();
 
     return 0;
 }
