@@ -19,58 +19,40 @@ class DatasetObject {
 public:
     std::string name;
     std::string type;
+    std::string pc_data_ext;
+    std::string mesh_data_ext;
     std::filesystem::path path;
     std::filesystem::path mesh_path;
     std::filesystem::path mesh_pcd_path;
-    std::string pc_data_ext;
-    std::string mesh_data_ext;
     std::vector<std::string> filenames;
     T4 camera_pose;
 
 
-    DatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PCD")
-            : path(path), pc_data_ext(data_ext) {
-        name = path.stem().string();
-    };
-
+    explicit DatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PCD");
     // VIRTUAL BASECLASS FUNCTIONS
-    virtual pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n) { return nullptr; };
+    virtual pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n);
 
-    virtual std::shared_ptr<cv::viz::Mesh> get_mesh() {
-        std::shared_ptr<cv::viz::Mesh> meshptr = std::make_shared<cv::viz::Mesh>(cv::viz::Mesh::load(mesh_path));
-        return meshptr;
-    }
+    virtual std::shared_ptr<cv::viz::Mesh> get_mesh();
 
-    virtual pcl::shared_ptr<PointCloudT> get_mesh_point_cloud() {
-        pcl::shared_ptr<PointCloudT> pc = pcl::make_shared<PointCloudT>();
-        pcl::io::loadPCDFile(mesh_pcd_path, *pc);
-        return pc;
-    }
+    virtual pcl::shared_ptr<PointCloudT> get_mesh_point_cloud();
 
-    virtual pcl::shared_ptr<NormalCloudT> get_mesh_normal_cloud() {
-        pcl::shared_ptr<NormalCloudT> nc = pcl::make_shared<NormalCloudT>();
-        pcl::io::loadPCDFile(mesh_pcd_path, *nc);
-        return nc;
-    }
+    virtual pcl::shared_ptr<NormalCloudT> get_mesh_normal_cloud();
 
-    virtual int size() const { return filenames.size(); };
+    virtual int size() const;
 
-    virtual bool has_gt(int n){return false;}
-    virtual std::vector<T4> get_gt(unsigned int n) { return std::vector<T4>(); }
-    virtual bool has_scores(int n){return false;}
-    virtual std::vector<double> get_scores(unsigned int n) { return std::vector<double>(); }
-    virtual std::vector<T4> get_object_candidates(unsigned int n) { return std::vector<T4>(); }
+    virtual bool has_gt(int n);
 
-    // UTILITY FUNCTIONS
+    virtual bool has_scores(int n);
+
+    virtual std::vector<T4> get_gt(unsigned int n);
+
+    virtual std::vector<double> get_scores(unsigned int n);
+
+    virtual std::vector<T4> get_object_candidates(unsigned int n);
 
 
 protected:
-    void get_filenames_with_ext_from_dir(std::string ext, std::string dir, std::vector<std::string> &vofs) {
-        for (auto &p : std::filesystem::directory_iterator(dir)) {
-            if (p.path().extension() == ext)
-                vofs.push_back(p.path().stem().string());
-        }
-    };
+    void get_filenames_with_ext_from_dir(std::string ext, std::string dir, std::vector<std::string> &vofs);
 };
 
 

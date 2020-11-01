@@ -14,16 +14,9 @@ public:
 
     Dataset() = default;
 
-    Dataset(std::string _path) : path(_path) {
-        name = path.stem().string();
-    };
+    explicit Dataset(std::string _path);
 
-    virtual DatasetObjectPtr get_object_by_name(std::string name) {
-        for (DatasetObjectPtr &sileaneObject:objects)
-            if (sileaneObject->name == name)
-                return sileaneObject;
-        return nullptr;
-    };
+    virtual DatasetObjectPtr get_object_by_name(std::string name);
 
 };
 
