@@ -5,83 +5,112 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/transforms.h>
 
-GAResultVis::GAResultVis(GA *ga) : ga(ga) {
-    vis.registerKeyboardCallback(&GAResultVis::keyboardCallback, *this);
+
+CustomVisualizer::CustomVisualizer() {
+    pclVisualizer.registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
 }
 
-void GAResultVis::vis_result() {
-    // Solution visualization
-    std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::dynamic_pointer_cast<GeneticEvaluatorOC>(
-            ga->geneticEvaluatorPtr);
+void CustomVisualizer::spin() {
+    ids_itt = group_ids.begin();
+    ids_itt_max = group_ids.end();
+    ids_itt_max--;
 
-    vis.removeAllPointClouds();
-    vis.addPointCloud(geneticEvaluatorOCPtr->pc, pc_id);
-    PointCloudT::Ptr mesh_pc = geneticEvaluatorOCPtr->pcm;
+    // Setup selection text
+    pclVisualizer.spinOnce(); // Spin once to make such that the camera is setup
+    std::array<double, 3> rgb = group_color[ids_itt->first];
+    pcl::visualization::Camera camera;
+    pclVisualizer.getCameraParameters(camera);
+    if (pclVisualizer.contains(text_id)) {
+        update_text();
+    } else {
 
-    pcl::ExtractIndices<PointT> extractIndices;
-    for (int i = 0; i < geneticEvaluatorOCPtr->object_candidates.size(); i++) {
-        std::string id = "oc_" + std::to_string(i);
-        PointCloudT::Ptr ocpc(new PointCloudT);
-        extractIndices.setInputCloud(geneticEvaluatorOCPtr->pcm);
-        extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
-        extractIndices.filter(*ocpc);
-        pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
-
-
-        int rgb[3] = {0, 0, 0};
-        if (ga->result.best_chromosome[i]) {
-            rgb[1] = 255;
-            accepted_ids.emplace_back(id);
-        } else {
-            rgb[0] = 255;
-            rejected_ids.emplace_back(id);
-        }
-        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color(ocpc, rgb[0], rgb[1], rgb[2]);
-        vis.addPointCloud<pcl::PointXYZ>(ocpc, color, id);
-
-        // Todo add camera
-
+        pclVisualizer.addText(ids_itt->first, static_cast<int>(camera.window_size[0] / 2),
+                              static_cast<int>(camera.window_size[1] - font_size * 1.5), font_size, rgb[0], rgb[1],
+                              rgb[2],
+                              text_id);
+        change_pt_size(ids_itt->first, 1);
     }
+    pclVisualizer.spin();
 
-    vis.spin();
 }
 
-void GAResultVis::flip_opacity(std::vector<std::string> &ids) {
-    if (!ids.empty()) {
-        if (vis.contains(ids[0])){
-            double current_opacity;
-            vis.getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity, ids[0]);
-            current_opacity = (current_opacity < 1.0) ? 1.0 : 0.0;
-            for (auto &id:ids) {
-                if (vis.contains(id)) {
-                    vis.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,
-                                                         id);
-                }
-            }
-        }
-    }
+void CustomVisualizer::update_text() {
+    std::array<double, 3> rgb = group_color[ids_itt->first];
+    pcl::visualization::Camera camera;
+    pclVisualizer.getCameraParameters(camera);
+    pclVisualizer.updateText(ids_itt->first, camera.window_size[0] / 2, camera.window_size[1] - font_size * 1.5,
+                             font_size,
+                             rgb[0], rgb[1], rgb[2], text_id);
 }
 
-void GAResultVis::flip_opacity(std::string id) {
-    if (vis.contains(id)) {
+void CustomVisualizer::toggle_opacity(std::string group_id) {
+
+    if (!group_ids[group_id].empty()) {
         double current_opacity;
-        vis.getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity, id);
+        pclVisualizer.getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,
+                                                       group_ids[group_id][0]);
         current_opacity = (current_opacity < 1.0) ? 1.0 : 0.0;
-        vis.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity, id);
+        for (auto &id:group_ids[group_id]) {
+            pclVisualizer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,
+                                                           id);
+        }
     }
 }
 
-void GAResultVis::keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *viewer_void) {
+void CustomVisualizer::change_pt_size(std::string group_id, int change) {
+    if (!group_ids[group_id].empty()) {
+        double current_point_size;
+        pclVisualizer.getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,
+                                                       current_point_size,
+                                                       group_ids[group_id][0]);
+        for (auto &id:group_ids[group_id]) {
+            pclVisualizer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,
+                                                           current_point_size + change, id);
+        }
+    }
+}
+
+void CustomVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *viewer_void) {
     if (event.keyDown()) {
         std::string key = event.getKeySym();
-        if (key == "p" && event.isCtrlPressed()) {
-            flip_opacity(pc_id);
-        }
-        if (key == "o" && event.isCtrlPressed()) {
-            flip_opacity(accepted_ids);
-        }
-        if (key == "O" && event.isCtrlPressed() && event.isShiftPressed()) {
-            flip_opacity(rejected_ids);
+        if (key == "Right" && (ids_itt != ids_itt_max)) {
+            ids_itt++;
+            update_text();
+        } else if (key == "Left" && ids_itt != group_ids.begin()) {
+            ids_itt--;
+            update_text();
+        } else if (key == "Up") {
+            toggle_opacity(ids_itt->first);
         }
     }
+}
+
+void
+CustomVisualizer::addPointCloud(PointCloudT::Ptr &pc, std::string id, std::string group_id, int r, int g, int b) {
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color(pc, r, g, b);
+    pclVisualizer.addPointCloud(pc, color, id);
+
+
+    if (group_id.empty()) { group_id = id; }
+
+    group_ids[group_id].emplace_back(id);
+    group_color[group_id] = std::array<double, 3>{r / 255.0, g / 255.0, b / 255.0};
+}
+
+void CustomVisualizer::clear() {
+    pclVisualizer.removeAllPointClouds();
+    group_ids.clear();
+    group_color.clear();
+}
+
+void CustomVisualizer::clear(std::string group) {
+
+    if (group_ids.find(group) != group_ids.end()) {
+        for (auto &id:group_ids[group]) {
+            pclVisualizer.removePointCloud(id);
+        }
+        group_ids.erase(group);
+        group_color.erase(group);
+    }
+
 }
