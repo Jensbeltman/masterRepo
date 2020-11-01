@@ -3,8 +3,18 @@ project(Dataset
         VERSION 1.0
         LANGUAGES CXX)
 
-add_library(Dataset INTERFACE)
-target_include_directories(Dataset INTERFACE include ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(Dataset INTERFACE ${PCL_LIBRARIES} opencv_core opencv_viz opencv_imgcodecs)
-target_compile_features(Dataset INTERFACE cxx_std_17)
+add_library(Dataset)
+target_sources(Dataset
+        PRIVATE src/scape/ScapeDataset.cpp
+                src/scape/ScapeDatasetObject.cpp
+                src/scape/ScapeZone.cpp
+                src/Dataset.cpp
+                src/DatasetObject.cpp
+                src/sileane/SileaneDataset.cpp
+                src/sileane/SileaneDatasetObject.cpp
+                src/sileane/SileaneCameraParams.cpp
+                src/pose_noise.cpp)
+target_include_directories(Dataset PUBLIC include ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(Dataset PUBLIC ${PCL_LIBRARIES} opencv_core opencv_viz opencv_imgcodecs)
+target_compile_features(Dataset PUBLIC cxx_std_17)
 
