@@ -37,7 +37,6 @@ void GeneticEvaluatorOC::init() {
     type = "GeneticEvaluatorOC";
 
     // KdTree of cloud data
-    std::cout << (pc->size() > 0) << std::endl;
     kdtree = pcl::make_shared<pcl::KdTreeFLANN<PointT>>();
     kdtree->setInputCloud(pc);
 
@@ -79,7 +78,9 @@ void GeneticEvaluatorOC::init_visible_inliers() {
 
 void GeneticEvaluatorOC::init_collisions() {
     // Detect collisions
+    chronometer.tic();
     oc_collision_pairs = get_collisions(object_candidates,meshPtr);
+    std::cout << "Collision init elapsed time: " << chronometer.toc() << "s\n";
 }
 
 double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
