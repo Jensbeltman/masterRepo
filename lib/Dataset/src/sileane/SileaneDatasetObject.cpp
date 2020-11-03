@@ -73,7 +73,7 @@ std::vector<T4> SileaneDatasetObject::get_object_candidates(unsigned int n) {
         gt_poses.push_back(T);
     }
 
-    PoseNoise poseNoise(mu_noise, sigma_noise);
+    TransformUtility poseNoise(mu_noise, sigma_noise);
     if (n_noisy_poses == -1)
         poseNoise.append_noisy_transforms(gt_poses, gt_poses.size());
     else
