@@ -3,23 +3,9 @@ project(test
         VERSION 1.0
         LANGUAGES CXX)
 
-add_executable(sileane_test src/sileane_data_set_test.cpp)
-target_link_libraries(sileane_test PUBLIC Chronometer Dataset)
-
-add_executable(scape_test src/scape_data_set_test.cpp)
-target_link_libraries(scape_test PUBLIC Chronometer Dataset)
-
-add_executable(ga_scape_test src/ga_test_scape_data.cpp)
-target_link_libraries(ga_scape_test PRIVATE GA)
-
-add_executable(fcl_test src/fcl_test.cpp)
-target_link_libraries(fcl_test PUBLIC GA)
-
-add_executable(baseline src/baseline.cpp)
-target_link_libraries(baseline PUBLIC GA)
-
-add_executable(baseline_ga_diff src/baseline_ga_diff.cpp)
-target_link_libraries(baseline_ga_diff PUBLIC GA)
+add_subdirectory(dataset)
+add_subdirectory(fcl)
+add_subdirectory(ga_and_baseline)
 
 #add_executable(test src/test.cpp)
 #target_compile_features(test PUBLIC cxx_std_17)

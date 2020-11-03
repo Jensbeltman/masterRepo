@@ -1,6 +1,7 @@
 #include "dataset/scape/ScapeDataset.hpp"
 
 ScapeDataset::ScapeDataset(std::string path, std::string recognition_path, bool verbose) {
+    name = "Scape";
     for (auto &pdi : std::filesystem::directory_iterator(path)) {
         if (pdi.is_directory()) {
             std::array<std::string, 2> ignore{"gt", "models"};
