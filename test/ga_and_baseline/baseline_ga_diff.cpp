@@ -31,6 +31,12 @@ int main(int argc, char **argv) {
     int bl_n_tp = 0;
     int ga_n_tp = 0;
 
+    GA ga(100, 100, 50, 0.05, 0.1, 0.3);
+
+    // Logging
+
+    auto dataObjects = json::array();
+
     for (int sample_n = 0; sample_n < ob->size(); sample_n++) {
         if (ob->has_gt(sample_n)) {
             std::cout << "Sample number: " << sample_n << " pc file "
@@ -57,15 +63,8 @@ int main(int argc, char **argv) {
             }
 
             //GA
-            GA ga(object_candidates.size());
-            ga.geneticEvaluatorPtr = geneticEvaluatorOCPtr;
-            ga.N_chromosomes = 100;
-            ga.generation_max = 50;
-            ga.mutation_rate = 0.01;
-            ga.elite_count = (int) (0.1 * ga.N_genes);
-            ga.parent_pool_count = (int) (0.3 * ga.N_genes);
-            ga.crossover = crossover_uniform;
-            ga.mutation = mutation_flip;
+            ga.n_genes = object_candidates.size(); // Update chromosome size
+            ga.geneticEvaluatorPtr = geneticEvaluatorOCPtr; // Create new evaluator for the given ocs
             GAResult result = ga.solve();
 
             std::vector<bool> true_positives = tu.get_true_positives(object_candidates, gts, 10, 6);
@@ -123,6 +122,25 @@ int main(int argc, char **argv) {
                 std::cout << "\n";
                 vis.spin();
             }
+
+            dataObjects.push_back(json::object(
+                    {
+                            {"dataset",  scapeData.name},
+                            {"object",   ob->name},
+                            {"sample_n", sample_n},
+                            {"ga",       result.best_chromosome},
+                            {"baseline", bl_chromosome}
+                    }
+            ));
+
         }
     }
+    json data_json;
+    data_json["data"] = dataObjects;
+
+// write prettified JSON to another file
+    std::ofstream o("../../../data/baseline_ga_comp");
+    o << std::setw(4) << data_json << std::endl;
+
+    o.close();
 }
