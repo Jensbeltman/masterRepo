@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
     // Logging
 
-    auto dataObjects = json::array();
+    //auto dataObjects = json::array();
 
     for (int sample_n = 0; sample_n < ob->size(); sample_n++) {
         if (ob->has_gt(sample_n)) {
@@ -123,24 +123,24 @@ int main(int argc, char **argv) {
                 vis.spin();
             }
 
-            dataObjects.push_back(json::object(
-                    {
-                            {"dataset",  scapeData.name},
-                            {"object",   ob->name},
-                            {"sample_n", sample_n},
-                            {"ga",       result.best_chromosome},
-                            {"baseline", bl_chromosome}
-                    }
-            ));
+//            dataObjects.push_back(json::object(
+//                    {
+//                            {"dataset",  scapeData.name},
+//                            {"object",   ob->name},
+//                            {"sample_n", sample_n},
+//                            {"ga",       result.best_chromosome},
+//                            {"baseline", bl_chromosome}
+//                    }
+//            ));
 
         }
     }
-    json data_json;
-    data_json["data"] = dataObjects;
+//    json data_json;
+//    data_json["data"] = dataObjects;
 
 // write prettified JSON to another file
-    std::ofstream o("../../../data/baseline_ga_comp");
-    o << std::setw(4) << data_json << std::endl;
-
-    o.close();
+//    std::ofstream o("../../../data/baseline_ga_comp");
+//    o << std::setw(4) << data_json << std::endl;
+//
+//    o.close();
 }
