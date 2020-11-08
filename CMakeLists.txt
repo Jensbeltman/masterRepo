@@ -3,6 +3,9 @@ project(master
         VERSION 1.0
         LANGUAGES CXX)
 
+
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(VTK REQUIRED)
 #PCL
 find_package(PCL REQUIRED)
 #JSON
