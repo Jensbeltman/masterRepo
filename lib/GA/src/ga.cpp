@@ -1,46 +1,44 @@
 #include "ga/ga.hpp"
+#include "ga/ga_functions.hpp"
 #include <iostream>
 #include <ostream>
 
 
-GA::GA(int N_genes) :
-        N_genes(N_genes),
-        N_chromosomes(100),
-        generation_max(100),
-        mutation_rate(0.005),
-        elite_count((int) (0.1 * N_genes)),
-        parent_pool_count((int) (0.3 * N_genes)),
+GA::GA(int n_genes, int population_size, int generation_max, double mutation_rate, double elite_pct,
+       double parent_pool_pct) :
+        n_genes(n_genes),
+        population_size(population_size),
+        generation_max(generation_max),
+        mutation_rate(mutation_rate),
+        elite_pct(elite_pct),
+        parent_pool_pct(parent_pool_pct),
         generate_initial_population(nullptr),
-        crossover(nullptr),
-        mutation(nullptr) {
-    // initialize the random number generator with time-dependent seed
-    uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
-    rng.seed(ss);
-
-    N_threads = std::thread::hardware_concurrency();// read number of threads
-
-    if (N_threads == 0) // number of CPU cores not detected.
-        N_threads = 8;
+        crossover(crossover_default),
+        mutation(mutation_default) {
 }
 
 void GA::initialize() {
     // Clear results
     result = GAResult();
 
-    // Validate parameters
-    assert(N_chromosomes || parent_pool_count);
-    assert(elite_count <= N_chromosomes);
+    // initialize the random number generator with time-dependent seed
+    uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
+    rng.seed(ss);
+
+    // Set and validate parameters
+    elite_cnt = static_cast<int>(elite_pct * n_genes);
+    parent_pool_cnt = static_cast<int>(parent_pool_pct * n_genes);
+    assert(population_size || parent_pool_cnt);
+    assert(elite_cnt <= population_size);
 
     //Initialize vectors
-    population_sorted_indices.resize(N_chromosomes);
+    population_sorted_indices.resize(population_size);
     std::iota(population_sorted_indices.begin(), population_sorted_indices.end(), 0);
-    population_costs.resize(N_chromosomes);
+    population_costs.resize(population_size);
     std::fill(population_costs.begin(), population_costs.end(), std::numeric_limits<double>::infinity());
 
-    uniform_dist_int_parent_pool = std::uniform_int_distribution<int>(0, parent_pool_count);
-
-
+    uniform_dist_int_parent_pool = std::uniform_int_distribution<int>(0, parent_pool_cnt);
 }
 
 void GA::solve_init() {
@@ -50,10 +48,10 @@ void GA::solve_init() {
     }
 
     // Generate random initial population
-    population.resize(N_chromosomes);
+    population.resize(population_size);
     for (chromosomeT &c: population) {
         c.clear();
-        for (int i = 0; i < N_genes; i++) {
+        for (int i = 0; i < n_genes; i++) {
             bool gv = bernoulli_dist(rng);
             c.push_back(gv);
         }
@@ -83,7 +81,7 @@ GAResult GA::solve() {
 }
 
 void GA::elite_transfer() {
-    for (int i = 0; i < elite_count; i++) {
+    for (int i = 0; i < elite_cnt; i++) {
         population.push_back(last_population[population_sorted_indices[i]]);
     }
 }
@@ -93,7 +91,7 @@ int GA::select_parrent() {
 }
 
 void GA::crossover_and_mutation() {
-    for (int i = 0; i < N_chromosomes - elite_count; i++) {
+    for (int i = 0; i < population_size - elite_cnt; i++) {
         int p1i = select_parrent();
         int p2i = select_parrent();
         chromosomeT c = crossover(this, p1i, p2i);
@@ -124,8 +122,8 @@ void GA::calculate_population_cost(std::vector<double> &costs) {
 
 
 // Compare funcitons and ostream overloads
-std::ostream &operator<<(std::ostream &os, const GAResult& result){
-    os<<"Best chromosome "<<result.best_chromosome<<", Cost "<<result.best_chromosome_cost;
+std::ostream &operator<<(std::ostream &os, const GAResult &result) {
+    os << "Best chromosome " << result.best_chromosome << ", Cost " << result.best_chromosome_cost;
     return os;
 }
 

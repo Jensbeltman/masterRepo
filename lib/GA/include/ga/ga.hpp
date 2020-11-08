@@ -23,7 +23,8 @@ struct GAResult {
     double best_chromosome_cost = std::numeric_limits<double>::max();
     std::vector<double> best_chromosome_cost_history;
 };
-std::ostream &operator<<(std::ostream &os, const GAResult& result);
+
+std::ostream &operator<<(std::ostream &os, const GAResult &result);
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GAResult, best_chromosome, best_chromosome_index, best_chromosome_cost,
                                    best_chromosome_cost_history)
@@ -46,18 +47,19 @@ public:
 
 
     // Params
-    int N_genes;
-    int N_chromosomes;
+    int n_genes;
+    int population_size;
     int generation_max;
     float mutation_rate;
-    int elite_count;
-    int parent_pool_count;
+    double elite_pct;
+    double parent_pool_pct;
 
-    int N_threads = 0;
+
     int generation;
 
     //functions
-    GA(int N_genes);
+    GA(int n_genes = 100, int population_size = 100, int generation_max = 100, double mutation_rate = 0.05,
+       double elite_pct = 0.1, double parent_pool_pct = 0.3);
 
     void calculate_population_cost(std::vector<double> &costs);
 
@@ -80,6 +82,9 @@ public:
     //Private functions
 private:
     void initialize();
+
+    int elite_cnt;
+    int parent_pool_cnt;
 
     bool cost_comp(int a, int b);
 
