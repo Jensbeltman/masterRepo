@@ -12,6 +12,7 @@ target_sources(GA
         src/GeneticEvaluatorObjectCandidates.cpp
         src/collision_checking.cpp
         src/visualization.cpp
+        src/point_cloud_processing.cpp
         )
 
 target_include_directories(GA PUBLIC include ${OpenCV_INCLUDE_DIRS})
