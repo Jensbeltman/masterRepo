@@ -52,11 +52,11 @@ int main(int argc, char** argv) {
     // GA object initilization, configuration and solution
     GA ga(object_candidates.size());
     ga.geneticEvaluatorPtr = geneticEvaluatorOCPtr;
-    ga.N_chromosomes = 100;
+    ga.population_size = 100;
     ga.generation_max = 50;
     ga.mutation_rate = 0.01;
-    ga.elite_count = (int) (0.1 * ga.N_genes);
-    ga.parent_pool_count = (int) (0.3 * ga.N_genes);
+    ga.elite_pct = 0.1;
+    ga.parent_pool_pct = 0.3;
     ga.crossover = crossover_uniform;
     ga.mutation = mutation_flip;
 
