@@ -4,3 +4,4 @@ project(app
         LANGUAGES CXX)
 
 add_subdirectory(manual_registration)
+add_subdirectory(dataset_viewer)
