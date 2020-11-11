@@ -55,5 +55,6 @@ protected:
     void get_filenames_with_ext_from_dir(std::string ext, std::string dir, std::vector<std::string> &vofs);
 };
 
+typedef std::shared_ptr<DatasetObject> DatasetObjectPtr;
 
 #endif //MASTER_DATASETOBJECT_H

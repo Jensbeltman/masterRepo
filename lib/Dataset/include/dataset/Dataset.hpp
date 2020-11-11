@@ -4,8 +4,6 @@
 #include <dataset/DatasetObject.hpp>
 #include <memory>
 
-typedef std::shared_ptr<DatasetObject> DatasetObjectPtr;
-
 class Dataset {
 public:
     std::string name;
@@ -20,5 +18,6 @@ public:
 
 };
 
+typedef std::shared_ptr<Dataset> DatasetPtr;
 
 #endif //MASTER_DATASET_HPP
