@@ -17,6 +17,12 @@ void TransformUtility::append_noisy_transforms(std::vector<Eigen::Transform<doub
         Ts.push_back(get_noisy_transform(Ts[uniform_dist_int(rng)]));
     }
 }
+void TransformUtility::append_noisy_transforms(std::vector<T4> &Ts, std::vector<T4> &Tsn, int n) {
+    uniform_dist_int = std::uniform_int_distribution<int>(0, Ts.size());
+    for (int i = 0; i < n; i++) {
+        Tsn.emplace_back(get_noisy_transform(Ts[uniform_dist_int(rng)]));
+    }
+}
 
 Eigen::Vector3d TransformUtility::spherical_uniform_unitvector() {
     Eigen::Vector3d unitvector;
@@ -72,3 +78,4 @@ TransformUtility::get_true_positives(std::vector<T4> ocs, std::vector<T4> gts, d
 
     return fp;
 }
+

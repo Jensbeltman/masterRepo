@@ -21,6 +21,7 @@ public:
     explicit TransformUtility(double std_t = 0.1, double std_r = M_PI / 4);
 
     void append_noisy_transforms(std::vector<T4> &Ts, int n);
+    void append_noisy_transforms(std::vector<T4> &Ts,std::vector<T4> &Tsn, int n);
 
     Eigen::Vector3d spherical_uniform_unitvector();
 
