@@ -25,9 +25,9 @@ using namespace pcl;
 using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-ManualRegistration::ManualRegistration() {
+ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent) {
     // Initialize bogus
-    res_ = 0.001;
+    res_ = 1;
     cloud_src_present_ = false;
     cloud_dst_present_ = false;
     src_point_selected_ = false;
@@ -75,6 +75,8 @@ ManualRegistration::ManualRegistration() {
     dst_pc_.reset(new Cloud);
 }
 
+
+
 void ManualRegistration::SourcePointPickCallback(const pcl::visualization::PointPickingEvent &event, void *) {
     // Check to see if we got a valid point. Early exit.
     int idx = event.getPointIndex();
@@ -94,7 +96,11 @@ void ManualRegistration::SourcePointPickCallback(const pcl::visualization::Point
 
         std::ostringstream oss;
         oss << src_pc_->size();
-        vis_src_->addSphere<PointT>(src_point_, 5 * res_, 0, 1, 0, "sphere_src_" + oss.str());
+        std::string id = "sphere_src_" + oss.str();
+        vis_src_->addSphere<PointT>(src_point_, 3, 0, 1, 0, id);
+        vtkProp * prop = vis_src_->getShapeActorMap()->at(id);
+        vtkLODActor * actor = dynamic_cast<vtkLODActor*>(prop);
+        actor->GetProperty()->SetInterpolationToGouraud();
 
         ui_->qvtk_widget_src->update();
 
