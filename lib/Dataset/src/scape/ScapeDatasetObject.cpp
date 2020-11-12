@@ -21,8 +21,8 @@ ScapeDatasetObject::ScapeDatasetObject(std::string _path, std::vector<std::files
     camera_pose(1, 1) = -1;
     camera_pose(2, 2) = -1;
 
-    get_filenames_with_ext_from_dir(pc_data_ext, path, filenames);
-    std::sort(filenames.begin(), filenames.end()); // To make indexing regonition data easyer
+    get_filenames_with_ext_from_dir(pc_data_ext, path, pcd_filenames);
+    std::sort(pcd_filenames.begin(), pcd_filenames.end()); // To make indexing regonition data easyer
 
     // Find gt files
     std::filesystem::path gt_path = _path;
@@ -32,10 +32,10 @@ ScapeDatasetObject::ScapeDatasetObject(std::string _path, std::vector<std::files
     for(auto &di : std::filesystem::directory_iterator(gt_path)){
         std::string di_s = di.path().string();
         if (di_s.find(name_singular)!=di_s.npos){
-            for(int i = 0 ;i<filenames.size();i++){
-                std::string fn_stem = std::filesystem::path(filenames[i]).stem();
+            for(int i = 0 ; i < pcd_filenames.size(); i++){
+                std::string fn_stem = std::filesystem::path(pcd_filenames[i]).stem();
                 if(di_s.find(fn_stem)!=di_s.npos){
-                    gt_file_data.emplace_back(di_s,i);
+                    pcd_fn_to_gt_fn[pcd_filenames[i]]=di_s;
                 }
             }
         }
@@ -52,8 +52,8 @@ ScapeDatasetObject::ScapeDatasetObject(std::string _path, std::vector<std::files
                 if (ext == ".pc3d") {
                     std::string p_str = p.string();
                     std::string filename_without_zoneidx;
-                    for (int j = 0; j < filenames.size(); j++) {
-                        filename_without_zoneidx = filenames[j].substr(0, filenames[j].find_last_not_of('_') - 1);
+                    for (int j = 0; j < pcd_filenames.size(); j++) {
+                        filename_without_zoneidx = pcd_filenames[j].substr(0, pcd_filenames[j].find_last_not_of('_') - 1);
                         recog_pcd_match = (p_str.find(filename_without_zoneidx) != p_str.npos);
                         if (recog_pcd_match)
                             break;
@@ -62,27 +62,27 @@ ScapeDatasetObject::ScapeDatasetObject(std::string _path, std::vector<std::files
                         {
                             int n_zones = get_corners(p_str + "_ZoneCorners.txt");
 
-                            auto begin = zones.begin() += (zones.size() - n_zones);
-                            auto end = zones.end();
+                            auto begin = scape_data_points.begin() += (scape_data_points.size() - n_zones);
+                            auto end = scape_data_points.end();
 
                             load_object_candidates(p_str + ".txt", begin, end); // Adds object candidates
                             load_scores(p_str + "_scores.txt", begin, end);
                             for (auto itt = begin; itt != end; ++itt) {
                                 std::string search_string =
                                         filename_without_zoneidx + "_" + std::to_string(itt->zone_idx);
-                                auto itt_fn = std::find(filenames.begin(), filenames.end(), search_string);
+                                auto itt_fn = std::find(pcd_filenames.begin(), pcd_filenames.end(), search_string);
 
-                                if (itt_fn == filenames.end())
+                                if (itt_fn == pcd_filenames.end())
                                     if (verbose)
                                         std::cout << "Filename not found" << std::endl;
 
-                                // Relate recognition to pcd and gt data
-                                itt->pc_filename_idx = std::distance(filenames.begin(), itt_fn);
-                                auto gt_file_data_itt = std::find_if( gt_file_data.begin(), gt_file_data.end(),
-                                                        [&itt](const std::pair<std::string, int>& element){ return element.second == itt->pc_filename_idx;} );
-                                if(gt_file_data_itt != gt_file_data.end()) {
-                                    itt->gt_file_data_idx = std::distance(gt_file_data.begin(), gt_file_data_itt);
-                                    itt->has_gt = true;
+                                // Relate recognition to pcd and gt data and vice verso
+                                 // Maps from filename to zone ptr or ptrs in case of multiple recog of the same pcd
+                                itt->pcd_filename =*itt_fn;
+                                pcd_fn_to_scape_dp[*itt_fn].emplace_back(std::distance(scape_data_points.begin(), itt));
+
+                                if(pcd_fn_to_gt_fn.contains(*itt_fn)) {
+                                    itt->ground_truth_filename = pcd_fn_to_gt_fn[*itt_fn];
                                 }
                             }
                         }
@@ -94,29 +94,23 @@ ScapeDatasetObject::ScapeDatasetObject(std::string _path, std::vector<std::files
             }
         }
     }
+    for(auto& sdp:scape_data_points){
+        data_points.emplace_back(static_cast<DataPoint>(sdp)); // Cast scape data point to regular so that they can be used my the general interface
+    }
+
 }
 
 std::vector<T4> ScapeDatasetObject::get_object_candidates(unsigned int n) {
-    return zones[n].ocs;
+    return scape_data_points[n].ocs;
 };
 
-int ScapeDatasetObject::size() const { return zones.size(); }
+int ScapeDatasetObject::size() const { return scape_data_points.size(); }
 
 PointCloudT::Ptr ScapeDatasetObject::get_pcd(int n) {
-    n %= filenames.size();
     PointCloudT::Ptr pc = pcl::make_shared<PointCloudT>();
-    pcl::io::loadPCDFile(path.string() + "/" + filenames[zones[n].pc_filename_idx] + pc_data_ext, *pc);
+    pcl::io::loadPCDFile(path.string() + "/" + data_points[n].pcd_filename + pc_data_ext, *pc);
     return pc;
 };
-
-bool ScapeDatasetObject::has_gt(int n) { return zones[n].has_gt; }
-
-bool ScapeDatasetObject::has_scores(int n) { return !zones[n].scores.empty(); }
-
-std::vector<T4> ScapeDatasetObject::get_gt(unsigned int n) { return load_gt(std::find_if(gt_file_data.begin(),gt_file_data.end(),[&n, this](const std::pair<std::string, int>& element){ return element.second == zones[n].gt_file_data_idx;})->first); }
-
-std::vector<double> ScapeDatasetObject::get_scores(unsigned int n) { return zones[n].scores; }
-
 
 int ScapeDatasetObject::get_corners(std::filesystem::path path) {
     std::ifstream oc_file(path);
@@ -129,8 +123,8 @@ int ScapeDatasetObject::get_corners(std::filesystem::path path) {
             size_t find_match = line.find("ZoneIndex:");
             if (find_match != line.npos) {
                 n_zones++;
-                zones.emplace_back();
-                zones.back().zone_idx = std::stod(line.substr(find_match + 10));
+                scape_data_points.emplace_back();
+                scape_data_points.back().zone_idx = std::stod(line.substr(find_match + 10));
 
                 std::getline(oc_file, line);
                 line.erase(std::remove_if(line.begin(), line.end(),
@@ -146,9 +140,9 @@ int ScapeDatasetObject::get_corners(std::filesystem::path path) {
                     getline(cords, val, ' ');
                     z = std::stod(val);
 
-                    zones.back().corners[i] = Eigen::Vector3d(x, y, z);
+                    scape_data_points.back().corners[i] = Eigen::Vector3d(x, y, z);
                 }
-                zones.back().init_projection_plane();
+                scape_data_points.back().init_projection_plane();
             }
         }
     }
@@ -156,8 +150,8 @@ int ScapeDatasetObject::get_corners(std::filesystem::path path) {
     return n_zones;
 }
 
-void ScapeDatasetObject::load_scores(std::filesystem::path path, std::vector<ScapeZone>::iterator begin,
-                                     std::vector<ScapeZone>::iterator end) {
+void ScapeDatasetObject::load_scores(std::filesystem::path path, std::vector<ScapeDataPoint>::iterator begin,
+                                     std::vector<ScapeDataPoint>::iterator end) {
     std::ifstream oc_file(path);
     std::string word;
     int global_index = 0;
@@ -170,7 +164,7 @@ void ScapeDatasetObject::load_scores(std::filesystem::path path, std::vector<Sca
             for (auto itt = begin; itt != end; itt++) {
                 if (std::find(itt->ocs_global_index.begin(), itt->ocs_global_index.end(), global_index) !=
                     itt->ocs_global_index.end()) {
-                    itt->scores.push_back(score);
+                    itt->oc_scores.push_back(score);
                 }
             }
             global_index++;
@@ -179,8 +173,8 @@ void ScapeDatasetObject::load_scores(std::filesystem::path path, std::vector<Sca
 }
 
 
-void ScapeDatasetObject::load_object_candidates(std::filesystem::path path, std::vector<ScapeZone>::iterator begin,
-                                                std::vector<ScapeZone>::iterator end) {
+void ScapeDatasetObject::load_object_candidates(std::filesystem::path path, std::vector<ScapeDataPoint>::iterator begin,
+                                                std::vector<ScapeDataPoint>::iterator end) {
     std::ifstream oc_file(path);
 
     T4 oc;
@@ -214,8 +208,8 @@ int ScapeDatasetObject::get_n_zones(std::filesystem::path path) {
     int n_zones = 0;
     while (zone_file >> word) {
         if (word.find("ZoneIndex") != word.npos) {
-            zones.emplace_back();
-            zone_file >> zones.back().zone_idx;
+            scape_data_points.emplace_back();
+            zone_file >> scape_data_points.back().zone_idx;
             n_zones++;
         }
     }

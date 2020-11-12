@@ -41,10 +41,9 @@ public:
 
     cv::Mat get_color(int n, bool gt = false);
 
-    std::vector<T4> get_object_candidates(unsigned int n);
-
     pcl::PointCloud<pcl::PointXYZ>::Ptr sileane_depth_to_pcd(std::string path, SileaneCameraParams &camera_params);
 
+    void load_object_candidates_and_gt( std::string pcd_filename, DataPoint &dp);
 };
 
 #endif //OPENGACUSTOM_SILEANEOBJECT_HPP

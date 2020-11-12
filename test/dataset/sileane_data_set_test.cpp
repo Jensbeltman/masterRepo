@@ -9,7 +9,7 @@ int main() {
 
     std::cout << "Following objects where loaded for the silean dataset" << "\n";
     for (auto &ob:sileaneData.objects) {
-        std::cout << ob->name << ", Number of filenames: " << ob->filenames.size() << "\n";
+        std::cout << ob->name << ", Number of filenames: " << ob->pcd_filenames.size() << "\n";
     }
 
 
@@ -24,14 +24,14 @@ int main() {
             std::vector<T4> ocs = object->get_object_candidates(i);
             if (ocs.empty())
                 std::cout << "Object " << object->name << " object candidates were empty for pc file "
-                          << object->filenames[i] << "\n";
+                          << object->pcd_filenames[i] << "\n";
         }
     }
     std::cout << "Sileane Dataset Traversal of pcs and ocs time: " << chronometer.toc() << "s\n\n";
 
 
     int sample_n = 2;
-    std::cout << "Using sample " << sileaneObject->filenames[sample_n] << " from dataset object folder "
+    std::cout << "Using sample " << sileaneObject->pcd_filenames[sample_n] << " from dataset object folder "
               << sileaneObject->name << std::endl;
 
     // DatasetObject mesh ply data

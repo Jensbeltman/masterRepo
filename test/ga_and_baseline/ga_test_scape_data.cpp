@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     std::cout << "GeneticEvaluatorOC init elapsed time: " << chronometer.toc() << "s\n";
 
     std::cout << "Testing zone " << sample_n << " with related point cloud data filename "
-              << scapeObject->filenames[scapeObject->zones[sample_n].pc_filename_idx] << " from dataset object folder "
+              << scapeObject->pcd_filenames[scapeObject->scape_data_points[sample_n].pc_filename_idx] << " from dataset object folder "
               << scapeObject->name << "\n\n";
     PointCloudT::Ptr pc = scapeObject->get_pcd(sample_n);
 

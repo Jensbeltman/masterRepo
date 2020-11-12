@@ -5,22 +5,31 @@ SileaneDatasetObject::SileaneDatasetObject(std::filesystem::path path, std::stri
     type = "Sileane";
     pc_data_ext = ".pcd";
     mesh_data_ext = ".ply";
-    get_filenames_with_ext_from_dir(data_ext, path.string() + "/depth", filenames);
-    std::sort(filenames.begin(), filenames.end());
+    get_filenames_with_ext_from_dir(data_ext, path.string() + "/depth", pcd_filenames);
+    std::sort(pcd_filenames.begin(), pcd_filenames.end());
     mesh_path = (path / "mesh").replace_extension(mesh_data_ext);
     mesh_pcd_path = (path / "mesh").replace_extension(pc_data_ext);
     sileaneCameraParams = SileaneCameraParams(path / "camera_params.txt");
     camera_pose = sileaneCameraParams.T;
     has_depth_gt = std::filesystem::exists(path / "depth_gt");
+
     if (!std::filesystem::exists(path / "depth")) {
         std::cout << "No depth directory found object" << "\"name\"" << "might not work as intended" << std::endl;
+    }
+
+    data_points.resize(pcd_filenames.size());
+    for(int i = 0;i<pcd_filenames.size();i++){
+        auto &fn =pcd_filenames[i];
+        auto &dp =data_points[i];
+        load_object_candidates_and_gt(fn,dp);
+        dp.pcd_filename = fn;
     }
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr SileaneDatasetObject::get_pcd(int n) { return get_pcd(n, false); }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr SileaneDatasetObject::get_pcd(int n, bool gt) {
-    if (n < filenames.size()) {
+    if (n < pcd_filenames.size()) {
         std::filesystem::path dir(path);
         if (gt) {
             if (has_depth_gt) {
@@ -31,15 +40,15 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr SileaneDatasetObject::get_pcd(int n, bool gt
         } else {
             dir /= "depth";
         }
-        return sileane_depth_to_pcd((dir / filenames[n]).replace_extension(".PNG"), sileaneCameraParams);
+        return sileane_depth_to_pcd((dir / pcd_filenames[n]).replace_extension(".PNG"), sileaneCameraParams);
     } else {
         return nullptr;
     }
 };
 
 cv::Mat SileaneDatasetObject::get_color(int n, bool gt) {
-    if (n < filenames.size()) {
-        std::filesystem::path p = (path / "rgb" / filenames[n]).replace_extension(pc_data_ext);
+    if (n < pcd_filenames.size()) {
+        std::filesystem::path p = (path / "rgb" / pcd_filenames[n]).replace_extension(pc_data_ext);
         if (std::filesystem::exists(p)) {
             return cv::imread(p, cv::IMREAD_UNCHANGED);
         } else {
@@ -50,12 +59,14 @@ cv::Mat SileaneDatasetObject::get_color(int n, bool gt) {
 };
 
 
-std::vector<T4> SileaneDatasetObject::get_object_candidates(unsigned int n) {
-    std::ifstream i((path / "gt" / filenames[n]).replace_extension(".json"));
+void SileaneDatasetObject::load_object_candidates_and_gt(std::string pcd_filename, DataPoint &dp) {
+
+    dp.ground_truth_filename = pcd_filename;
+    std::ifstream i((path / "gt" / pcd_filename).replace_extension(".json"));
+
     nlohmann::json j;
     i >> j;
 
-    std::vector<T4> gt_poses;
     for (auto gt : j) {
         T4 T;
         T(0, 0) = gt["R"][0][0];
@@ -70,16 +81,17 @@ std::vector<T4> SileaneDatasetObject::get_object_candidates(unsigned int n) {
         T(0, 3) = gt["t"][0];
         T(1, 3) = gt["t"][1];
         T(2, 3) = gt["t"][2];
-        gt_poses.push_back(T);
+        dp.gts.push_back(T);
     }
 
-    TransformUtility poseNoise(mu_noise, sigma_noise);
+    TransformUtility transformUtility(mu_noise, sigma_noise);
     if (n_noisy_poses == -1)
-        poseNoise.append_noisy_transforms(gt_poses, gt_poses.size());
-    else
-        poseNoise.append_noisy_transforms(gt_poses, n_noisy_poses);
+    for(auto &gt:dp.gts)
+        dp.ocs.emplace_back(transformUtility.get_noisy_transform(gt));
+    else{
+        transformUtility.append_noisy_transforms(dp.gts, dp.ocs, n_noisy_poses);
+    }
 
-    return gt_poses;
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr

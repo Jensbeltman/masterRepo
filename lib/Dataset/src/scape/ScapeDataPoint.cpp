@@ -1,6 +1,6 @@
-#include "dataset/scape/ScapeZone.hpp"
+#include "dataset/scape/ScapeDataPoint.hpp"
 
-bool ScapeZone::push_back_oc_if_valid(T4 &object_candidate) {
+bool ScapeDataPoint::push_back_oc_if_valid(T4 &object_candidate) {
     Eigen::Vector3d tvec = object_candidate.matrix().block<3, 1>(0, 3);
     Eigen::Vector2d ptvec = project_to_plane(tvec);
     std::array<bool, 4> res;
@@ -16,7 +16,7 @@ bool ScapeZone::push_back_oc_if_valid(T4 &object_candidate) {
     return false;
 }
 
-void ScapeZone::init_projection_plane() {
+void ScapeDataPoint::init_projection_plane() {
     projection_vectors[0] = (corners[1] - corners[0]);
     normal = projection_vectors[0].cross(corners[3] - corners[0]);
     projection_vectors[1] = normal.cross(projection_vectors[0]);
@@ -34,14 +34,14 @@ void ScapeZone::init_projection_plane() {
     }
 }
 
-Eigen::Vector2d ScapeZone::project_to_plane(Eigen::Vector3d &vec) {
+Eigen::Vector2d ScapeDataPoint::project_to_plane(Eigen::Vector3d &vec) {
     return Eigen::Vector2d(projection_vectors[0].dot(vec), projection_vectors[1].dot(vec));
 }
 
-Eigen::Vector2d ScapeZone::perpendicular_clockwise(Eigen::Vector2d &vec) {
+Eigen::Vector2d ScapeDataPoint::perpendicular_clockwise(Eigen::Vector2d &vec) {
     return Eigen::Vector2d(vec[1], -vec[0]);
 }
 
-Eigen::Vector2d ScapeZone::perpendicular_counter_clockwise(Eigen::Vector2d &vec) {
+Eigen::Vector2d ScapeDataPoint::perpendicular_counter_clockwise(Eigen::Vector2d &vec) {
     return Eigen::Vector2d(-vec[1], vec[0]);
 }

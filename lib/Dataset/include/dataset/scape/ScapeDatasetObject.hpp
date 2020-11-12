@@ -2,21 +2,26 @@
 #define MASTER_SCAPEDATASETOBJECT_HPP
 
 #include <dataset/DatasetObject.hpp>
-#include <dataset/scape/ScapeZone.hpp>
+#include <dataset/scape/ScapeDataPoint.hpp>
 #include <Eigen/Eigen>
 #include <Eigen/StdVector>
 #include <fstream>
 #include <sstream>
 #include <array>
 #include <algorithm>
-
+#include <map>
 
 class ScapeDatasetObject : public DatasetObject {
 public:
     std::string name_singular;
     std::vector<std::filesystem::path> recognition_paths;
-    std::vector<ScapeZone> zones;
+    std::vector<ScapeDataPoint> scape_data_points;
+
+    std::map<std::string,std::string> pcd_fn_to_gt_fn;
     std::vector<std::pair<std::string,int>> gt_file_data;
+
+    std::map<std::string,std::vector<int>> pcd_fn_to_scape_dp;
+
 
     ScapeDatasetObject();
 
@@ -28,27 +33,21 @@ public:
 
     PointCloudT::Ptr get_pcd(int n) override;
 
-    bool has_gt(int n) override;
-
-    bool has_scores(int n) override;
-
-    std::vector<T4> get_gt(unsigned int n) override;
-
-    std::vector<double> get_scores(unsigned int n) override;
-
+    std::vector<T4> load_gt(std::string path);
 private:
     int get_corners(std::filesystem::path path);
 
-    static void load_scores(std::filesystem::path path, std::vector<ScapeZone>::iterator begin,
-                            std::vector<ScapeZone>::iterator end);
+    static void load_scores(std::filesystem::path path, std::vector<ScapeDataPoint>::iterator begin,
+                            std::vector<ScapeDataPoint>::iterator end);
 
-    static void load_object_candidates(std::filesystem::path path, std::vector<ScapeZone>::iterator begin,
-                                       std::vector<ScapeZone>::iterator end);
+    static void load_object_candidates(std::filesystem::path path, std::vector<ScapeDataPoint>::iterator begin,
+                                       std::vector<ScapeDataPoint>::iterator end);
 
-    std::vector<T4> load_gt(std::string path);
+
 
     int get_n_zones(std::filesystem::path path);
 };
 
 
+typedef std::shared_ptr<ScapeDatasetObject> ScapeDatasetObjectPtr;
 #endif //MASTER_SCAPEDATASETOBJECT_HPP

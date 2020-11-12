@@ -6,7 +6,7 @@
 int main() {
     Chronometer chronometer;
     chronometer.tic();
-    ScapeDataset scapeData("/home/jens/masterData/ScapeDataset/Scape/Full Dataset",
+    ScapeDataset scapeData("/home/jens/masterData/ScapeDataset/Scape/Full_Dataset",
                            "/home/jens/masterData/ScapeDataset/Data from Scape Recognition");
     std::cout << "\nScape Dataset Init Load time: " << chronometer.toc() << "s\n";
 
@@ -15,7 +15,7 @@ int main() {
         ScapeDatasetObjectPtr sob = std::dynamic_pointer_cast<ScapeDatasetObject>(ob);
         std::cout   <<"\t"<<ob->name
                     <<"\n\t\tnumber of zones: " << ob->size()
-                    <<"\n\t\tnumber of pcd filenames: " << ob->filenames.size()
+                    <<"\n\t\tnumber of pcd filenames: " << ob->pcd_filenames.size()
                     <<"\n\t\tnumber of recognition paths: " << sob->recognition_paths.size()
                     <<"\n\n";
     }
@@ -25,19 +25,19 @@ int main() {
     for (auto object:scapeData.objects) {
         ScapeDatasetObjectPtr sobject = std::dynamic_pointer_cast<ScapeDatasetObject>(object);
         for (int i = 0; i < object->size(); i++) {
-            ScapeZone zone = sobject->zones[i];
+            ScapeDataPoint &scape_data_point = sobject->scape_data_points[i];
             PointCloudT::Ptr pc = object->get_pcd(i);
             if (pc->points.empty())
                 std::cout << "Datasample " << i << " pointcloud was empty" << "\n";
-            std::vector<T4> ocs = object->get_object_candidates(i);
-            std::vector<double> scores = object->get_scores(i);
+            std::vector<T4> &ocs = scape_data_point.ocs;
+            std::vector<double> &scores = scape_data_point.oc_scores;
             if (ocs.empty())
                 std::cout << "Object " << sobject->name << " candidates were empty for zone "
-                          << sobject->zones[i].zone_idx << " for pc file "
-                          << sobject->filenames[sobject->zones[i].pc_filename_idx] << "\n";
+                          << scape_data_point.zone_idx << " for pc file "
+                          << scape_data_point.pcd_filename << "\n";
             if(ocs.size() != scores.size())
                 std::cout << "Object " << sobject->name << " had missmatch between n of ocs and scores for zone "
-                          << sobject->zones[i].zone_idx << "\n";
+                          << sobject->scape_data_points[i].zone_idx << "\n";
 
         }
     }
@@ -49,7 +49,7 @@ int main() {
     // DatasetObject sample point cloud
     int sample_n = 2;
     std::cout << "Testing zone " << sample_n << " with related point cloud data filename "
-              << scapeObject->filenames[scapeObject->zones[sample_n].pc_filename_idx] << " from dataset object folder "
+              << scapeObject->data_points[sample_n].pcd_filename << " from dataset object folder "
               << scapeObject->name << "\n\n";
     PointCloudT::Ptr pc = scapeObject->get_pcd(sample_n);
 
