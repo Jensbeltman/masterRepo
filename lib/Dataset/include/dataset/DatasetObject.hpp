@@ -11,6 +11,7 @@
 #include <pcl/io/pcd_io.h>
 #include <opencv2/viz/vizcore.hpp>
 #include <dataset/typedefinitions.hpp>
+#include "dataset/DataPoint.hpp"
 
 
 typedef Eigen::Transform<double, 3, Eigen::Affine> T4;
@@ -24,7 +25,9 @@ public:
     std::filesystem::path path;
     std::filesystem::path mesh_path;
     std::filesystem::path mesh_pcd_path;
-    std::vector<std::string> filenames;
+    std::vector<std::string> pcd_filenames;
+
+    std::vector<DataPoint> data_points;
     T4 camera_pose;
 
 
