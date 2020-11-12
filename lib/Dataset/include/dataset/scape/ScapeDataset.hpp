@@ -5,11 +5,10 @@
 #include <dataset/scape/ScapeDatasetObject.hpp>
 #include <array>
 
-typedef std::shared_ptr<ScapeDatasetObject> ScapeDatasetObjectPtr;
-
 class ScapeDataset : public Dataset {
 public:
     ScapeDataset(std::string path, std::string recognition_path, bool verbose = false);
 };
+typedef std::shared_ptr<ScapeDataset> ScapeDatasetPtr;
 
 #endif //MASTER_SCAPEDATASET_HPP
