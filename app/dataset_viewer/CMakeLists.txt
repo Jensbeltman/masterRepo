@@ -14,9 +14,9 @@ endif()
 find_package(VTK REQUIRED) # Needed for include dirs to be found dont know why it cant be propergates from the top level cmake
 include(${VTK_USE_FILE})
 
-add_executable(dataset_viewer dataset_viewer.ui main.cpp dataset_viewer.cpp dataset_viewer.hpp)
+add_executable(dataset_viewer dataset_viewer.ui ../manual_registration/manual_registration.ui ../manual_registration/manual_registration.cpp main.cpp dataset_viewer.cpp dataset_viewer.hpp)
 
-target_include_directories(dataset_viewer PUBLIC ./ ${CMAKE_CURRENT_BINARY_DIR} ${VTK_INCLUDE_DIRS})
+target_include_directories(dataset_viewer PUBLIC ./ ../manual_registration ${CMAKE_CURRENT_BINARY_DIR} ${VTK_INCLUDE_DIRS})
 
 target_link_libraries(dataset_viewer ${PCL_LIBRARIES}  ${VTK_LIBRARIES} Qt5::Widgets Dataset)
 

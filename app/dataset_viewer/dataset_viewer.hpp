@@ -8,7 +8,8 @@
 #include <QTimer>
 #include <QSettings>
 #include <QFileSystemModel>
-#include <dataset/Dataset.hpp>
+#include <dataset/scape/ScapeDataset.hpp>
+#include "manual_registration.h"
 
 struct Settings{
     QString data_folder;
@@ -32,13 +33,15 @@ private:
     void saveSettings();
 
     Settings settings;
+    ManualRegistration *mr;
+    ScapeDatasetPtr scapeDatasetPtr;
     DatasetPtr datasetPtr;
     QFileSystemModel *filesystemModel;
+    std::vector<int> obj_ns;
     void load_dataset();
 private slots:
     void chose_dataset_folders();
-
-
+    void open_anotator(int row, int column);
 
 };
 
