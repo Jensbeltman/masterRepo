@@ -64,15 +64,9 @@ ManualRegistration::ManualRegistration() {
 
 
     // Connect all buttons
-    //  connect (ui_->confirmSrcPointButton, SIGNAL(clicked()), this, SLOT(confirmSrcPointPressed()));
-    //  connect (ui_->confirmDstPointButton, SIGNAL(clicked()), this, SLOT(confirmDstPointPressed()));
     connect(ui_->calculateButton, SIGNAL(clicked()), this, SLOT(calculatePressed()));
     connect(ui_->clearButton, SIGNAL(clicked()), this, SLOT(clearPressed()));
-    //  connect (ui_->orthoButton, SIGNAL(stateChanged(int)), this, SLOT(orthoChanged(int)));
-    //  connect (ui_->applyTransformButton, SIGNAL(clicked()), this, SLOT(applyTransformPressed()));
-    //  connect (ui_->refineButton, SIGNAL(clicked()), this, SLOT(refinePressed()));
-    //  connect (ui_->undoButton, SIGNAL(clicked()), this, SLOT(undoPressed()));
-    //  connect (ui_->safeButton, SIGNAL(clicked()), this, SLOT(safePressed()));
+
 
     cloud_src_modified_ = true; // first iteration is always a new pointcloud
     cloud_dst_modified_ = true;
@@ -102,17 +96,8 @@ void ManualRegistration::SourcePointPickCallback(const pcl::visualization::Point
         oss << src_pc_->size();
         vis_src_->addSphere<PointT>(src_point_, 5 * res_, 0, 1, 0, "sphere_src_" + oss.str());
 
-/*        if(vis_src_->getCloudActorMap()->find("src_pc") == vis_src_->getCloudActorMap()->end()) {
-            // First time
-            vis_src_->addPointCloud(src_pc_,
-                    pcl::visualization::PointCloudColorHandlerCustom<PointT>(src_pc_, 255, 0, 0),
-                    "src_pc");
-            vis_src_->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 25, "src_pc");
-        } else {
-            vis_src_->updatePointCloud(src_pc_,
-                    pcl::visualization::PointCloudColorHandlerCustom<PointT>(src_pc_, 255, 0, 0),
-                    "src_pc");
-        }*/
+        ui_->qvtk_widget_src->update();
+
     } else {
         PCL_INFO ("Please select a point in the source window first\n");
     }
@@ -137,19 +122,11 @@ void ManualRegistration::DstPointPickCallback(const pcl::visualization::PointPic
 
         std::ostringstream oss;
         oss << dst_pc_->size();
-        vis_dst_->addSphere<PointT>(dst_point_, 5 * res_, 1, 0, 0, "sphere_dst_" + oss.str());
-
-/*        if(vis_dst_->getCloudActorMap()->find("dst_pc") == vis_dst_->getCloudActorMap()->end()) {
-            // First time
-            vis_dst_->addPointCloud(dst_pc_,
-                    pcl::visualization::PointCloudColorHandlerCustom<PointT>(dst_pc_, 255, 0, 0),
-                    "dst_pc");
-            vis_dst_->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 25, "dst_pc");
-        } else {
-            vis_dst_->updatePointCloud(dst_pc_,
-                    pcl::visualization::PointCloudColorHandlerCustom<PointT>(dst_pc_, 255, 0, 0),
-                    "dst_pc");
-        }*/
+        std::string id = "sphere_dst_" + oss.str();
+        vis_dst_->addSphere<PointT>(dst_point_, 3, 0, 1, 0, id);
+        vtkProp * prop = vis_dst_->getShapeActorMap()->at(id);
+        vtkLODActor * actor = dynamic_cast<vtkLODActor*>(prop);
+        actor->GetProperty()->SetInterpolationToGouraud();
     } else {
         PCL_INFO ("Please select a point in the destination window first\n");
     }
@@ -181,36 +158,17 @@ void ManualRegistration::calculatePressed() {
     }
 
     if (ui_->robustBox->isChecked()) {
-/*              PCL_INFO("Generating correspondences for the downsampled models...\n");
-              pcl::search::KdTree<PointT> ssrc, sdst;
-              ssrc.setInputCloud(cloud_src_ds);
-              sdst.setInputCloud(cloud_dst_ds);
-
-              pcl::Correspondences corr_ds(src_pc_->size());
-              for(size_t i = 0; i < src_pc_->size(); ++i) {
-                  std::vector<int> idx(1);
-                  std::vector<float> distsq(1);
-
-                  ssrc.nearestKSearch(src_pc_->points[corr_ds[i].index_query], 1, idx, distsq);
-                  corr_ds[i].index_query = idx[0];
-
-                  sdst.nearestKSearch(dst_pc_->points[corr_ds[i].index_match], 1, idx, distsq);
-                  corr_ds[i].index_match = idx[0];
-              }*/
         pcl::Correspondences corr(src_pc_->size());
         for (size_t i = 0; i < src_pc_->size(); ++i)
             corr[i].index_query = corr[i].index_match = i;
 
         PCL_INFO("Computing pose using RANSAC with an inlier threshold of %f...\n", inlier_threshold_ransac);
         pcl::registration::CorrespondenceRejectorSampleConsensus<PointT> sac;
-        //      sac.setInputSource(cloud_src_ds);
-        //      sac.setInputTarget(cloud_dst_ds);
         sac.setInputSource(src_pc_);
         sac.setInputTarget(dst_pc_);
         sac.setInlierThreshold(inlier_threshold_ransac);
 
         pcl::Correspondences inliers;
-        //      sac.getRemainingCorrespondences(corr_ds, inliers);
         sac.getRemainingCorrespondences(corr, inliers);
 
         // Abort if RANSAC fails
