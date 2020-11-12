@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     for (int sample_n = 0; sample_n < ob->size(); sample_n++) {
         if (ob->has_gt(sample_n)) {
             std::cout << "Sample number: " << sample_n << " pc file "
-                      << ob->filenames[ob->zones[sample_n].pc_filename_idx] << std::endl;
+                      << ob->pcd_filenames[ob->scape_data_points[sample_n].pc_filename_idx] << std::endl;
             auto geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(ob, sample_n, 1);
 
             // BASELINE
