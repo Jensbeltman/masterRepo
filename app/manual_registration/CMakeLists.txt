@@ -14,7 +14,7 @@ endif()
 find_package(VTK REQUIRED) # Needed for include dirs to be found dont know why it cant be propergates from the top level cmake
 include(${VTK_USE_FILE})
 
-add_executable(manual_registration manual_registration.ui  manual_registration.cpp)
+add_executable(manual_registration manual_registration.ui  manual_registration.cpp main.cpp)
 
 target_include_directories(manual_registration PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${VTK_INCLUDE_DIRS})
 
