@@ -71,8 +71,8 @@ ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent)
     cloud_src_modified_ = true; // first iteration is always a new pointcloud
     cloud_dst_modified_ = true;
 
-    src_pc_.reset(new Cloud);
-    dst_pc_.reset(new Cloud);
+    src_pc_.reset(new PointCloudT);
+    dst_pc_.reset(new PointCloudT);
 }
 
 
@@ -151,8 +151,8 @@ void ManualRegistration::calculatePressed() {
     const double inlier_threshold_ransac = 2 * voxel_size;
     const double inlier_threshold_icp = 2 * voxel_size;
 
-    CloudPtr cloud_src_ds(new Cloud);
-    CloudPtr cloud_dst_ds(new Cloud);
+    PointCloudT::Ptr cloud_src_ds =  pcl::make_shared<PointCloudT>();
+    PointCloudT::Ptr cloud_dst_ds =  pcl::make_shared<PointCloudT>();
     if (ui_->robustBox->isChecked() || ui_->refineBox->isChecked()) {
         PCL_INFO("Downsampling point clouds with a voxel size of %f...\n", voxel_size);
         pcl::VoxelGrid<PointT> grid;
@@ -196,7 +196,7 @@ void ManualRegistration::calculatePressed() {
     if (ui_->refineBox->isChecked()) {
 
         pcl::IterativeClosestPoint<PointT, PointT> icp;
-        Cloud tmp;
+        PointCloudT tmp;
 
         PCL_INFO("Refining pose using ICP with an inlier threshold of %f...\n", inlier_threshold_icp);
         icp.setInputSource(cloud_src_ds);
@@ -253,7 +253,7 @@ void ManualRegistration::calculatePressed() {
             << "The transform can be used to place the source (leftmost) point cloud into the target, and thus places observations (points, poses) relative to the source camera in the target camera (rightmost). If you need the other way around, use the inverse:"
             << std::endl << transform_.inverse() << std::endl;
 
-    CloudPtr cloud_src_aligned(new Cloud);
+    PointCloudT::Ptr cloud_src_aligned = pcl::make_shared<PointCloudT>();
     pcl::transformPointCloud<PointT>(*cloud_src_, *cloud_src_aligned, transform_);
 
     pcl::visualization::PCLVisualizer vpose("Pose visualization. Red: scene. Green: aligned object");

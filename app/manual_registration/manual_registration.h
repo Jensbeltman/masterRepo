@@ -35,15 +35,14 @@ class ManualRegistration : public QMainWindow {
 Q_OBJECT
 public:
     typedef pcl::PointXYZ PointT;
-    typedef pcl::PointCloud<PointT> Cloud;
-    typedef Cloud::Ptr CloudPtr;
-    typedef Cloud::ConstPtr CloudConstPtr;
+    typedef pcl::PointCloud<PointT> PointCloudT;
+
 
     ManualRegistration(QMainWindow *parent = nullptr);
 
     ~ManualRegistration() {}
 
-    void setSrcCloud(CloudPtr cloud_src) {
+    void setSrcCloud(PointCloudT::Ptr cloud_src) {
         cloud_src_ = cloud_src;
         cloud_src_present_ = true;
     }
@@ -52,7 +51,7 @@ public:
         res_ = res;
     }
 
-    void setDstCloud(CloudPtr cloud_dst) {
+    void setDstCloud(PointCloudT::Ptr cloud_dst) {
         cloud_dst_ = cloud_dst;
         cloud_dst_present_ = true;
     }
@@ -65,12 +64,10 @@ protected:
     boost::shared_ptr<pcl::visualization::PCLVisualizer> vis_src_;
     boost::shared_ptr<pcl::visualization::PCLVisualizer> vis_dst_;
 
-    CloudPtr cloud_src_;
-    CloudPtr cloud_dst_;
+    PointCloudT::Ptr cloud_src_;
+    PointCloudT::Ptr cloud_dst_;
     double res_;
 
-    QMutex mtx_;
-    QMutex vis_mtx_;
     Ui::MainWindow *ui_;
     QTimer *vis_timer_;
 
@@ -85,8 +82,8 @@ protected:
     PointT src_point_;
     PointT dst_point_;
 
-    CloudPtr src_pc_;
-    CloudPtr dst_pc_;
+    PointCloudT::Ptr src_pc_;
+    PointCloudT::Ptr dst_pc_;
 
     Eigen::Matrix4f transform_;
 
