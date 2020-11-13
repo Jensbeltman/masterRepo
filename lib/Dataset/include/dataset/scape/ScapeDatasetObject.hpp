@@ -12,6 +12,7 @@
 #include <map>
 
 class ScapeDatasetObject : public DatasetObject {
+typedef std::shared_ptr<ScapeDatasetObject> ScapeDatasetObjectPtr;
 public:
     std::string name_singular;
     std::vector<std::filesystem::path> recognition_paths;
@@ -20,12 +21,13 @@ public:
     std::map<std::string,std::string> pcd_fn_to_gt_fn;
     std::vector<std::pair<std::string,int>> gt_file_data;
 
-    std::map<std::string,std::vector<int>> pcd_fn_to_scape_dp;
+    std::map<std::string,std::vector<int>> pcd_fn_to_scape_dpis;
 
 
     ScapeDatasetObject();
 
     ScapeDatasetObject(std::string _path, std::vector<std::filesystem::path> &recognition_paths, bool verbose = false);
+
 
     std::vector<T4> get_object_candidates(unsigned int n) override;
 
@@ -33,7 +35,7 @@ public:
 
     PointCloudT::Ptr get_pcd(int n) override;
 
-    std::vector<T4> load_gt(std::string path);
+    void load_gt(std::string path, std::vector<T4> &gts);
 private:
     int get_corners(std::filesystem::path path);
 
@@ -48,6 +50,6 @@ private:
     int get_n_zones(std::filesystem::path path);
 };
 
-
 typedef std::shared_ptr<ScapeDatasetObject> ScapeDatasetObjectPtr;
+
 #endif //MASTER_SCAPEDATASETOBJECT_HPP

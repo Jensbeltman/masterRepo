@@ -79,10 +79,11 @@ ScapeDatasetObject::ScapeDatasetObject(std::string _path, std::vector<std::files
                                 // Relate recognition to pcd and gt data and vice verso
                                  // Maps from filename to zone ptr or ptrs in case of multiple recog of the same pcd
                                 itt->pcd_filename =*itt_fn;
-                                pcd_fn_to_scape_dp[*itt_fn].emplace_back(std::distance(scape_data_points.begin(), itt));
+                                pcd_fn_to_scape_dpis[*itt_fn].emplace_back(std::distance(scape_data_points.begin(), itt));
 
                                 if(pcd_fn_to_gt_fn.contains(*itt_fn)) {
                                     itt->ground_truth_filename = pcd_fn_to_gt_fn[*itt_fn];
+                                    load_gt(itt->ground_truth_filename,itt->gts);
                                 }
                             }
                         }
@@ -226,14 +227,13 @@ std::ifstream& operator >> (std::ifstream& in, T4 &t4)
     return in;
 }
 
-std::vector<T4> ScapeDatasetObject::load_gt(std::string path) {
+void ScapeDatasetObject::load_gt(std::string path, std::vector<T4> &gts) {
     std::ifstream gt_file(path);
     std::string word;
     T4 gt;
-    std::vector<T4> gts;
     while (gt_file >> gt) {
         gts.emplace_back(gt);
     }
-    return gts;
 
 }
+
