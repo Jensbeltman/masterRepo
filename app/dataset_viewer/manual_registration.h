@@ -25,6 +25,10 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/point_cloud_handlers.h>
 
+// Custom visualizer
+
+
+
 // Useful macros
 
 namespace Ui {
@@ -61,8 +65,8 @@ public:
     void DstPointPickCallback(const pcl::visualization::PointPickingEvent &event, void *);
 
 protected:
-    boost::shared_ptr<pcl::visualization::PCLVisualizer> vis_src_;
-    boost::shared_ptr<pcl::visualization::PCLVisualizer> vis_dst_;
+    std::shared_ptr<pcl::visualization::PCLVisualizer> vis_src_;
+    std::shared_ptr<pcl::visualization::PCLVisualizer> vis_dst_;
 
     PointCloudT::Ptr cloud_src_;
     PointCloudT::Ptr cloud_dst_;
