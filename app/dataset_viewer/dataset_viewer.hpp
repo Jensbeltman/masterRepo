@@ -11,7 +11,7 @@
 #include <dataset/scape/ScapeDataset.hpp>
 #include "manual_registration.h"
 
-struct Settings{
+struct Settings {
     QString data_folder;
     QString recognition_folder;
 };
@@ -20,27 +20,31 @@ namespace Ui {
     class DatasetViewer;
 }
 
-class DatasetViewer: public QMainWindow, private Ui::DatasetViewer
-{
-    Q_OBJECT
+class DatasetViewer : public QMainWindow, private Ui::DatasetViewer {
+Q_OBJECT
 public:
     explicit DatasetViewer(QMainWindow *parent = nullptr);
+
     ~DatasetViewer();
+
     void changeEvent(QEvent *e);
 
 private:
-    void loadSettings();
-    void saveSettings();
-
     Settings settings;
     ManualRegistration *mr;
     ScapeDatasetPtr scapeDatasetPtr;
-    DatasetPtr datasetPtr;
-    QFileSystemModel *filesystemModel;
-    std::vector<int> obj_ns;
+    std::vector<std::vector<int>> obj_ns;
+
+    void loadSettings();
+
+    void saveSettings();
+
     void load_dataset();
+
 private slots:
+
     void chose_dataset_folders();
+
     void open_anotator(int row, int column);
 
 };

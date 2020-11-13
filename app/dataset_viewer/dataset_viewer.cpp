@@ -13,9 +13,9 @@ DatasetViewer::DatasetViewer(QMainWindow *parent) : QMainWindow(parent) {
     setupUi(this);
     QObject::connect(actionOpen, &QAction::triggered, this, &DatasetViewer::chose_dataset_folders);
     QObject::connect(tableWidget, &QTableWidget::cellDoubleClicked, this, &DatasetViewer::open_anotator);
-    mr = new ManualRegistration(this);
-    loadSettings();
-    filesystemModel = new QFileSystemModel;
+
+    mr = new ManualRegistration(this); // Initialize first ManualRegistration Window
+    loadSettings(); // Load setting from prev session e.g. paths for dataset
 }
 
 void DatasetViewer::changeEvent(QEvent *e) {
@@ -70,24 +70,41 @@ void DatasetViewer::load_dataset() {
                                                                      settings.recognition_folder.toStdString(), true);
     datasetTitle->setText((scapeDatasetPtr->name + " Dataset").c_str());
     tableWidget->setRowCount(0);
-    int glob_count;
-    for (auto obj:scapeDatasetPtr->objects) {
-        int prev_row_count = tableWidget->rowCount();
-        tableWidget->setRowCount(prev_row_count + obj->size());
-        obj_ns.resize(prev_row_count + obj->size());
-        for (int r = 0; r < obj->size(); r++) {
-            auto &dp = obj->data_points[r];
-            glob_count=prev_row_count + r;
-            obj_ns[glob_count] = r;
-            tableWidget->setItem(glob_count, 0, new QTableWidgetItem(QString(obj->name.c_str())));
-            tableWidget->setItem(glob_count, 1, new QTableWidgetItem(QString(dp.pcd_filename.c_str())));
+    int current_row;
+    for (auto obj : scapeDatasetPtr->objects) {
+        auto sobj =  std::static_pointer_cast<ScapeDatasetObject>(obj);
+        for (auto &fn : obj->pcd_filenames) {
+            auto &dpis = sobj->pcd_fn_to_scape_dpis[fn];
+            if(!dpis.empty()){
+                obj_ns.emplace_back(dpis);
+                auto &dp = obj->data_points[dpis[0]];
+                tableWidget->insertRow(tableWidget->rowCount());
 
-            tableWidget->setItem(glob_count, 2, new QTableWidgetItem(
-                    QString(std::to_string(dp.gts.size()).c_str())));
-            tableWidget->setItem(glob_count, 3, new QTableWidgetItem(
-                    QString(std::to_string(dp.ocs.size()).c_str())));
+                current_row = tableWidget->rowCount() - 1;
+                tableWidget->setItem(current_row, 0, new QTableWidgetItem(QString(obj->name.c_str())));
+                tableWidget->setItem(current_row, 1, new QTableWidgetItem(QString(dp.pcd_filename.c_str())));
+
+                tableWidget->setItem(current_row, 2, new QTableWidgetItem(
+                        QString(std::to_string(dp.gts.size()).c_str())));
+
+                std::string oc_string="";
+                for(int i = 0;i<dpis.size()-1;i++)
+                    oc_string+=std::to_string( obj->data_points[dpis[i]].ocs.size())+", ";
+                oc_string+=std::to_string(obj->data_points[dpis.back()].ocs.size());
+
+                tableWidget->setItem(current_row, 3, new QTableWidgetItem(
+                        QString(oc_string.c_str())));
+            }
         }
     }
+}
+
+std::ostream& operator << (std::ostream& os, std::vector<int> &ints)
+{
+    for(int i = 0;i<ints.size()-1;i++)
+        os<<ints[i]<<", ";
+    os<<ints.back();
+    return os;
 }
 
 void DatasetViewer::open_anotator(int row, int column) {
@@ -95,11 +112,18 @@ void DatasetViewer::open_anotator(int row, int column) {
     if (mr->isVisible()){
         std::cout<<"A Manual Registration is still in the process please close it"<<std::endl;
     }else{
-        std::cout<<"Starting anotation of data point "<<obj_ns[row]<<" from object "<<tableWidget->itemAt(0,row)->text().toStdString()<<"\n";
         delete mr;
         mr = new ManualRegistration(this);
-        mr->setDstCloud(scapeDatasetPtr->get_object_by_name(tableWidget->itemAt(0,row)->text().toStdString())->get_pcd(obj_ns[row]));
-        mr->setSrcCloud(scapeDatasetPtr->get_object_by_name(tableWidget->itemAt(0,row)->text().toStdString())->get_mesh_point_cloud());
+
+        std::string fn = tableWidget->itemAt(1,row)->text().toStdString();
+        ScapeDatasetObjectPtr datasetObjPtr = scapeDatasetPtr->get_scape_object_by_name(tableWidget->itemAt(0,row)->text().toStdString());
+        auto &dp = datasetObjPtr->data_points[obj_ns[row][0]];
+
+        mr->setDstCloud(datasetObjPtr->get_pcd(obj_ns[row][0])); // Chose pcd based on first dp as they all should have the same
+        mr->setSrcCloud(datasetObjPtr->get_mesh_point_cloud());
         mr->show();
+
+        std::cout<<"Starting anotation of data points "<<obj_ns[row]<<" from object "<<tableWidget->itemAt(0,row)->text().toStdString()<<"\n";
+        std::cout<<"PCD file: "<<dp.pcd_filename<<"\nGround Truth path: "<<dp.ground_truth_filename<<std::endl;
     }
 }
