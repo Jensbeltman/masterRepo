@@ -24,3 +24,7 @@ ScapeDataset::ScapeDataset(std::string path, std::string recognition_path, bool 
         }
     }
 }
+
+ScapeDatasetObjectPtr ScapeDataset::get_scape_object_by_name(std::string name) {
+    return std::static_pointer_cast<ScapeDatasetObject>(get_object_by_name(name));
+}
