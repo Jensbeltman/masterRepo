@@ -27,8 +27,8 @@ using namespace std;
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
 
-    ManualRegistration::CloudPtr cloud_src(new ManualRegistration::Cloud);
-    ManualRegistration::CloudPtr cloud_dst(new ManualRegistration::Cloud);
+    ManualRegistration::PointCloudT::Ptr cloud_src(new ManualRegistration::PointCloudT);
+    ManualRegistration::PointCloudT::Ptr cloud_dst(new ManualRegistration::PointCloudT);
 
     if (argc < 3) {
         PCL_ERROR ("Usage:\n\t%s <source_cloud.pcd> <target_cloud.pcd>\n", argv[0]);
