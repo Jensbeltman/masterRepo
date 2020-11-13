@@ -39,8 +39,8 @@ int main(int argc, char** argv) {
     std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(datasetObject, sample_n, 1);
     std::cout << "GeneticEvaluatorOC init elapsed time: " << chronometer.toc() << "s\n";
 
-    std::cout << "Testing zone " << sample_n << " with related point cloud data filename "
-              << scapeObject->pcd_filenames[scapeObject->scape_data_points[sample_n].pc_filename_idx] << " from dataset object folder "
+    std::cout << "Testing Datapoint " << sample_n << " with related point cloud data filename "
+              << scapeObject->scape_data_points[sample_n].pcd_filename << " from dataset object folder "
               << scapeObject->name << "\n\n";
     PointCloudT::Ptr pc = scapeObject->get_pcd(sample_n);
 
