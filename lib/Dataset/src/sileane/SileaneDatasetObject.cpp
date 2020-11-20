@@ -61,7 +61,7 @@ cv::Mat SileaneDatasetObject::get_color(int n, bool gt) {
 
 void SileaneDatasetObject::load_object_candidates_and_gt(std::string pcd_filename, DataPoint &dp) {
 
-    dp.ground_truth_filename = pcd_filename;
+    dp.ground_truth_path = pcd_filename;
     std::ifstream i((path / "gt" / pcd_filename).replace_extension(".json"));
 
     nlohmann::json j;

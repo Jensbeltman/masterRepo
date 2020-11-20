@@ -79,16 +79,16 @@ int main(int argc, char** argv) {
         pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
 
         if (ga.result.best_chromosome[i]) {
-            vis.addPointCloud(ocpc, id, "accepted", 0, 255, 0);
+            vis.addIdPointCloud(ocpc, id, "accepted", 0, 255, 0);
         } else {
-            vis.addPointCloud(ocpc, id, "rejected", 255, 0, 0);
+            vis.addIdPointCloud(ocpc, id, "rejected", 255, 0, 0);
         }
     }
 
-    vis.addPointCloud(geneticEvaluatorOCPtr->pc, "pc");
+    vis.addIdPointCloud(geneticEvaluatorOCPtr->pc, "pc");
     PointCloudT::Ptr mesh_pc = geneticEvaluatorOCPtr->pcm;
 
-    vis.spin();
+    vis.custom_spin();
 
     return 0;
 }

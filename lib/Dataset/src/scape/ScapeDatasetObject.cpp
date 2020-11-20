@@ -82,8 +82,8 @@ ScapeDatasetObject::ScapeDatasetObject(std::string _path, std::vector<std::files
                                 pcd_fn_to_scape_dpis[*itt_fn].emplace_back(std::distance(scape_data_points.begin(), itt));
 
                                 if(pcd_fn_to_gt_fn.contains(*itt_fn)) {
-                                    itt->ground_truth_filename = pcd_fn_to_gt_fn[*itt_fn];
-                                    load_gt(itt->ground_truth_filename,itt->gts);
+                                    itt->ground_truth_path = pcd_fn_to_gt_fn[*itt_fn];
+                                    load_gt(itt->ground_truth_path, itt->gts);
                                 }
                             }
                         }
