@@ -4,55 +4,99 @@
 
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/transforms.h>
+#include <thread>
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 
-CustomVisualizer::CustomVisualizer() {
-    pclVisualizer.registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+
+CustomVisualizer::CustomVisualizer(){
+    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
 }
 
-void CustomVisualizer::spin() {
-    ids_itt = group_ids.begin();
-    ids_itt_max = group_ids.end();
-    ids_itt_max--;
+CustomVisualizer::CustomVisualizer(const std::string &name, const bool create_interactor) : PCLVisualizer(name,
+                                                                                                          create_interactor) {
+    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+}
 
-    // Setup selection text
-    pclVisualizer.spinOnce(); // Spin once to make such that the camera is setup
-    std::array<double, 3> rgb = group_color[ids_itt->first];
-    pcl::visualization::Camera camera;
-    pclVisualizer.getCameraParameters(camera);
-    if (pclVisualizer.contains(text_id)) {
-        update_text();
-    } else {
+CustomVisualizer::CustomVisualizer(int &argc, char **argv, const std::string &name,
+                                   pcl::visualization::PCLVisualizerInteractorStyle *style,
+                                   const bool create_interactor) : PCLVisualizer(argc, argv, name, style,
+                                                                                 create_interactor) {
+    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+}
 
-        pclVisualizer.addText(ids_itt->first, static_cast<int>(camera.window_size[0] / 2),
-                              static_cast<int>(camera.window_size[1] - font_size * 1.5), font_size, rgb[0], rgb[1],
-                              rgb[2],
-                              text_id);
-        change_pt_size(ids_itt->first, 1);
+CustomVisualizer::CustomVisualizer(vtkSmartPointer<vtkRenderer> ren, vtkSmartPointer<vtkRenderWindow> wind,
+                                   const std::string &name, const bool create_interactor) : PCLVisualizer(ren, wind,
+                                                                                                          name,
+                                                                                                          create_interactor) {
+    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+}
+
+CustomVisualizer::CustomVisualizer(int &argc, char **argv, vtkSmartPointer<vtkRenderer> ren,
+                                   vtkSmartPointer<vtkRenderWindow> wind, const std::string &name,
+                                   pcl::visualization::PCLVisualizerInteractorStyle *style,
+                                   const bool create_interactor) : PCLVisualizer(argc, argv, ren, wind, name, style,
+                                                                                 create_interactor) {
+    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+}
+
+void CustomVisualizer::updateSelector() {
+
+        group_ids_itt = group_ids.begin();
+
+    if(!group_ids.empty())
+    {
+        spinOnce();
+
+        std::array<double, 3> rgb = group_color[group_ids_itt->first];
+        pcl::visualization::Camera camera;
+        getCameraParameters(camera);
+        if (contains(text_id)) {
+            update_text();
+        } else {
+            addText(group_ids_itt->first, static_cast<int>(camera.window_size[0] / 2),
+                    static_cast<int>(camera.window_size[1] - font_size * 1.5), font_size, rgb[0], rgb[1],
+                    rgb[2],
+                    text_id);
+            change_pt_size(group_ids_itt->first, 1);
+        }
     }
-    pclVisualizer.spin();
+}
 
+void CustomVisualizer::custom_spin() {
+    updateSelector();
+    spin();
 }
 
 void CustomVisualizer::update_text() {
-    std::array<double, 3> rgb = group_color[ids_itt->first];
+    std::string s = group_ids_itt->first;
+    std::array<double, 3> rgb = group_color[s];
     pcl::visualization::Camera camera;
-    pclVisualizer.getCameraParameters(camera);
-    pclVisualizer.updateText(ids_itt->first, camera.window_size[0] / 2, camera.window_size[1] - font_size * 1.5,
-                             font_size,
-                             rgb[0], rgb[1], rgb[2], text_id);
+    getCameraParameters(camera);
+    updateText(group_ids_itt->first, camera.window_size[0] / 2, camera.window_size[1] - font_size * 1.5,
+               font_size,
+               rgb[0], rgb[1], rgb[2], text_id);
 }
 
-void CustomVisualizer::toggle_opacity(std::string group_id) {
+void CustomVisualizer::toggle_opacity(std::string id) {
+        double current_opacity;
+        getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,id);
+        current_opacity = (current_opacity < 1.0) ? 1.0 : 0.0;
+        setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,id);
+}
+
+void CustomVisualizer::toggle_group_opacity(std::string group_id) {
 
     if (!group_ids[group_id].empty()) {
         double current_opacity;
-        pclVisualizer.getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,
-                                                       group_ids[group_id][0]);
+        getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,
+                                         group_ids[group_id][0]);
         current_opacity = (current_opacity < 1.0) ? 1.0 : 0.0;
         for (auto &id:group_ids[group_id]) {
-            pclVisualizer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,
-                                                           id);
+            setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,
+                                             id);
         }
     }
 }
@@ -60,35 +104,63 @@ void CustomVisualizer::toggle_opacity(std::string group_id) {
 void CustomVisualizer::change_pt_size(std::string group_id, int change) {
     if (!group_ids[group_id].empty()) {
         double current_point_size;
-        pclVisualizer.getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,
-                                                       current_point_size,
-                                                       group_ids[group_id][0]);
+        getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,
+                                         current_point_size,
+                                         group_ids[group_id][0]);
         for (auto &id:group_ids[group_id]) {
-            pclVisualizer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,
-                                                           current_point_size + change, id);
+            setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,
+                                             current_point_size + change, id);
         }
     }
 }
 
 void CustomVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *viewer_void) {
-    if (event.keyDown()) {
-        std::string key = event.getKeySym();
-        if (key == "Right" && (ids_itt != ids_itt_max)) {
-            ids_itt++;
-            update_text();
-        } else if (key == "Left" && ids_itt != group_ids.begin()) {
-            ids_itt--;
-            update_text();
-        } else if (key == "Up") {
-            toggle_opacity(ids_itt->first);
+    if(!group_ids.empty())
+    {
+        if(!event.isShiftPressed()) {
+            if (event.keyDown()) {
+                std::string key = event.getKeySym();
+                if (key == "Right" && (group_ids_itt != --group_ids.end())) {
+                    group_ids_itt++;
+                    ids_itt = group_ids_itt->second.begin();
+                } else if (key == "Left" && group_ids_itt != group_ids.begin()) {
+                    group_ids_itt--;
+                    ids_itt = group_ids_itt->second.begin();
+                } else if (key == "Up") {
+                    toggle_group_opacity(group_ids_itt->first);
+                }
+                update_text();
+            }
+        }
+        else{
+            if (event.keyDown()) {
+                if (group_ids_itt->second.size() > 1) {
+                    std::string key = event.getKeySym();
+                    if (key == "Right" && (ids_itt != --(group_ids_itt->second.end()))) {
+                        setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, *ids_itt);
+                        ids_itt++;
+                    } else if (key == "Left" && ids_itt != group_ids[group_ids_itt->first].begin()) {
+                        setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, *ids_itt);
+                        ids_itt--;
+                    } else if (key == "Up") {
+                        toggle_opacity(*ids_itt);
+                    }
+
+                    double current_point_size;
+                    getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, current_point_size,
+                                                     *ids_itt);
+                    if (current_point_size == 1)
+                        setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, *ids_itt);
+                }
+            }
         }
     }
 }
 
 void
-CustomVisualizer::addPointCloud(PointCloudT::Ptr &pc, std::string id, std::string group_id, int r, int g, int b) {
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color(pc, r, g, b);
-    pclVisualizer.addPointCloud(pc, color, id);
+CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc, std::string id, std::string group_id, int r, int g, int b) {
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color_handler(pc, r, g, b);
+    addPointCloud(pc, color_handler, id);
 
 
     if (group_id.empty()) { group_id = id; }
@@ -97,8 +169,17 @@ CustomVisualizer::addPointCloud(PointCloudT::Ptr &pc, std::string id, std::strin
     group_color[group_id] = std::array<double, 3>{r / 255.0, g / 255.0, b / 255.0};
 }
 
+void CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc, const pcl::visualization::PointCloudColorHandler<PointT> &color_handler, std::string id,std::string group_id) {
+    addPointCloud(pc, color_handler, id);
+
+    if (group_id.empty()) { group_id = id; }
+
+    group_ids[group_id].emplace_back(id);
+    group_color[group_id] = std::array<double, 3>{1.0, 1.0, 1.0};
+}
+
 void CustomVisualizer::clear() {
-    pclVisualizer.removeAllPointClouds();
+    removeAllPointClouds();
     group_ids.clear();
     group_color.clear();
 }
@@ -107,10 +188,12 @@ void CustomVisualizer::clear(std::string group) {
 
     if (group_ids.find(group) != group_ids.end()) {
         for (auto &id:group_ids[group]) {
-            pclVisualizer.removePointCloud(id);
+            removePointCloud(id);
         }
         group_ids.erase(group);
         group_color.erase(group);
     }
 
 }
+
+
