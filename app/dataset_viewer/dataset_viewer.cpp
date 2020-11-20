@@ -70,6 +70,8 @@ void DatasetViewer::load_dataset() {
                                                                      settings.recognition_folder.toStdString(), true);
     datasetTitle->setText((scapeDatasetPtr->name + " Dataset").c_str());
     tableWidget->setRowCount(0);
+    obj_ns.clear();
+
     int current_row;
     for (auto obj : scapeDatasetPtr->objects) {
         auto sobj =  std::static_pointer_cast<ScapeDatasetObject>(obj);
@@ -108,22 +110,60 @@ std::ostream& operator << (std::ostream& os, std::vector<int> &ints)
 }
 
 void DatasetViewer::open_anotator(int row, int column) {
-
     if (mr->isVisible()){
         std::cout<<"A Manual Registration is still in the process please close it"<<std::endl;
     }else{
         delete mr;
         mr = new ManualRegistration(this);
 
-        std::string fn = tableWidget->itemAt(1,row)->text().toStdString();
-        ScapeDatasetObjectPtr datasetObjPtr = scapeDatasetPtr->get_scape_object_by_name(tableWidget->itemAt(0,row)->text().toStdString());
+        std::string fn = tableWidget->item(row,1)->text().toStdString();
+        ScapeDatasetObjectPtr datasetObjPtr = scapeDatasetPtr->get_scape_object_by_name(tableWidget->item(row,0)->text().toStdString());
+
         auto &dp = datasetObjPtr->data_points[obj_ns[row][0]];
 
-        mr->setDstCloud(datasetObjPtr->get_pcd(obj_ns[row][0])); // Chose pcd based on first dp as they all should have the same
         mr->setSrcCloud(datasetObjPtr->get_mesh_point_cloud());
+        mr->setDstCloud(datasetObjPtr->get_pcd(obj_ns[row][0])); // Chose pcd based on first dp as they all should have the same
+        if(dp.ground_truth_path.empty()) {
+            std::filesystem::path p = datasetObjPtr->path;
+            p = p.parent_path();
+            p/="gt";
+            p/=(datasetObjPtr->name_singular+"-"+dp.pcd_filename+".txt");
+            mr->setGTs(dp.gts,p.string());
+        }
+        else {
+            mr->setGTs(dp.gts, dp.ground_truth_path);
+        }
+
+        if(obj_ns[row].size()>1)
+        {
+            int total_ocs=0;
+            std::vector<T4> all_ocs;
+            for(auto &on:obj_ns[row]) {
+                total_ocs+=(datasetObjPtr->data_points[on].ocs.size());
+                for(auto &t4:datasetObjPtr->data_points[on].ocs){
+                    auto itt = all_ocs.begin();
+                    for(;itt!=all_ocs.end();++itt){
+                        if(itt->isApprox(t4))
+                            break;
+                    }
+                    if(itt==all_ocs.end()){
+                        all_ocs.emplace_back(t4);
+                    }
+                }
+            }
+            std::cout<<"A toal of "<<total_ocs<<" ocs found in multiple files, merged to "<<all_ocs.size()<<std::endl;
+            mr->setOCs(all_ocs);
+        }else{
+            mr->setOCs(dp.ocs);
+        }
+
+
+
         mr->show();
 
-        std::cout<<"Starting anotation of data points "<<obj_ns[row]<<" from object "<<tableWidget->itemAt(0,row)->text().toStdString()<<"\n";
-        std::cout<<"PCD file: "<<dp.pcd_filename<<"\nGround Truth path: "<<dp.ground_truth_filename<<std::endl;
+        mr->setup();
+
+        std::cout<<"Starting anotation of data points "<<obj_ns[row]<<" from object "<<tableWidget->item(row,0)->text().toStdString()<<"\n";
+        std::cout << "PCD file: " << dp.pcd_filename << "\nGround Truth path: " << dp.ground_truth_path << std::endl;
     }
 }
