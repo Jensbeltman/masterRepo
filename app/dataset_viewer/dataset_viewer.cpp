@@ -50,7 +50,6 @@ void DatasetViewer::loadSettings() {
     QSettings qsettings;
     settings.data_folder = qsettings.value("data_folder", "/home").toString();
     settings.recognition_folder = qsettings.value("recognition_folder", "/home").toString();
-
 }
 
 void DatasetViewer::saveSettings() {

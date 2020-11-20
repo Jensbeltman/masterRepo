@@ -11,7 +11,7 @@
 #include <dataset/scape/ScapeDataset.hpp>
 #include "manual_registration.h"
 
-struct Settings {
+struct DatasetViewerSettings {
     QString data_folder;
     QString recognition_folder;
 };
@@ -30,7 +30,7 @@ public:
     void changeEvent(QEvent *e);
 
 private:
-    Settings settings;
+    DatasetViewerSettings settings;
     ManualRegistration *mr;
     ScapeDatasetPtr scapeDatasetPtr;
     std::vector<std::vector<int>> obj_ns;

@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     std::string object_name = argv[1];
     bool vis_on = static_cast<bool>(std::stoi(argv[2]));
     Chronometer chronometer;
-    ScapeDataset scapeData("/home/jens/masterData/ScapeDataset/Scape/Full Dataset",
+    ScapeDataset scapeData("/home/jens/masterData/ScapeDataset/Scape/Full_Dataset",
                            "/home/jens/masterData/ScapeDataset/Data from Scape Recognition");
 
 
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
             if (vis_on) {
                 // VISUALISATION
                 vis.clear();
-                vis.addPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
+                vis.addIdPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
                 PointCloudT::Ptr mesh_pc = geneticEvaluatorOCPtr->pcm;
                 pcl::ExtractIndices<PointT> extractIndices;
 
@@ -101,13 +101,13 @@ int main(int argc, char **argv) {
                     pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
 
                     if (ga.result.best_chromosome[i] && bl_chromosome[i]) {
-                        vis.addPointCloud(ocpc, id, "Accepted by both", 0, 255, 0);
+                        vis.addIdPointCloud(ocpc, id, "Accepted by both", 0, 255, 0);
                     } else if ((!ga.result.best_chromosome[i]) && (!bl_chromosome[i])) {
-                        vis.addPointCloud(ocpc, id, "Rejected by both", 255, 0, 0);
+                        vis.addIdPointCloud(ocpc, id, "Rejected by both", 255, 0, 0);
                     } else if ((ga.result.best_chromosome[i]) && (!bl_chromosome[i])) {
-                        vis.addPointCloud(ocpc, id, "Rejcted by baseline", 255, 255, 0);
+                        vis.addIdPointCloud(ocpc, id, "Rejcted by baseline", 255, 255, 0);
                     } else if ((!ga.result.best_chromosome[i]) && (bl_chromosome[i])) {
-                        vis.addPointCloud(ocpc, id, "Accepted by baseline", 0, 0, 255);
+                        vis.addIdPointCloud(ocpc, id, "Accepted by baseline", 0, 0, 255);
                     }
                 }
 
@@ -116,11 +116,11 @@ int main(int argc, char **argv) {
                     PointCloudT::Ptr gtpc_vis = pcl::make_shared<PointCloudT>();
                     std::string id = "gt_" + std::to_string(g);
                     pcl::transformPointCloud(*gtpc, *gtpc_vis, gts[g]);
-                    vis.addPointCloud(gtpc_vis, id, "Ground Truth", 0, 255, 255);
+                    vis.addIdPointCloud(gtpc_vis, id, "Ground Truth", 0, 255, 255);
                 }
-                vis.pclVisualizer.resetCamera();
+                vis.resetCamera();
                 std::cout << "\n";
-                vis.spin();
+                vis.custom_spin();
             }
 
 //            dataObjects.push_back(json::object(

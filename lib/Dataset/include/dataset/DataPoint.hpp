@@ -5,7 +5,7 @@
 class DataPoint {
 public:
     std::string pcd_filename;
-    std::string ground_truth_filename;
+    std::string ground_truth_path;
     std::vector<T4> ocs;
     std::vector<T4> gts;
     std::vector<double> oc_scores;

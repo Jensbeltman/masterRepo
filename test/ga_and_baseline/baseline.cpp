@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 
     CustomVisualizer vis;
     pcl::ExtractIndices<PointT> extractIndices;
-    vis.addPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
+    vis.addIdPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
 
     for (int i = 0; i < geneticEvaluatorOCPtr->object_candidates.size(); i++) {
         std::string id = "oc_" + std::to_string(i);
@@ -70,10 +70,10 @@ int main(int argc, char** argv) {
         pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
 
         if (ga.result.best_chromosome[i]) {
-            vis.addPointCloud(ocpc, id,"Accepted", 0, 255, 0);
+            vis.addIdPointCloud(ocpc, id, "Accepted", 0, 255, 0);
         } else{
-            vis.addPointCloud(ocpc, id,"Rejected", 255, 0, 0);
+            vis.addIdPointCloud(ocpc, id, "Rejected", 255, 0, 0);
         }
     }
-    vis.spin();
+    vis.custom_spin();
 }
