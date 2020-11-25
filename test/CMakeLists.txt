@@ -6,6 +6,7 @@ project(test
 add_subdirectory(dataset)
 add_subdirectory(fcl)
 add_subdirectory(ga_and_baseline)
+add_subdirectory(ContextProcessingTests)
 
 #add_executable(test src/test.cpp)
 #target_compile_features(test PUBLIC cxx_std_17)
