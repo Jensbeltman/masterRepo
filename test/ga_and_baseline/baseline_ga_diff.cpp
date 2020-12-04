@@ -1,6 +1,6 @@
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/ga_functions.hpp>
-#include <ga/utility/visualization.hpp>
+#include <ga/visualization/visualization.hpp>
 #include <dataset/scape/ScapeDataset.hpp>
 #include <dataset/transform_utility.hpp>
 #include <chronometer.h>
@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/transforms.h>
-#include <ga/utility/visualization.hpp>
+#include <ga/visualization/visualization.hpp>
 #include <test_util.hpp>
 
 int main(int argc, char **argv) {

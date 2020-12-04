@@ -1,6 +1,6 @@
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/ga_functions.hpp>
-#include <ga/utility/visualization.hpp>
+#include <ga/visualization/visualization.hpp>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/transforms.h>
 #include <dataset/scape/ScapeDataset.hpp>
