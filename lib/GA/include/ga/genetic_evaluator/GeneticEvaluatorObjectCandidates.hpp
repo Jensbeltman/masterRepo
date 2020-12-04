@@ -16,7 +16,7 @@ typedef std::shared_ptr<cv::viz::Mesh> MeshPtr;
 
 class GeneticEvaluatorOC : public GeneticEvaluator {
 public:
-    GeneticEvaluatorOC(DatasetObjectPtr datasetObjectPtr, int datapoint_n, double inlier_threshold = 0.001);
+    GeneticEvaluatorOC(DatasetObjectPtr datasetObjectPtr, int datapoint_n, double inlier_threshold = 1);
     void initialise_datapoint(int datapoint_n);
 
     DatasetObjectPtr datasetObjectPtr;
