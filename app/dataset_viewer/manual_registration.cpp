@@ -7,6 +7,7 @@
 #include <QMutexLocker>
 #include <QObject>
 #include <QSettings>
+#include <pcl/visualization/qvtk_compatibility.h>
 
 
 // VTK
@@ -38,8 +39,15 @@ ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent)
     dst_point_selected_ = false;
 
     // Construction Visualizers
-    vis_src_ = pcl::make_shared<CustomVisualizer>("vis_src",false);
-    vis_dst_ = pcl::make_shared<CustomVisualizer>("vis_dst",false);
+    render_window_src_ = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+    render_window_dst_ = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+    renderer_src_ = vtkSmartPointer<vtkRenderer>::New();
+    renderer_dst_ = vtkSmartPointer<vtkRenderer>::New();
+    render_window_src_->AddRenderer(renderer_src_);
+    render_window_dst_->AddRenderer(renderer_dst_);
+
+    vis_src_ = pcl::make_shared<CustomVisualizer>(renderer_src_, render_window_src_, "vis_src",false);
+    vis_dst_ = pcl::make_shared<CustomVisualizer>(renderer_dst_, render_window_dst_, "vis_dst",false);
 
     //Create a timer
     vis_timer_ = new QTimer(this);
@@ -53,15 +61,15 @@ ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent)
     this->setWindowTitle("Manual Registration");
 
     // Set up the source window
-    ui_->qvtk_widget_src->SetRenderWindow(vis_src_->getRenderWindow());
+    ui_->qvtk_widget_src->SetRenderWindow(render_window_src_);
 
-    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor_src = ui_->qvtk_widget_src->GetInteractor();
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor_src = ui_->qvtk_widget_src->interactor();
     pointPicker_src = vtkSmartPointer<vtkPointPicker>::New();
     pointPicker_src->SetTolerance(0.001);
     renderWindowInteractor_src->SetPicker(pointPicker_src);
-    renderWindowInteractor_src->SetRenderWindow(vis_src_->getRenderWindow());
+    renderWindowInteractor_src->SetRenderWindow(render_window_src_);
 
-    vis_src_->setupInteractor(renderWindowInteractor_src, ui_->qvtk_widget_src->GetRenderWindow());
+    vis_src_->setupInteractor(renderWindowInteractor_src, ui_->qvtk_widget_src->renderWindow());
     vis_src_->getInteractorStyle()->setKeyboardModifier(pcl::visualization::INTERACTOR_KB_MOD_SHIFT);
     vis_src_->setShowFPS(false);
     ui_->qvtk_widget_src->update();
@@ -70,15 +78,15 @@ ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent)
     vis_src_->registerPointPickingCallback(&ManualRegistration::SourcePointPickCallback, *this);
 
     // Set up the destination window
-    ui_->qvtk_widget_dst->SetRenderWindow(vis_dst_->getRenderWindow());
+    ui_->qvtk_widget_dst->SetRenderWindow(render_window_dst_);
 
-    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor_dst = ui_->qvtk_widget_dst->GetInteractor();
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor_dst = ui_->qvtk_widget_dst->interactor();
     pointPicker_dst = vtkSmartPointer<vtkPointPicker>::New();
     pointPicker_dst->SetTolerance(0.001);
     renderWindowInteractor_dst->SetPicker(pointPicker_dst);
-    renderWindowInteractor_dst->SetRenderWindow(vis_dst_->getRenderWindow());
+    renderWindowInteractor_dst->SetRenderWindow(render_window_dst_);
 
-    vis_dst_->setupInteractor(renderWindowInteractor_dst, ui_->qvtk_widget_dst->GetRenderWindow());
+    vis_dst_->setupInteractor(renderWindowInteractor_dst, ui_->qvtk_widget_dst->renderWindow());
     vis_dst_->getInteractorStyle()->setKeyboardModifier(pcl::visualization::INTERACTOR_KB_MOD_SHIFT);
     vis_dst_->setShowFPS(false);
     ui_->qvtk_widget_dst->update();

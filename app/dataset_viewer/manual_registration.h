@@ -29,7 +29,10 @@
 #include <pcl/visualization/point_cloud_handlers.h>
 
 // Custom visualizer
-#include "ga/utility/visualization.hpp"
+#include "ga/visualization/visualization.hpp"
+
+//VTK
+#include "vtkGenericOpenGLRenderWindow.h"
 
 
 struct ManualRegistrationSettings {
@@ -80,6 +83,11 @@ public:
 
 
 protected:
+
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> render_window_src_;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> render_window_dst_;
+    vtkSmartPointer<vtkRenderer> renderer_src_;
+    vtkSmartPointer<vtkRenderer> renderer_dst_;
     pcl::shared_ptr<CustomVisualizer> vis_src_;
     pcl::shared_ptr<CustomVisualizer> vis_dst_;
     std::string dst_filename;
