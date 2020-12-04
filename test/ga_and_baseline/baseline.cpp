@@ -1,6 +1,6 @@
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/ga_functions.hpp>
-#include <ga/visualization/visualization.hpp>
+#include <ga/visualization/point_cloud_group_visualizer.hpp>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/transforms.h>
 #include <dataset/scape/ScapeDataset.hpp>
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorOCPtr);
     ga.result.best_chromosome=chromosome;
 
-    CustomVisualizer vis;
+    PointCloudGroupVisualizer vis;
     pcl::ExtractIndices<PointT> extractIndices;
     vis.addIdPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
 

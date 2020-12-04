@@ -46,8 +46,8 @@ ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent)
     render_window_src_->AddRenderer(renderer_src_);
     render_window_dst_->AddRenderer(renderer_dst_);
 
-    vis_src_ = pcl::make_shared<CustomVisualizer>(renderer_src_, render_window_src_, "vis_src",false);
-    vis_dst_ = pcl::make_shared<CustomVisualizer>(renderer_dst_, render_window_dst_, "vis_dst",false);
+    vis_src_ = pcl::make_shared<PointCloudGroupVisualizer>(renderer_src_, render_window_src_, "vis_src", false);
+    vis_dst_ = pcl::make_shared<PointCloudGroupVisualizer>(renderer_dst_, render_window_dst_, "vis_dst", false);
 
     //Create a timer
     vis_timer_ = new QTimer(this);

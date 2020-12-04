@@ -12,7 +12,7 @@
 #include <ga/ga.hpp>
 #include <ga/ga_functions.hpp>
 #include <ga/utility/logging.hpp>
-#include <ga/visualization/visualization.hpp>
+#include <ga/visualization/point_cloud_group_visualizer.hpp>
 
 std::ostream &operator<<(std::ostream &os, const std::vector<double>& vectord){
     for(int i = 0; i<vectord.size()-1;i++)
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     std::cout << "Ocs scores "<<scapeObject->get_scores(sample_n)<<std::endl;
     result_write(result, "/home/jens/masterRepo/data/ga_results.json");
 
-    CustomVisualizer vis;
+    PointCloudGroupVisualizer vis;
 
     pcl::ExtractIndices<PointT> extractIndices;
     for (int i = 0; i < geneticEvaluatorOCPtr->object_candidates.size(); i++) {

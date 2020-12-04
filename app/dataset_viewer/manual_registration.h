@@ -29,7 +29,7 @@
 #include <pcl/visualization/point_cloud_handlers.h>
 
 // Custom visualizer
-#include "ga/visualization/visualization.hpp"
+#include "ga/visualization/point_cloud_group_visualizer.hpp"
 
 //VTK
 #include "vtkGenericOpenGLRenderWindow.h"
@@ -88,8 +88,8 @@ protected:
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> render_window_dst_;
     vtkSmartPointer<vtkRenderer> renderer_src_;
     vtkSmartPointer<vtkRenderer> renderer_dst_;
-    pcl::shared_ptr<CustomVisualizer> vis_src_;
-    pcl::shared_ptr<CustomVisualizer> vis_dst_;
+    pcl::shared_ptr<PointCloudGroupVisualizer> vis_src_;
+    pcl::shared_ptr<PointCloudGroupVisualizer> vis_dst_;
     std::string dst_filename;
 
     std::vector<T4> orig_gts_;

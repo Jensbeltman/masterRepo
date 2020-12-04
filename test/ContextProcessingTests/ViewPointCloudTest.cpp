@@ -1,5 +1,5 @@
 #include <iostream>
-#include "ga/visualization/visualization.hpp"
+#include "ga/visualization/point_cloud_group_visualizer.hpp"
 #include "ga/visualization/point_cloud_renderer.hpp"
 #include "vtkPLYReader.h"
 #include <vtkActor.h>
@@ -22,7 +22,7 @@ int main(){
     ScapeDatasetObjectPtr scapeObjPtr = scapeData.get_scape_object_by_name("Conrods");
 
     PointCloudRenderer pcRen;
-    CustomVisualizer vis;
+    PointCloudGroupVisualizer vis;
 
 
     auto &dp = scapeObjPtr->data_points[0];

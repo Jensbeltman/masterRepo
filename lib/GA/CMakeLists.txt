@@ -11,7 +11,7 @@ target_sources(GA
         src/genetic_evalutator/GeneticEvaluator.cpp
         src/genetic_evalutator/GeneticEvaluatorObjectCandidates.cpp
         src/collision/collision_checking.cpp
-        src/visualization/visualization.cpp
+        src/visualization/point_cloud_group_visualizer.cpp
         src/point_cloud_processing/point_cloud_processing.cpp
         src/visualization/point_cloud_renderer.cpp
         )

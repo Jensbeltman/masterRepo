@@ -1,6 +1,6 @@
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/ga_functions.hpp>
-#include <ga/visualization/visualization.hpp>
+#include <ga/visualization/point_cloud_group_visualizer.hpp>
 #include <dataset/scape/ScapeDataset.hpp>
 #include <dataset/transform_utility.hpp>
 #include <chronometer.h>
@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/transforms.h>
-#include <ga/visualization/visualization.hpp>
+#include <ga/visualization/point_cloud_group_visualizer.hpp>
 #include <test_util.hpp>
 
 int main(int argc, char **argv) {
@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     std::cout << "Comparing baseline vs ga for object: " << object_name << std::endl;
     PointCloudT::Ptr gtpc = ob->get_mesh_point_cloud();
 
-    CustomVisualizer vis;
+    PointCloudGroupVisualizer vis;
     TransformUtility tu;
     int n_oc = 0;
     int n_tp = 0;

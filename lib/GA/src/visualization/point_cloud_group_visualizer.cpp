@@ -1,4 +1,4 @@
-#include "ga/visualization/visualization.hpp"
+#include "ga/visualization/point_cloud_group_visualizer.hpp"
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/typedefinitions.hpp>
 
@@ -12,40 +12,40 @@
 using namespace std::chrono_literals;
 
 
-void CustomVisualizer::init() {
-    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+void PointCloudGroupVisualizer::init() {
+    registerKeyboardCallback(&PointCloudGroupVisualizer::keyboardCallback, *this);
     setShowFPS(false);
 };
 
 
-CustomVisualizer::CustomVisualizer(const std::string &name, const bool create_interactor) : PCLVisualizer(name,
-                                                                                                          create_interactor) {
+PointCloudGroupVisualizer::PointCloudGroupVisualizer(const std::string &name, const bool create_interactor) : PCLVisualizer(name,
+                                                                                                                            create_interactor) {
     init();
 }
 
-CustomVisualizer::CustomVisualizer(int &argc, char **argv, const std::string &name,
-                                   pcl::visualization::PCLVisualizerInteractorStyle *style,
-                                   const bool create_interactor) : PCLVisualizer(argc, argv, name, style,
+PointCloudGroupVisualizer::PointCloudGroupVisualizer(int &argc, char **argv, const std::string &name,
+                                                     pcl::visualization::PCLVisualizerInteractorStyle *style,
+                                                     const bool create_interactor) : PCLVisualizer(argc, argv, name, style,
                                                                                  create_interactor) {
     init();
 }
 
-CustomVisualizer::CustomVisualizer(vtkSmartPointer<vtkRenderer> ren, vtkSmartPointer<vtkRenderWindow> wind,
-                                   const std::string &name, const bool create_interactor) : PCLVisualizer(ren, wind,
+PointCloudGroupVisualizer::PointCloudGroupVisualizer(vtkSmartPointer<vtkRenderer> ren, vtkSmartPointer<vtkRenderWindow> wind,
+                                                     const std::string &name, const bool create_interactor) : PCLVisualizer(ren, wind,
                                                                                                           name,
                                                                                                           create_interactor) {
     init();
 }
 
-CustomVisualizer::CustomVisualizer(int &argc, char **argv, vtkSmartPointer<vtkRenderer> ren,
-                                   vtkSmartPointer<vtkRenderWindow> wind, const std::string &name,
-                                   pcl::visualization::PCLVisualizerInteractorStyle *style,
-                                   const bool create_interactor) : PCLVisualizer(argc, argv, ren, wind, name, style,
+PointCloudGroupVisualizer::PointCloudGroupVisualizer(int &argc, char **argv, vtkSmartPointer<vtkRenderer> ren,
+                                                     vtkSmartPointer<vtkRenderWindow> wind, const std::string &name,
+                                                     pcl::visualization::PCLVisualizerInteractorStyle *style,
+                                                     const bool create_interactor) : PCLVisualizer(argc, argv, ren, wind, name, style,
                                                                                  create_interactor) {
     init();
 }
 
-void CustomVisualizer::updateSelector() {
+void PointCloudGroupVisualizer::updateSelector() {
 
     group_ids_itt = group_ids.begin();
 
@@ -66,12 +66,12 @@ void CustomVisualizer::updateSelector() {
     }
 }
 
-void CustomVisualizer::custom_spin() {
+void PointCloudGroupVisualizer::custom_spin() {
     updateSelector();
     spin();
 }
 
-void CustomVisualizer::update_text() {
+void PointCloudGroupVisualizer::update_text() {
     std::string s = group_ids_itt->first;
     std::array<double, 3> rgb = group_color[s];
     pcl::visualization::Camera camera;
@@ -81,14 +81,14 @@ void CustomVisualizer::update_text() {
                rgb[0], rgb[1], rgb[2], text_id);
 }
 
-void CustomVisualizer::toggle_opacity(std::string id) {
+void PointCloudGroupVisualizer::toggle_opacity(std::string id) {
     double current_opacity;
     getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity, id);
     current_opacity = (current_opacity < 1.0) ? 1.0 : 0.0;
     setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity, id);
 }
 
-void CustomVisualizer::toggle_group_opacity(std::string group_id) {
+void PointCloudGroupVisualizer::toggle_group_opacity(std::string group_id) {
 
     if (!group_ids[group_id].empty()) {
         double current_opacity;
@@ -102,7 +102,7 @@ void CustomVisualizer::toggle_group_opacity(std::string group_id) {
     }
 }
 
-void CustomVisualizer::change_pt_size(std::string group_id, int change) {
+void PointCloudGroupVisualizer::change_pt_size(std::string group_id, int change) {
     if (!group_ids[group_id].empty()) {
         double current_point_size;
         getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,
@@ -115,7 +115,7 @@ void CustomVisualizer::change_pt_size(std::string group_id, int change) {
     }
 }
 
-void CustomVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *viewer_void) {
+void PointCloudGroupVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *viewer_void) {
     if (!group_ids.empty()) {
         if (!event.isShiftPressed()) {
             if (event.keyDown()) {
@@ -157,7 +157,7 @@ void CustomVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent 
 }
 
 void
-CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc, std::string id, std::string group_id, int r, int g, int b) {
+PointCloudGroupVisualizer::addIdPointCloud(PointCloudT::Ptr &pc, std::string id, std::string group_id, int r, int g, int b) {
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color_handler(pc, r, g, b);
     addPointCloud(pc, color_handler, id);
 
@@ -168,9 +168,9 @@ CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc, std::string id, std::str
     group_color[group_id] = std::array<double, 3>{r / 255.0, g / 255.0, b / 255.0};
 }
 
-void CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc,
-                                       const pcl::visualization::PointCloudColorHandler<PointT> &color_handler,
-                                       std::string id, std::string group_id) {
+void PointCloudGroupVisualizer::addIdPointCloud(PointCloudT::Ptr &pc,
+                                                const pcl::visualization::PointCloudColorHandler<PointT> &color_handler,
+                                                std::string id, std::string group_id) {
     addPointCloud(pc, color_handler, id);
 
     if (group_id.empty()) { group_id = id; }
@@ -179,13 +179,13 @@ void CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc,
     group_color[group_id] = std::array<double, 3>{1.0, 1.0, 1.0};
 }
 
-void CustomVisualizer::clear() {
+void PointCloudGroupVisualizer::clear() {
     removeAllPointClouds();
     group_ids.clear();
     group_color.clear();
 }
 
-void CustomVisualizer::clear(std::string group) {
+void PointCloudGroupVisualizer::clear(std::string group) {
 
     if (group_ids.find(group) != group_ids.end()) {
         for (auto &id:group_ids[group]) {
