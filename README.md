@@ -13,10 +13,19 @@ This is the software repository for the my master thesis named: "Improving the F
 
 **Pre-requisits**
 
-- OpenCV 4.4 and OpenCV contribution modules: https://github.com/opencv 
-- PCL 1.10: https://github.com/PointCloudLibrary/pcl
+- QT 5.12
+  - Lower version might also workout
+- VTK 9.0: https://github.com/Kitware/VTK/tree/v9.0.0
+  - Moved to 9.0 as 7.1 had errors related to it.
+- OpenCV 4.4* and OpenCV contribution modules: https://github.com/opencv 
+  - Build with VTK
+- PCL 1.10: https://github.com/PointCloudLibrary/pcl/pull/4262
+  - Build With QT,VTK 9.0
+  - This pull request i to be merged to master soon as far as i understand.
 - FCL: https://github.com/flexible-collision-library/fcl
 - JSON lib: https://github.com/nlohmann/json
+- Matplot++: https://github.com/alandefreitas/matplotplusplus
+- Rapidcsv: https://github.com/d99kris/rapidcsv
 
 ### Build Notes
 
