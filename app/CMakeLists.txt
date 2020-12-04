@@ -4,4 +4,3 @@ project(app
         LANGUAGES CXX)
 
 add_subdirectory(dataset_viewer)
-add_subdirectory(viewpoint_point_cloud)

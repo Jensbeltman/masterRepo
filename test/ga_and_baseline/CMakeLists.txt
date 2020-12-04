@@ -6,7 +6,7 @@ project(ga_baseline_test
 add_executable(ga_scape_test ga_test_scape_data.cpp)
 target_link_libraries(ga_scape_test PRIVATE GA)
 
-add_executable(baseline baseline.cpp include/test_util.hpp ../ContextProcessingTests/ViewPointCloudTest.cpp)
+add_executable(baseline baseline.cpp include/test_util.hpp)
 target_link_libraries(baseline PUBLIC GA)
 
 add_executable(baseline_ga_diff)

@@ -4,4 +4,4 @@ project(ContextProcessingTests
         LANGUAGES CXX)
 
 add_executable(ViewPointCloudTest ViewPointCloudTest.cpp)
-target_link_libraries(ViewPointCloudTest PUBLIC ContextProcessing Dataset GA)
+target_link_libraries(ViewPointCloudTest PUBLIC Dataset GA)
