@@ -12,7 +12,7 @@
 #include <ga/ga.hpp>
 #include <ga/ga_functions.hpp>
 #include <ga/utility/logging.hpp>
-#include <ga/utility/visualization.hpp>
+#include <ga/visualization/visualization.hpp>
 
 std::ostream &operator<<(std::ostream &os, const std::vector<double>& vectord){
     for(int i = 0; i<vectord.size()-1;i++)
