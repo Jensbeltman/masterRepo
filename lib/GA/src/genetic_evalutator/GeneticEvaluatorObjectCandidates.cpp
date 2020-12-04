@@ -9,50 +9,36 @@
 
 using namespace std;
 
-GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr doPtr, int sample_n, double inlier_threshold)
-        : inlier_threshold(inlier_threshold) {
+GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr datasetObjectPtr, int datapoint_n, double inlier_threshold)
+        : inlier_threshold(inlier_threshold), datasetObjectPtr(datasetObjectPtr),
+          pcm(datasetObjectPtr->get_mesh_point_cloud()), ncm(datasetObjectPtr->get_mesh_normal_cloud()),
+          meshPtr(datasetObjectPtr->get_mesh()), camera_pose(datasetObjectPtr->camera_pose) {
 
-    pc = doPtr->get_pcd(sample_n);
-    pcm = doPtr->get_mesh_point_cloud();
-    ncm = doPtr->get_mesh_normal_cloud();
-    meshPtr = doPtr->get_mesh();
-    object_candidates = doPtr->get_object_candidates(sample_n);
-    camera_pose = doPtr->camera_pose;
-    init();
-}
+    initialise_datapoint(datapoint_n);
 
-GeneticEvaluatorOC::GeneticEvaluatorOC(std::vector<T4> &poses, PointCloudT::Ptr &pc, PointCloudT::Ptr &pcm,
-                                       NormalCloudT::Ptr &ncm, std::shared_ptr<cv::viz::Mesh> &meshptr,
-                                       T4 &camera_pose,
-                                       double
-                                       inlier_threshold) : pc(pc), pcm(pcm), ncm(ncm), meshPtr(meshptr),
-                                                           object_candidates(poses),
-                                                           inlier_threshold(inlier_threshold),
-                                                           camera_pose(camera_pose) {
-    init();
-}
-
-
-void GeneticEvaluatorOC::init() {
     type = "GeneticEvaluatorOC";
+}
 
+void GeneticEvaluatorOC::initialise_datapoint(int datapoint_n) {
+    dp = datasetObjectPtr->data_points[datapoint_n];
+    pc = datasetObjectPtr->get_pcd(datapoint_n);
     // KdTree of cloud data
     kdtree = pcl::make_shared<pcl::KdTreeFLANN<PointT>>();
     kdtree->setInputCloud(pc);
-
     init_visible_inliers();
     init_collisions();
 }
 
-
 //Todo consider if this should be a seperate function
 void GeneticEvaluatorOC::init_visible_inliers() {
+    oc_visible_pt_idxs.clear();
+    oc_visible_inlier_pt_idxs.clear();
     chronometer.tic();
     // Vectors for knn
     std::vector<int> k_indices;
     std::vector<float> k_sqr_distances;
 
-    for (T4 oc:object_candidates) {
+    for (T4 oc:dp.ocs) {
         // Generate visible idxs for object candidate
         T4 cameraMeshVis = (camera_pose.inverse() *
                             oc).inverse();// instead of transforming the point cloud i transform the camera for use in visiblity calc
@@ -77,15 +63,16 @@ void GeneticEvaluatorOC::init_visible_inliers() {
 }
 
 void GeneticEvaluatorOC::init_collisions() {
+    oc_collision_pairs.clear();
     // Detect collisions
     chronometer.tic();
-    oc_collision_pairs = get_collisions(object_candidates,meshPtr);
+    oc_collision_pairs = get_collisions(dp.ocs, meshPtr);
     std::cout << "Collision init elapsed time: " << chronometer.toc() << "s\n";
 }
 
 double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
 
-    if (object_candidates.size() != chromosome.size()) {
+    if (dp.ocs.size() != chromosome.size()) {
         std::cout << "Chromosome and ground truth poses are not same dimension returning 0.0 cost" << endl;
         return 0.0;
     }
@@ -93,26 +80,25 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
     int n_active_genes = 0;
     int vis_inlier_pt_cnt_tot = 0;
     int vis_pt_cnt_tot = 0;
-    auto coll_pair_itt =oc_collision_pairs.begin();
+    auto coll_pair_itt = oc_collision_pairs.begin();
 
     // Check if ocs are in collision
-    std::vector<bool> in_collision(chromosome.size(),false);
-    for(auto &cp:oc_collision_pairs){
-        if(chromosome[cp.first]&& chromosome[cp.second]){
+    std::vector<bool> in_collision(chromosome.size(), false);
+    for (auto &cp:oc_collision_pairs) {
+        if (chromosome[cp.first] && chromosome[cp.second]) {
             in_collision[cp.first] = true;
             in_collision[cp.second] = true;
         }
     }
 
-    for (int i = 0; i < object_candidates.size(); i++) {
+    for (int i = 0; i < dp.ocs.size(); i++) {
         if (chromosome[i]) {
             int vis_inlier_pt_cnt = oc_visible_inlier_pt_idxs[i]->size();
             int vis_pt_cnt = oc_visible_pt_idxs[i]->size();
 
-            if(in_collision[i]) {
+            if (in_collision[i]) {
                 vis_inlier_pt_cnt_tot -= vis_inlier_pt_cnt;
-            }
-            else{
+            } else {
                 vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
                 n_active_genes++;
             }
@@ -123,7 +109,7 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
     }
 
 
-    cost =  -vis_inlier_pt_cnt_tot;
+    cost = -vis_inlier_pt_cnt_tot;
 
 
     if (isnan(cost) || !n_active_genes)
