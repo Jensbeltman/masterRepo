@@ -1,4 +1,4 @@
-#include "ga/utility/visualization.hpp"
+#include "ga/visualization/visualization.hpp"
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/typedefinitions.hpp>
 
@@ -6,32 +6,35 @@
 #include <pcl/common/transforms.h>
 #include <thread>
 #include <chrono>
+#include <vtkRenderWindow.h>
+#include <vtkCamera.h>
 
 using namespace std::chrono_literals;
 
 
-
-CustomVisualizer::CustomVisualizer(){
+void CustomVisualizer::init() {
     registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
-}
+    setShowFPS(false);
+};
+
 
 CustomVisualizer::CustomVisualizer(const std::string &name, const bool create_interactor) : PCLVisualizer(name,
                                                                                                           create_interactor) {
-    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+    init();
 }
 
 CustomVisualizer::CustomVisualizer(int &argc, char **argv, const std::string &name,
                                    pcl::visualization::PCLVisualizerInteractorStyle *style,
                                    const bool create_interactor) : PCLVisualizer(argc, argv, name, style,
                                                                                  create_interactor) {
-    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+    init();
 }
 
 CustomVisualizer::CustomVisualizer(vtkSmartPointer<vtkRenderer> ren, vtkSmartPointer<vtkRenderWindow> wind,
                                    const std::string &name, const bool create_interactor) : PCLVisualizer(ren, wind,
                                                                                                           name,
                                                                                                           create_interactor) {
-    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+    init();
 }
 
 CustomVisualizer::CustomVisualizer(int &argc, char **argv, vtkSmartPointer<vtkRenderer> ren,
@@ -39,16 +42,14 @@ CustomVisualizer::CustomVisualizer(int &argc, char **argv, vtkSmartPointer<vtkRe
                                    pcl::visualization::PCLVisualizerInteractorStyle *style,
                                    const bool create_interactor) : PCLVisualizer(argc, argv, ren, wind, name, style,
                                                                                  create_interactor) {
-    registerKeyboardCallback(&CustomVisualizer::keyboardCallback, *this);
+    init();
 }
 
 void CustomVisualizer::updateSelector() {
 
-        group_ids_itt = group_ids.begin();
+    group_ids_itt = group_ids.begin();
 
-    if(!group_ids.empty())
-    {
-        spinOnce();
+    if (!group_ids.empty()) {
 
         std::array<double, 3> rgb = group_color[group_ids_itt->first];
         pcl::visualization::Camera camera;
@@ -81,10 +82,10 @@ void CustomVisualizer::update_text() {
 }
 
 void CustomVisualizer::toggle_opacity(std::string id) {
-        double current_opacity;
-        getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,id);
-        current_opacity = (current_opacity < 1.0) ? 1.0 : 0.0;
-        setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity,id);
+    double current_opacity;
+    getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity, id);
+    current_opacity = (current_opacity < 1.0) ? 1.0 : 0.0;
+    setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, current_opacity, id);
 }
 
 void CustomVisualizer::toggle_group_opacity(std::string group_id) {
@@ -115,9 +116,8 @@ void CustomVisualizer::change_pt_size(std::string group_id, int change) {
 }
 
 void CustomVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *viewer_void) {
-    if(!group_ids.empty())
-    {
-        if(!event.isShiftPressed()) {
+    if (!group_ids.empty()) {
+        if (!event.isShiftPressed()) {
             if (event.keyDown()) {
                 std::string key = event.getKeySym();
                 if (key == "Right" && (group_ids_itt != --group_ids.end())) {
@@ -131,8 +131,7 @@ void CustomVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent 
                 }
                 update_text();
             }
-        }
-        else{
+        } else {
             if (event.keyDown()) {
                 if (group_ids_itt->second.size() > 1) {
                     std::string key = event.getKeySym();
@@ -169,7 +168,9 @@ CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc, std::string id, std::str
     group_color[group_id] = std::array<double, 3>{r / 255.0, g / 255.0, b / 255.0};
 }
 
-void CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc, const pcl::visualization::PointCloudColorHandler<PointT> &color_handler, std::string id,std::string group_id) {
+void CustomVisualizer::addIdPointCloud(PointCloudT::Ptr &pc,
+                                       const pcl::visualization::PointCloudColorHandler<PointT> &color_handler,
+                                       std::string id, std::string group_id) {
     addPointCloud(pc, color_handler, id);
 
     if (group_id.empty()) { group_id = id; }
@@ -195,5 +196,4 @@ void CustomVisualizer::clear(std::string group) {
     }
 
 }
-
 
