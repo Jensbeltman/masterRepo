@@ -13,7 +13,7 @@ target_sources(GA
         src/collision/collision_checking.cpp
         src/visualization/point_cloud_group_visualizer.cpp
         src/point_cloud_processing/point_cloud_processing.cpp
-        src/visualization/point_cloud_renderer.cpp
+        src/point_cloud_processing/point_cloud_renderer.cpp
         )
 
 target_include_directories(GA PUBLIC include ${OpenCV_INCLUDE_DIRS})

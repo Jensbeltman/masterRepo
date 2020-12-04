@@ -1,6 +1,6 @@
 #include <iostream>
 #include "ga/visualization/point_cloud_group_visualizer.hpp"
-#include "ga/visualization/point_cloud_renderer.hpp"
+#include "ga/point_cloud_processing/point_cloud_renderer.hpp"
 #include "vtkPLYReader.h"
 #include <vtkActor.h>
 #include "dataset/scape/ScapeDataset.hpp"

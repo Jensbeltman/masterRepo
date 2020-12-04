@@ -2,7 +2,7 @@
 // Created by jens on 11/25/20.
 //
 
-#include "ga/visualization/point_cloud_renderer.hpp"
+#include "ga/point_cloud_processing/point_cloud_renderer.hpp"
 #include "chronometer.h"
 #include "vtkCamera.h"
 #include "vtkMatrix4x4.h"
