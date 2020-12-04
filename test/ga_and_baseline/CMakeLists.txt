@@ -6,10 +6,10 @@ project(ga_baseline_test
 add_executable(ga_scape_test ga_test_scape_data.cpp)
 target_link_libraries(ga_scape_test PRIVATE GA)
 
-add_executable(baseline baseline.cpp include/test_util.hpp)
+add_executable(baseline baseline_comp.cpp include/test_util.hpp)
 target_link_libraries(baseline PUBLIC GA)
 
 add_executable(baseline_ga_diff)
 target_sources(baseline_ga_diff PRIVATE baseline_ga_diff.cpp)
 target_include_directories(baseline_ga_diff PRIVATE include)
-target_link_libraries(baseline_ga_diff PRIVATE GA)
+target_link_libraries(baseline_ga_diff PRIVATE GA Baseline)

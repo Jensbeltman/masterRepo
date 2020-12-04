@@ -8,6 +8,8 @@
 #include <utility>
 #include <numeric>
 #include <algorithm>
+#include "../../lib/Baseline/include/baseline/baseline_comp.hpp"
+
 
 template<typename T>
 std::vector<size_t> sorted_idxs(std::vector<T> &vec) {

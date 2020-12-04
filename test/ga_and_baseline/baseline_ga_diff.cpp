@@ -1,3 +1,4 @@
+#include <baseline/baseline.hpp>
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/ga_functions.hpp>
 #include <ga/visualization/point_cloud_group_visualizer.hpp>
@@ -31,46 +32,33 @@ int main(int argc, char **argv) {
     int bl_n_tp = 0;
     int ga_n_tp = 0;
 
+    auto geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(ob, 0, 1);
     GA ga(100, 100, 50, 0.05, 0.1, 0.3);
-
+    Baseline baseline(geneticEvaluatorOCPtr);
     // Logging
 
     //auto dataObjects = json::array();
 
     for (int sample_n = 0; sample_n < ob->size(); sample_n++) {
         if (ob->has_gt(sample_n)) {
+            geneticEvaluatorOCPtr->initialise_datapoint(sample_n);
+
+            auto &dp =  geneticEvaluatorOCPtr->dp;
+
             std::cout << "Sample number: " << sample_n << " pc file "
                       << ob->scape_data_points[sample_n].pcd_filename << std::endl;
-            auto geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(ob, sample_n, 1);
 
-            // BASELINE
-            std::vector<T4> object_candidates = ob->get_object_candidates(sample_n);
-            std::vector<T4> gts = ob->get_gt(sample_n);
-            std::vector<double> object_candidates_scores = ob->get_scores(sample_n);
-            std::vector<size_t> sorted_score_idx = sorted_idxs(object_candidates_scores);
-
-            chromosomeT bl_chromosome(object_candidates.size(), false);
-            double best_cost = std::numeric_limits<double>::max();
-            double cost;
-            for (auto &i:sorted_score_idx) {
-                bl_chromosome[i] = true;
-                cost = geneticEvaluatorOCPtr->evaluate_chromosome(bl_chromosome);
-                if (cost < best_cost) {
-                    best_cost = cost;
-                } else {
-                    bl_chromosome[i] = false;
-                }
-            }
+            chromosomeT bl_chromosome = baseline.get_best_chromosome();
 
             //GA
-            ga.n_genes = object_candidates.size(); // Update chromosome size
+            ga.n_genes = dp.ocs.size(); // Update chromosome size
             ga.geneticEvaluatorPtr = geneticEvaluatorOCPtr; // Create new evaluator for the given ocs
             GAResult result = ga.solve();
 
-            std::vector<bool> true_positives = tu.get_true_positives(object_candidates, gts, 10, 6);
+            std::vector<bool> true_positives = tu.get_true_positives(dp.ocs, dp.gts, 10, 6);
 
-            n_oc += object_candidates.size();
-            for (int i = 0; i < object_candidates.size(); i++) {
+            n_oc += dp.ocs.size();
+            for (int i = 0; i < dp.ocs.size(); i++) {
                 if (true_positives[i]) {
                     n_tp++;
                     if (result.best_chromosome[i]) {
@@ -112,10 +100,10 @@ int main(int argc, char **argv) {
                 }
 
                 // Add gt to visualization
-                for (int g = 0; g < gts.size(); g++) {
+                for (int g = 0; g < dp.gts.size(); g++) {
                     PointCloudT::Ptr gtpc_vis = pcl::make_shared<PointCloudT>();
                     std::string id = "gt_" + std::to_string(g);
-                    pcl::transformPointCloud(*gtpc, *gtpc_vis, gts[g]);
+                    pcl::transformPointCloud(*gtpc, *gtpc_vis, dp.gts[g]);
                     vis.addIdPointCloud(gtpc_vis, id, "Ground Truth", 0, 255, 255);
                 }
                 vis.resetCamera();
