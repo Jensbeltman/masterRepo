@@ -2,6 +2,7 @@
 #define MASTER_POINT_CLOUD_PROCESSING_HPP
 
 #include <pcl/common/common.h>
+#include <pcl/pcl_base.h>
 #include <pcl/point_cloud.h>
 #include <iostream>
 #include "ga/typedefinitions.hpp"

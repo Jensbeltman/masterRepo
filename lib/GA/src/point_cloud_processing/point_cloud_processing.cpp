@@ -2,9 +2,9 @@
 
 namespace pp{
 
-    pcl::IndicesPtr get_visible_indices(NormalCloudT::Ptr &nc, T4 &camera_transform) {
+   pcl::IndicesPtr get_visible_indices(NormalCloudT::Ptr &nc, T4 &camera_transform) {
         unsigned int i = 0;
-        pcl::IndicesPtr indices(new pcl::Indices);
+       pcl::IndicesPtr indices(new pcl::Indices);
         Eigen::Vector3f nv;
         Eigen::Vector3f zv = camera_transform.rotation().matrix().col(2).cast<float>();
         for (auto &n:nc->points) {
