@@ -16,7 +16,7 @@ public:
     vtkSmartPointer<vtkRenderWindow> renWin;
     std::vector<vtkSmartPointer<vtkActor> > actors;
 
-    float *depth;
+    float *depth = nullptr;
 
 
     PointCloudRenderer(int xres = 1920, int yres = 1080);

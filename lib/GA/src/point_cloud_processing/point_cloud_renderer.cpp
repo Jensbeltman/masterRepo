@@ -38,12 +38,16 @@ void PointCloudRenderer::renderPointCloud(PointCloudT::Ptr &pc) {
 
 void PointCloudRenderer::check_pcs(std::vector<PointCloudT::Ptr> &pcs) {
     if (pcs.size() != actors.size())
-        if (pcs.size() < actors.size())
-            for (int i = 0; i < actors.size() - pcs.size(); i++)
+        if (pcs.size() < actors.size()) {
+            int diff = actors.size() - pcs.size();
+            for (int i = 0; i < diff; i++)
                 pcs.emplace_back(pcl::make_shared<PointCloudT>());
-        else
+        }
+        else {
             cout << "Received more point clouds than there are actors in function \"renderPointClouds\" only "
-                 << actors.size() << " pcs will be filled";
+                 << pcs.size() - actors.size() << "pcs will be removed";
+            pcs.resize(actors.size());
+        }
 
 }
 
@@ -174,7 +178,7 @@ void PointCloudRenderer::getWorldCoordMatrix(Eigen::Matrix4f &mat) {
     mat = user_transform_inverse.matrix().cast<float>()*mat2 * mat1;
 }
 
-void PointCloudRenderer::convertDepthToPointCloud(PointCloudT::Ptr &pc) {
+void PointCloudRenderer::convertDepthToPointCloud(PointCloudT::Ptr &pc) {// TODO add option for transforming point cloud based on custom tf(ocs)
     unsigned int ptr = 0;
     Eigen::Vector4f world_coords;
     vtkCamera *camera = renderer->GetActiveCamera();
@@ -252,7 +256,8 @@ void PointCloudRenderer::addActorsPLY(std::string path, std::vector<T4> ts) {
 }
 
 void PointCloudRenderer::setRes(int x, int y) {
-    delete[] depth;
+    if(!(depth == nullptr))
+        delete[] depth;
     xres = x;
     yres = y;
     renWin->SetSize(xres, yres);
