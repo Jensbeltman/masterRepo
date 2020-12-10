@@ -18,16 +18,16 @@
 
 
 struct GAResult {
-    chromosomeT best_chromosome;
-    int best_chromosome_index = 0;
-    double best_chromosome_cost = std::numeric_limits<double>::max();
-    std::vector<double> best_chromosome_cost_history;
+    chromosomeT chromosome;
+    int chromosome_index = 0;
+    double cost = std::numeric_limits<double>::max();
+    std::vector<double> cost_history;
 };
 
 std::ostream &operator<<(std::ostream &os, const GAResult &result);
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GAResult, best_chromosome, best_chromosome_index, best_chromosome_cost,
-                                   best_chromosome_cost_history)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GAResult, chromosome, chromosome_index, cost,
+                                   cost_history)
 
 
 class GA {
