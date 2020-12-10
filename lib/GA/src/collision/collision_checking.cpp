@@ -1,12 +1,15 @@
 #include "ga/collision/collision_checking.hpp"
 #include "fcl/narrowphase/collision.h"
+#include "fcl/narrowphase/distance.h"
 #include <fcl/broadphase/broadphase_dynamic_AABB_tree.h>
 #include <utility>
 
 struct CustomCollisionData {
-    fcl::CollisionRequest<double> request;
-    fcl::CollisionResult<double> result;
-    std::vector<std::pair<fcl::CollisionObject<double>*,fcl::CollisionObject<double>*>> final_results;
+    const fcl::CollisionRequest<double> coll_request{1,true};
+    fcl::CollisionResult<double> coll_result;
+
+    std::vector<std::pair<fcl::CollisionObject<double>*,fcl::CollisionObject<double>*>> collision_pairs;
+    std::vector<double> collision_pair_penetration_depth;
 
     bool done{false};
 };
@@ -15,13 +18,17 @@ bool CustomCollisionFunction(fcl::CollisionObject<double>* o1, fcl::CollisionObj
                              void* data) {
     assert(data != nullptr);
     auto* collision_data = static_cast<CustomCollisionData*>(data);
-    const fcl::CollisionRequest<double>& request = collision_data->request;
-    fcl::CollisionResult<double>& result = collision_data->result;
+    const fcl::CollisionRequest<double>& coll_request = collision_data->coll_request;
+    fcl::CollisionResult<double>& coll_result = collision_data->coll_result;
 
-    collide(o1, o2, request, result);
-    if(result.isCollision()) { collision_data->final_results.emplace_back(o1, o2); }
 
-    result.clear();
+    collide(o1, o2, coll_request, coll_result);
+    if(coll_result.isCollision()) {
+        collision_data->collision_pairs.emplace_back(o1, o2);
+        collision_data->collision_pair_penetration_depth.emplace_back(coll_result.getContact(0).penetration_depth);
+    }
+
+    coll_result.clear();
     return collision_data->done;
 }
 
@@ -65,7 +72,7 @@ CollisionModelPtr get_coll_model(MeshPtr meshptr) {
     return collModelPtr;
 }
 
-std::vector<std::pair<int,int>> get_collisions(std::vector<T4> &object_candidates, MeshPtr &meshPtr){
+Collisions get_collisions(std::vector<T4> &object_candidates, MeshPtr &meshPtr){
     CollisionModelPtr collisionModelPtr = get_coll_model(meshPtr);
 
     auto *manager = new fcl::DynamicAABBTreeCollisionManager<double>;
@@ -86,15 +93,15 @@ std::vector<std::pair<int,int>> get_collisions(std::vector<T4> &object_candidate
     manager->collide(&custom_collision_data, CustomCollisionFunction);
 
     // Get collision pair index
-    std::vector<std::pair<int,int>> collisions;
+    Collisions collisions;
     int first_obj_match, second_obj_match;
-    for(auto &p:custom_collision_data.final_results){
+    for(auto &p:custom_collision_data.collision_pairs){
         first_obj_match = std::distance(collisionObjects.begin(),std::find(collisionObjects.begin(),collisionObjects.end(),p.first));
         second_obj_match = std::distance(collisionObjects.begin(),std::find(collisionObjects.begin(),collisionObjects.end(),p.second));
-        collisions.emplace_back(first_obj_match,second_obj_match);
+        collisions.pairs.emplace_back(first_obj_match, second_obj_match);
     }
 
-    std::sort(collisions.begin(),collisions.end());
+    std::sort(collisions.pairs.begin(), collisions.pairs.end());
 
     return collisions;
 }

@@ -63,7 +63,8 @@ void GeneticEvaluatorOC::init_collisions() {
     oc_collision_pairs.clear();
     // Detect collisions
     chronometer.tic();
-    oc_collision_pairs = get_collisions(dp.ocs, meshPtr);
+    Collisions collisions = get_collisions(dp.ocs, meshPtr);
+    oc_collision_pairs = collisions.pairs;
     std::cout << "Collision init elapsed time: " << chronometer.toc() << "s\n";
 }
 

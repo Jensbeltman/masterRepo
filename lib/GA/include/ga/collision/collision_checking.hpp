@@ -10,7 +10,12 @@ typedef fcl::BVHModel<fcl::OBBRSSd> CollisionModel;
 typedef std::shared_ptr<CollisionModel> CollisionModelPtr;
 typedef std::shared_ptr<cv::viz::Mesh> MeshPtr;
 
-std::vector<std::pair<int,int>> get_collisions(std::vector<T4> &object_candidates, MeshPtr &meshPtr);
+struct Collisions{
+    std::vector<std::pair<int,int>> pairs;
+    std::vector<double> distances;
+};
+
+Collisions get_collisions(std::vector<T4> &object_candidates, MeshPtr &meshPtr);
 std::ostream &operator<<(std::ostream &os, const std::vector<std::pair<int,int>>& collisions);
 
 #endif //MASTER_COLLISION_CHECK_HPP
