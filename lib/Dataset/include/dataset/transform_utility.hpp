@@ -27,7 +27,7 @@ public:
 
     T4 get_noisy_transform(T4 &T);
 
-    std::vector<bool> get_true_positives(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh);
+    std::vector<bool> get_false_positives(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh);
 };
 
 #endif //MASTER_POSE_NOISE_H

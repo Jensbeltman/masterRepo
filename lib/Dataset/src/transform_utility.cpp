@@ -8,7 +8,6 @@ TransformUtility::TransformUtility(double std_t, double std_r) : normal_dist_t(
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
     rng.seed(ss);
-
 }
 
 void TransformUtility::append_noisy_transforms(std::vector<Eigen::Transform<double, 3, Eigen::Affine>> &Ts, int n) {
@@ -44,8 +43,8 @@ TransformUtility::get_noisy_transform(Eigen::Transform<double, 3, Eigen::Affine>
 }
 
 std::vector<bool>
-TransformUtility::get_true_positives(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh) {
-    std::vector<bool> fp(ocs.size(), false);
+TransformUtility::get_false_positives(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh) {
+    std::vector<bool> fp(ocs.size(), true);
 
 
     for (auto gt:gts) {
@@ -62,7 +61,7 @@ TransformUtility::get_true_positives(std::vector<T4> ocs, std::vector<T4> gts, d
             Eigen::Matrix3d R = gt_r.transpose() * oc_r;
 
             double t_diff = t.lpNorm<2>();
-            double r_diff = Eigen::AngleAxis<double>(R).angle();
+            double r_diff = abs(Eigen::AngleAxis<double>(R).angle());
             if ((t_diff <= t_thresh) && (r_diff <= r_thresh)) {
                 if (t_diff < best_t_diff && r_diff < best_r_diff) {
                     best_i = i;
@@ -72,7 +71,7 @@ TransformUtility::get_true_positives(std::vector<T4> ocs, std::vector<T4> gts, d
             }
         }
         if (best_i != -1) {
-            fp[best_i] = true;
+            fp[best_i] = false;
         }
     }
 
