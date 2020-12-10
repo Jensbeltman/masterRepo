@@ -1,4 +1,5 @@
 #include "dataset/transform_utility.hpp"
+#include <algorithm>    // std::find
 
 TransformUtility::TransformUtility(double std_t, double std_r) : normal_dist_t(
         std::normal_distribution<double>(0, std_t)),
@@ -43,14 +44,15 @@ TransformUtility::get_noisy_transform(Eigen::Transform<double, 3, Eigen::Affine>
 }
 
 std::vector<bool>
-TransformUtility::get_false_positives(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh) {
-    std::vector<bool> fp(ocs.size(), true);
+TransformUtility::get_true_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh) {
+    std::vector<bool> true_ocs(ocs.size(), false);
 
 
     for (auto gt:gts) {
         int best_i = -1;
         double best_t_diff = std::numeric_limits<double>::max();
         double best_r_diff = std::numeric_limits<double>::max();
+        std::vector<int> chosen;
 
         for (int i = 0; i < ocs.size(); i++) {
             Eigen::Vector3d oc_t = ocs[i].matrix().block<3, 1>(0, 3);
@@ -64,17 +66,20 @@ TransformUtility::get_false_positives(std::vector<T4> ocs, std::vector<T4> gts, 
             double r_diff = abs(Eigen::AngleAxis<double>(R).angle());
             if ((t_diff <= t_thresh) && (r_diff <= r_thresh)) {
                 if (t_diff < best_t_diff && r_diff < best_r_diff) {
-                    best_i = i;
-                    best_t_diff = t_diff;
-                    best_r_diff = r_diff;
+                    if(std::find(chosen.begin(),chosen.end(),i)==chosen.end()) {
+                        best_i = i;
+                        best_t_diff = t_diff;
+                        best_r_diff = r_diff;
+                    }
                 }
             }
         }
         if (best_i != -1) {
-            fp[best_i] = false;
+            true_ocs[best_i] = true;
+            chosen.emplace_back(best_i);
         }
     }
 
-    return fp;
+    return true_ocs;
 }
 
