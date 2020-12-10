@@ -36,12 +36,23 @@ int main(int argc, char **argv) {
     TransformUtility tu;
 
     // Logging
-    rapidcsv::CSVWriteDoc cost_hist_doc(output_folder+"/gaCostHist.csv",
-                                        rapidcsv::LabelParams(-1, 0));
+    rapidcsv::CSVWriteDoc ga_cost_hist_doc(output_folder + "/gaCostHist.csv",
+                                           rapidcsv::LabelParams(-1, 0));
+    rapidcsv::CSVWriteDoc ba_cost_hist_doc(output_folder + "/baCostHist.csv",
+                                           rapidcsv::LabelParams(-1, 0));
     rapidcsv::CSVWriteDoc results_doc(output_folder+"/results.csv", rapidcsv::LabelParams(0, 0));
     results_doc.SetColumnName(0, "GA_Chromosome");
     results_doc.SetColumnName(1, "BA_Chromosome");
-    results_doc.SetColumnName(2, "False_Posetives");
+    results_doc.SetColumnName(2, "#ocs");
+    results_doc.SetColumnName(3, "#ga_tp");
+    results_doc.SetColumnName(4, "#ga_fp");
+    results_doc.SetColumnName(5, "#ga_tn");
+    results_doc.SetColumnName(6, "#ga_fn");
+    results_doc.SetColumnName(7, "#ba_tp");
+    results_doc.SetColumnName(8, "#ba_fp");
+    results_doc.SetColumnName(9, "#ba_tn");
+    results_doc.SetColumnName(10, "#ba_fn");
+
     int csv_row = 0;
 
     for(auto name:object_names) {
@@ -57,7 +68,7 @@ int main(int argc, char **argv) {
 
 
         auto geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(ob, 0, 1);
-        GA ga(100, 100, 50, 0.05, 0.1, 0.3);
+        GA ga(100, 20, 50, 0.05, 0.1, 0.3);
         ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorOCPtr);
 
         Baseline baseline(geneticEvaluatorOCPtr);
@@ -73,44 +84,71 @@ int main(int argc, char **argv) {
 
                 BAResult baResult = baseline.solve();
 
-
                 //GA
                 ga.n_genes = dp.ocs.size(); // Update chromosome size
                 GAResult gaResult = ga.solve();
 
-                std::vector<bool> false_positives = tu.get_false_positives(dp.ocs, dp.gts, 4, 0.5);
+                std::vector<bool> correct_ocs = tu.get_true_ocs(dp.ocs, dp.gts, 4, 0.5);
 
-
-                int n_fp = 0;
-                int bl_n_fp = 0;
-                int ga_n_fp = 0;
+                int ga_tp = 0;
+                int ga_fp = 0;
+                int ga_tn = 0;
+                int ga_fn = 0;
+                int ba_tp = 0;
+                int ba_fp = 0;
+                int ba_tn = 0;
+                int ba_fn = 0;
 
                 int n_oc = dp.ocs.size();
-                for (int i = 0; i < dp.ocs.size(); i++) {
-                    if (false_positives[i]) {
+                int n_fp = 0;
+                for (int i = 0; i < n_oc; i++) {
+                    if (correct_ocs[i]) {
                         n_fp++;
                         if (gaResult.chromosome[i]) {
-                            ga_n_fp++;
+                            ga_tp++;
+                        }else{
+                            ga_fn++;
                         }
                         if (baResult.chromosome[i]) {
-                            bl_n_fp++;
+                            ba_tp++;
+                        }else{
+                            ba_fn++;
+                        }
+                    }
+                    else{
+                        if (gaResult.chromosome[i]) {
+                            ga_fp++;
+                        }else{
+                            ga_tn++;
+                        }
+                        if (baResult.chromosome[i]) {
+                            ba_fp++;
+                        }else{
+                            ba_tn++;
                         }
                     }
                 }
 
                 std::string row_name = ob->name_singular + "_" + std::to_string(sample_n);
-                cost_hist_doc.SetRowNameAndValue(csv_row, row_name, gaResult.cost_history);
-                results_doc.SetCell(0, csv_row, gaResult.chromosome);
-                results_doc.SetCell(1, csv_row, baResult.chromosome);
-                results_doc.SetCell(2, csv_row, false_positives);
+                ga_cost_hist_doc.SetRowNameAndValue(csv_row, row_name, gaResult.cost_history);
+                ba_cost_hist_doc.SetRowNameAndValue(csv_row, row_name, baResult.cost_history);
+                results_doc.SetCell(0,csv_row, gaResult.chromosome);
+                results_doc.SetCell(1,csv_row, baResult.chromosome);
+                results_doc.SetCell(2,csv_row, correct_ocs);
+                results_doc.SetCell(3,csv_row, ga_tp);
+                results_doc.SetCell(4,csv_row, ga_fp);
+                results_doc.SetCell(5,csv_row, ga_tn);
+                results_doc.SetCell(6,csv_row, ga_fn);
+                results_doc.SetCell(7,csv_row, ba_tp);
+                results_doc.SetCell(8,csv_row, ba_fp);
+                results_doc.SetCell(9,csv_row, ba_tn);
+                results_doc.SetCell(10,csv_row, ba_fn);
                 results_doc.SetRowName(csv_row, row_name);
                 csv_row++;
 
-                std::cout << "Number of ocs: " << n_oc << "\tNumber of false positive: " << n_fp
-                          << "\tBaseline false positive: " << bl_n_fp
-                          << "\tGa false positive: " << ga_n_fp << std::endl;
+                std::cout <<dp.ocs.size()<<"ocs "<<dp.gts.size()<<"gts "<<"results(tp,fp,tn,fn), GA: " << ga_tp <<"\t"<<ga_fp<<"\t"<<ga_tn<<"\t"<<ga_fn<<" BA: "<< ba_tp <<"\t"<<ba_fp<<"\t"<<ba_tn<<"\t"<<ba_fn<<std::endl;
 
-                if (false) { //vis_on || (ga_n_fp<bl_n_fp) /todo fix visualizer
+                if (false) { //vis_on || (ga_fp<ba_fp) /todo fix visualizer
                     PointCloudGroupVisualizer vis;
                     // VISUALISATION
                     vis.addIdPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
@@ -119,20 +157,20 @@ int main(int argc, char **argv) {
 
                     for (int i = 0; i < geneticEvaluatorOCPtr->dp.ocs.size(); i++) {
                         std::string id = "oc_" + std::to_string(i);
-                        PointCloudT::Ptr ocpc(new PointCloudT);
-                        extractIndices.setInputCloud(geneticEvaluatorOCPtr->pcm);
-                        extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
-                        extractIndices.filter(*ocpc);
-                        pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->dp.ocs[i]);
+//                        PointCloudT::Ptr ocpc(new PointCloudT);
+//                        extractIndices.setInputCloud(geneticEvaluatorOCPtr->pcm);
+//                        extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
+//                        extractIndices.filter(*ocpc);
+//                        pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->dp.ocs[i]);
 
                         if (gaResult.chromosome[i] && baResult.chromosome[i]) {
-                            vis.addIdPointCloud(ocpc, id, "Accepted by both", 0, 255, 0);
+                            vis.addIdPointCloud(geneticEvaluatorOCPtr->visible_oc_pcs[i], id, "Accepted by both", 0, 255, 0);
                         } else if ((!gaResult.chromosome[i]) && (!baResult.chromosome[i])) {
-                            vis.addIdPointCloud(ocpc, id, "Rejected by both", 255, 0, 0);
+                            vis.addIdPointCloud(geneticEvaluatorOCPtr->visible_oc_pcs[i], id, "Rejected by both", 255, 0, 0);
                         } else if ((gaResult.chromosome[i]) && (!baResult.chromosome[i])) {
-                            vis.addIdPointCloud(ocpc, id, "Rejcted by baseline", 255, 255, 0);
+                            vis.addIdPointCloud(geneticEvaluatorOCPtr->visible_oc_pcs[i], id, "Rejcted by baseline", 255, 255, 0);
                         } else if ((!gaResult.chromosome[i]) && (baResult.chromosome[i])) {
-                            vis.addIdPointCloud(ocpc, id, "Accepted by baseline", 0, 0, 255);
+                            vis.addIdPointCloud(geneticEvaluatorOCPtr->visible_oc_pcs[i], id, "Accepted by baseline", 0, 0, 255);
                         }
                     }
 
@@ -152,7 +190,8 @@ int main(int argc, char **argv) {
             }
         }
     }
-    cost_hist_doc.Save();
+    ga_cost_hist_doc.Save();
+    ba_cost_hist_doc.Save();
     results_doc.Save();
     return 0;
 }
