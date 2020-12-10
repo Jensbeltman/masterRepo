@@ -28,8 +28,9 @@ public:
     pcl::KdTreeFLANN<PointT>::Ptr kdtree;
     T4 camera_pose;
     std::vector<T4> object_candidates;//object candidates
-    std::vector<pcl::IndicesPtr> oc_visible_pt_idxs;
+    //std::vector<pcl::IndicesPtr> oc_visible_pt_idxs;
     std::vector<pcl::IndicesPtr> oc_visible_inlier_pt_idxs;
+    std::vector<PointCloudT::Ptr> visible_oc_pcs;
     std::vector<std::pair<int,int>>  oc_collision_pairs;
 
     double inlier_threshold;

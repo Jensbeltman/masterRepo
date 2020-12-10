@@ -6,6 +6,7 @@
 #include <pcl/common/transforms.h>
 #include "chronometer.h"
 #include <fcl/fcl.h>
+#include "ga/point_cloud_processing/point_cloud_renderer.hpp"
 
 using namespace std;
 
@@ -31,35 +32,31 @@ void GeneticEvaluatorOC::initialise_datapoint(int datapoint_n) {
 
 //Todo consider if this should be a seperate function
 void GeneticEvaluatorOC::init_visible_inliers() {
-    oc_visible_pt_idxs.clear();
     oc_visible_inlier_pt_idxs.clear();
     chronometer.tic();
+    PointCloudRenderer pc_render;
+    pc_render.addActorsPLY(datasetObjectPtr->mesh_path,dp.ocs);
+    pc_render.fitCameraAndResolution();
+    visible_oc_pcs.clear();
+    visible_oc_pcs.reserve(dp.ocs.size());
+    pc_render.renderPointClouds(visible_oc_pcs);
+    double render_time =  chronometer.toc();
+
     // Vectors for knn
     std::vector<int> k_indices;
     std::vector<float> k_sqr_distances;
 
-    for (T4 oc:dp.ocs) {
-        // Generate visible idxs for object candidate
-        T4 cameraMeshVis = (camera_pose.inverse() *
-                            oc).inverse();// instead of transforming the point cloud i transform the camera for use in visiblity calc
-        oc_visible_pt_idxs.push_back(pp::get_visible_indices(ncm,
-                                                             cameraMeshVis));// get visible mesh point cloud indices based on normal information and camera pose
-
-        // Generate visible inlier points between object candidate pc and data
-        PointT p;
-        pcl::detail::Transformer<float> tf(oc.matrix().cast<float>());
+    for (auto &pc:visible_oc_pcs) {
         pcl::IndicesPtr inlier_pts(new pcl::Indices);
-        for (int &pi : *(oc_visible_pt_idxs.back())) {
-            tf.se3(pcm->points[pi].data, p.data);
-            kdtree->radiusSearch(p, inlier_threshold, k_indices, k_sqr_distances,
-                                 1);//Todo speed might be improved by implementing a nn instead of knn too avoid vector usage
+        for (auto &p: pc->points) {
+            kdtree->radiusSearch(p, inlier_threshold, k_indices, k_sqr_distances,1);//Todo speed might be improved by implementing a nn instead of knn too avoid vector usage
             if (!k_indices.empty()) {
                 inlier_pts->push_back(k_indices[0]);
             }
         }
         oc_visible_inlier_pt_idxs.push_back(inlier_pts);
     }
-    std::cout << "Inliers and visiblity init elapsed time: " << chronometer.toc() << "s\n";
+    std::cout << "Inliers and visiblity init elapsed time: " << chronometer.toc() << "s,"<<"Render Time: "<<render_time<<"s\n";
 }
 
 void GeneticEvaluatorOC::init_collisions() {
@@ -76,7 +73,7 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
         std::cout << "Chromosome and ground truth poses are not same dimension returning 0.0 cost" << endl;
         return 0.0;
     }
-    double cost = 0;
+    double cost = pc->size();
     int n_active_genes = 0;
     int vis_inlier_pt_cnt_tot = 0;
     int vis_pt_cnt_tot = 0;
@@ -94,25 +91,27 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
     for (int i = 0; i < dp.ocs.size(); i++) {
         if (chromosome[i]) {
             int vis_inlier_pt_cnt = oc_visible_inlier_pt_idxs[i]->size();
-            int vis_pt_cnt = oc_visible_pt_idxs[i]->size();
+            vis_pt_cnt_tot += visible_oc_pcs[i]->points.size();
 
-            if (in_collision[i]) {
-                vis_inlier_pt_cnt_tot -= vis_inlier_pt_cnt;
-            } else {
+//            if (in_collision[i]) {
+//                vis_inlier_pt_cnt_tot -= vis_inlier_pt_cnt;
+//            } else {
+//                vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
+//                n_active_genes++;
+//            }
+            if (!in_collision[i]) {
                 vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
-                n_active_genes++;
             }
-            vis_pt_cnt_tot += vis_pt_cnt;
-
-
+            n_active_genes++;
         }
     }
+    const double cost_equality_inlier_thresh = 0.1;
+    double scale = 1/cost_equality_inlier_thresh;
+    // If inlier is 50% of ocs points cost remains unchanged
+    //cost -= vis_inlier_pt_cnt_tot; // Reduce the cost when added ocs explain data
+    cost += (vis_pt_cnt_tot-scale*vis_inlier_pt_cnt_tot); // Increase cost if some of the added oc data does not explain the data
 
-
-    cost = -vis_inlier_pt_cnt_tot;
-
-
-    if (isnan(cost) || !n_active_genes)
+    if (isnan(cost))
         cost = std::numeric_limits<double>::max();
 
     return cost;
