@@ -75,7 +75,7 @@ GAResult GA::solve() {
         last_population = population;
     }
 
-    result.best_chromosome = population[population_sorted_indices[0]];
+    result.chromosome = population[population_sorted_indices[0]];
 
     return result;
 }
@@ -113,17 +113,17 @@ void GA::calculate_population_cost(std::vector<double> &costs) {
              return costs[a] < costs[b];
          });
 
-    result.best_chromosome_cost_history.push_back(population_costs[population_sorted_indices[0]]);
-    if (population_costs[population_sorted_indices[0]] < result.best_chromosome_cost) {
-        result.best_chromosome_cost = population_costs[population_sorted_indices[0]];
-        result.best_chromosome_index = population_sorted_indices[0];
+    result.cost_history.push_back(population_costs[population_sorted_indices[0]]);
+    if (population_costs[population_sorted_indices[0]] < result.cost) {
+        result.cost = population_costs[population_sorted_indices[0]];
+        result.chromosome_index = population_sorted_indices[0];
     }
 }
 
 
 // Compare funcitons and ostream overloads
 std::ostream &operator<<(std::ostream &os, const GAResult &result) {
-    os << "Best chromosome " << result.best_chromosome << ", Cost " << result.best_chromosome_cost;
+    os << "Best chromosome " << result.chromosome << ", Cost " << result.cost;
     return os;
 }
 

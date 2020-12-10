@@ -1,11 +1,17 @@
 #ifndef MASTER_BASELINE_HPP
-#define MASTER_BASELINE_COMP_HPP
+#define MASTER_BASELINE_HPP
 #include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
+
+struct BAResult {
+    chromosomeT chromosome;
+    double cost = std::numeric_limits<double>::max();
+    std::vector<double> cost_history;
+};
 
 class Baseline {
 public:
     Baseline(GeneticEvaluatorOCPtr geneticEvaluatorOCPtr);
-    chromosomeT get_best_chromosome();
+    BAResult solve();
 
     GeneticEvaluatorOCPtr geneticEvaluatorOCPtr;
 private:

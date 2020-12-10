@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
         extractIndices.filter(*ocpc);
         pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
 
-        if (ga.result.best_chromosome[i]) {
+        if (ga.result.chromosome[i]) {
             vis.addIdPointCloud(ocpc, id, "accepted", 0, 255, 0);
         } else {
             vis.addIdPointCloud(ocpc, id, "rejected", 255, 0, 0);
