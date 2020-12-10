@@ -16,6 +16,9 @@ find_package(OpenCV REQUIRED)
 # FCL
 find_package(fcl REQUIRED)
 
+#Matplot++
+find_package(Matplot++ REQUIRED)
+
 add_subdirectory(lib)
 add_subdirectory(app)
 add_subdirectory(test)
