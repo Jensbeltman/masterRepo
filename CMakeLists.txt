@@ -8,14 +8,13 @@ find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(VTK REQUIRED)
 OPTION(VTK_LEGACY_REMOVE "Remove all legacy code completely." ON)
 #PCL
-find_package(PCL 1.11 REQUIRED)
+find_package(PCL 1.10 REQUIRED)
 #JSON
 find_package(nlohmann_json 3.2.0 REQUIRED)
-#OPENCV
-find_package(OpenCV REQUIRED)
 # FCL
 find_package(fcl REQUIRED)
-
+#OPENCV
+find_package(OpenCV REQUIRED)
 #Matplot++
 find_package(Matplot++ REQUIRED)
 
