@@ -749,7 +749,7 @@ namespace rapidcsv
         mData.push_back(row);
       }
 
-      if (pRow.size() > GetDataColumnCount())
+      if ((pRow.size() + (mLabelParams.mRowNameIdx + 1)) > GetDataColumnCount())
       {
         for (auto itRow = mData.begin(); itRow != mData.end(); ++itRow)
         {
