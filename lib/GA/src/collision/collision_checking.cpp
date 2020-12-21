@@ -101,6 +101,8 @@ Collisions get_collisions(std::vector<T4> &object_candidates, MeshPtr &meshPtr){
         collisions.pairs.emplace_back(first_obj_match, second_obj_match);
     }
 
+    collisions.distances = custom_collision_data.collision_pair_penetration_depth;
+
     std::sort(collisions.pairs.begin(), collisions.pairs.end());
 
     return collisions;
