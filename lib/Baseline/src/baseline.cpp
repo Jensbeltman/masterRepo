@@ -20,10 +20,11 @@ BAResult Baseline::solve() {
         cost = geneticEvaluatorOCPtr->evaluate_chromosome(result.chromosome);
         if (cost < result.cost) {
             result.cost = cost;
-            result.cost_history.emplace_back(cost);
         } else {
             result.chromosome[i] = false;
         }
+
+        result.cost_history.emplace_back(result.cost);
     }
     return result;
 }
