@@ -72,16 +72,11 @@ int main(int argc, char** argv) {
     pcl::ExtractIndices<PointT> extractIndices;
     for (int i = 0; i < geneticEvaluatorOCPtr->object_candidates.size(); i++) {
         std::string id = "oc_" + std::to_string(i);
-        PointCloudT::Ptr ocpc(new PointCloudT);
-        extractIndices.setInputCloud(geneticEvaluatorOCPtr->pcm);
-        extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
-        extractIndices.filter(*ocpc);
-        pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->object_candidates[i]);
 
         if (ga.result.chromosome[i]) {
-            vis.addIdPointCloud(ocpc, id, "accepted", 0, 255, 0);
+            vis.addIdPointCloud(geneticEvaluatorOCPtr->visible_oc_pcs[i], id, "accepted", 0, 255, 0);
         } else {
-            vis.addIdPointCloud(ocpc, id, "rejected", 255, 0, 0);
+            vis.addIdPointCloud(geneticEvaluatorOCPtr->visible_oc_pcs[i], id, "rejected", 255, 0, 0);
         }
     }
 
