@@ -95,6 +95,8 @@ ScapeDatasetObject::ScapeDatasetObject(std::string _path, std::vector<std::files
             }
         }
     }
+
+    std::sort(scape_data_points.begin(),scape_data_points.end(),[](ScapeDataPoint &a,ScapeDataPoint &b){return a.pcd_filename<b.pcd_filename;});
     for(auto& sdp:scape_data_points){
         data_points.emplace_back(static_cast<DataPoint>(sdp)); // Cast scape data point to regular so that they can be used my the general interface
     }
