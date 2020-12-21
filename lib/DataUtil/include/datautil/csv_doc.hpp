@@ -12,6 +12,13 @@ namespace rapidcsv {
             SetRow(pRowIdx, pRow);
             SetRowName(pRowIdx, pRowName);
         };
+
+        template<typename T>
+        void AppendRowNameAndValue(size_t pRowIdx, const std::string &pRowName, const std::vector<T> &pRow) {
+            size_t next_row = GetRowCount();
+            SetRow(next_row, pRow);
+            SetRowName(next_row, pRowName);
+        };
     };
 
     class CSVRReadDoc : public CSVDoc {
