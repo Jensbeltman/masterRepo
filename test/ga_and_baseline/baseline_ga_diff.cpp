@@ -20,6 +20,8 @@ int main(int argc, char **argv) {
     std::string s = argv[1];
     std::string delimiter = ":";
     std::string output_folder = argv[2];
+    if(!std::filesystem::exists(output_folder))
+        std::filesystem::create_directory(output_folder);
 
     size_t pos = 0;
     std::string token;
@@ -31,7 +33,7 @@ int main(int argc, char **argv) {
         s.erase(0, pos + delimiter.length());
     }
     object_names.push_back(s); // Get last name
-
+    bool vis_on = (bool)std::stoi(argv[3]);
 
     TransformUtility tu;
 
@@ -88,7 +90,7 @@ int main(int argc, char **argv) {
                 ga.n_genes = dp.ocs.size(); // Update chromosome size
                 GAResult gaResult = ga.solve();
 
-                std::vector<bool> correct_ocs = tu.get_true_ocs(dp.ocs, dp.gts, 4, 0.5);
+                std::vector<bool> correct_ocs = tu.get_true_ocs(dp.ocs, dp.gts, 4, 5);
 
                 int ga_tp = 0;
                 int ga_fp = 0;
@@ -130,8 +132,8 @@ int main(int argc, char **argv) {
                 }
 
                 std::string row_name = ob->name_singular + "_" + std::to_string(sample_n);
-                ga_cost_hist_doc.SetRowNameAndValue(csv_row, row_name, gaResult.cost_history);
-                ba_cost_hist_doc.SetRowNameAndValue(csv_row, row_name, baResult.cost_history);
+                ga_cost_hist_doc.AppendRowNameAndValue(csv_row, row_name, gaResult.cost_history);
+                ba_cost_hist_doc.AppendRowNameAndValue(csv_row, row_name, baResult.cost_history);
                 results_doc.SetCell(0,csv_row, gaResult.chromosome);
                 results_doc.SetCell(1,csv_row, baResult.chromosome);
                 results_doc.SetCell(2,csv_row, correct_ocs);
@@ -148,7 +150,7 @@ int main(int argc, char **argv) {
 
                 std::cout <<dp.ocs.size()<<"ocs "<<dp.gts.size()<<"gts "<<"results(tp,fp,tn,fn), GA: " << ga_tp <<"\t"<<ga_fp<<"\t"<<ga_tn<<"\t"<<ga_fn<<" BA: "<< ba_tp <<"\t"<<ba_fp<<"\t"<<ba_tn<<"\t"<<ba_fn<<std::endl;
 
-                if (false) { //vis_on || (ga_fp<ba_fp) /todo fix visualizer
+                if (vis_on) { //vis_on || (ga_fp<ba_fp) /todo fix visualizer
                     PointCloudGroupVisualizer vis;
                     // VISUALISATION
                     vis.addIdPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
@@ -157,11 +159,6 @@ int main(int argc, char **argv) {
 
                     for (int i = 0; i < geneticEvaluatorOCPtr->dp.ocs.size(); i++) {
                         std::string id = "oc_" + std::to_string(i);
-//                        PointCloudT::Ptr ocpc(new PointCloudT);
-//                        extractIndices.setInputCloud(geneticEvaluatorOCPtr->pcm);
-//                        extractIndices.setIndices(geneticEvaluatorOCPtr->oc_visible_pt_idxs[i]);
-//                        extractIndices.filter(*ocpc);
-//                        pcl::transformPointCloud(*ocpc, *ocpc, geneticEvaluatorOCPtr->dp.ocs[i]);
 
                         if (gaResult.chromosome[i] && baResult.chromosome[i]) {
                             vis.addIdPointCloud(geneticEvaluatorOCPtr->visible_oc_pcs[i], id, "Accepted by both", 0, 255, 0);
