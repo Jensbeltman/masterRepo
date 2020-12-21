@@ -21,11 +21,11 @@ int main(){
 
     std::shared_ptr<GeneticEvaluatorOC> geneticEvaluatorOCPtr = std::make_shared<GeneticEvaluatorOC>(datasetObject, sample_n, 1);
 
-    std::shared_ptr<cv::viz::Mesh> meshPtr = scapeObject->get_mesh();
-    std::vector<T4> object_candidates = scapeObject->get_object_candidates(sample_n);
 
-    std::vector<std::pair<int,int>> collisions = get_collisions(object_candidates,meshPtr);
-    std::cout<<collisions;
+    std::vector<T4> object_candidates = scapeObject->get_object_candidates(sample_n);
+    MeshPtr meshPtr =  scapeObject->get_mesh();
+    Collisions collisions = get_collisions(object_candidates,meshPtr);
+    std::cout<<collisions.pairs;
 
     pcl::visualization::PCLVisualizer::Ptr vis = vis_pc_and_oc(datasetObject,sample_n);
     vis->spin();
