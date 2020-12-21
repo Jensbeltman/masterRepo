@@ -50,7 +50,7 @@ void PointCloudGroupVisualizer::updateSelector() {
     group_ids_itt = group_ids.begin();
 
     if (!group_ids.empty()) {
-
+        spinOnce();
         std::array<double, 3> rgb = group_color[group_ids_itt->first];
         pcl::visualization::Camera camera;
         getCameraParameters(camera);

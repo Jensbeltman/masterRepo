@@ -84,8 +84,8 @@ public:
 
 protected:
 
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> render_window_src_;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> render_window_dst_;
+    vtkSmartPointer<vtkRenderWindow> render_window_src_;
+    vtkSmartPointer<vtkRenderWindow> render_window_dst_;
     vtkSmartPointer<vtkRenderer> renderer_src_;
     vtkSmartPointer<vtkRenderer> renderer_dst_;
     pcl::shared_ptr<PointCloudGroupVisualizer> vis_src_;

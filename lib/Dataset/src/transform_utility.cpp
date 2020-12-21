@@ -1,5 +1,9 @@
 #include "dataset/transform_utility.hpp"
 #include <algorithm>    // std::find
+#include <cmath>
+#include <math.h>
+
+
 
 TransformUtility::TransformUtility(double std_t, double std_r) : normal_dist_t(
         std::normal_distribution<double>(0, std_t)),
@@ -63,7 +67,7 @@ TransformUtility::get_true_ocs(std::vector<T4> ocs, std::vector<T4> gts, double 
             Eigen::Matrix3d R = gt_r.transpose() * oc_r;
 
             double t_diff = t.lpNorm<2>();
-            double r_diff = abs(Eigen::AngleAxis<double>(R).angle());
+            double r_diff = std::acos((R.trace()-1)/2)*(180.0/M_PI);
             if ((t_diff <= t_thresh) && (r_diff <= r_thresh)) {
                 if (t_diff < best_t_diff && r_diff < best_r_diff) {
                     if(std::find(chosen.begin(),chosen.end(),i)==chosen.end()) {
