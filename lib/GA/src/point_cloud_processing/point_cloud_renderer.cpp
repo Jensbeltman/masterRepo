@@ -51,7 +51,7 @@ void PointCloudRenderer::check_pcs(std::vector<PointCloudT::Ptr> &pcs) {
 
 }
 
-void PointCloudRenderer::renderPointClouds(std::vector<PointCloudT::Ptr> &pcs) {
+void PointCloudRenderer::renderPointClouds(std::vector<PointCloudT::Ptr> &pcs,bool apply_inverse_transform) {
     check_pcs(pcs);
 
     for (auto &a:actors)
@@ -68,7 +68,10 @@ void PointCloudRenderer::renderPointClouds(std::vector<PointCloudT::Ptr> &pcs) {
         pc->points.reserve(xres * yres);
         renWin->Render();
         updateDepth();
-        convertDepthToPointCloud(pc);
+        if (apply_inverse_transform)
+            convertDepthToPointCloud(pc,&(actor_transforms[i]));
+        else
+            convertDepthToPointCloud(pc);
 
         a->SetVisibility(0);
     }
@@ -178,11 +181,17 @@ void PointCloudRenderer::getWorldCoordMatrix(Eigen::Matrix4f &mat) {
     mat = user_transform_inverse.matrix().cast<float>()*mat2 * mat1;
 }
 
-void PointCloudRenderer::convertDepthToPointCloud(PointCloudT::Ptr &pc) {// TODO add option for transforming point cloud based on custom tf(ocs)
+void PointCloudRenderer::convertDepthToPointCloud(PointCloudT::Ptr &pc, T4* object_transform) {// TODO add option for transforming point cloud based on custom tf(ocs)
     unsigned int ptr = 0;
     Eigen::Vector4f world_coords;
     vtkCamera *camera = renderer->GetActiveCamera();
     double pos[3];
+
+    Eigen::Matrix4f mat_with_t;
+    if(!(object_transform == nullptr))
+        mat_with_t = object_transform->inverse().matrix().cast<float>()*mat;
+    else
+        mat_with_t = mat;
 
     float w3;
     for (int y = 0; y < yres; ++y) {
@@ -192,7 +201,7 @@ void PointCloudRenderer::convertDepthToPointCloud(PointCloudT::Ptr &pc) {// TODO
                 world_coords(1) = dheight * float(y) - 1.0f;
                 world_coords(2) = depth[ptr];
                 world_coords(3) = 1.0f;
-                world_coords = mat * world_coords;
+                world_coords = mat_with_t * world_coords;
 
                 w3 = 1.0f / world_coords[3];
                 // vtk view coordinate system is different than the standard camera coordinates (z forward, y down, x right), thus, the fliping in y and z
@@ -227,6 +236,8 @@ void PointCloudRenderer::convertDepthToPointCloud(PointCloudT::Ptr &pc) {// TODO
 
 
 void PointCloudRenderer::addActorsPLY(std::string path, std::vector<T4> ts) {
+    actor_transforms = ts;
+
     auto reader = vtkSmartPointer<vtkPLYReader>::New();
     reader->SetFileName(path.c_str());
 

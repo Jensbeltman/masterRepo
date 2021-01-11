@@ -15,6 +15,7 @@ public:
     vtkSmartPointer<vtkRenderer> renderer;
     vtkSmartPointer<vtkRenderWindow> renWin;
     std::vector<vtkSmartPointer<vtkActor> > actors;
+    std::vector<T4> actor_transforms;
 
     float *depth = nullptr;
 
@@ -24,7 +25,7 @@ public:
 
     void renderPointCloud(PointCloudT::Ptr &pc);
 
-    void renderPointClouds(std::vector<PointCloudT::Ptr> &pcs);
+    void renderPointClouds(std::vector<PointCloudT::Ptr> &pcs,bool apply_inverse_transform = false);
 
     void addActorsPLY(std::string path, std::vector<T4> ts);
 
@@ -42,7 +43,7 @@ private:
 
     void getWorldCoordMatrix(Eigen::Matrix4f &mat);
 
-    void convertDepthToPointCloud(PointCloudT::Ptr &pc);
+    void convertDepthToPointCloud(PointCloudT::Ptr &pc, T4* object_transform = nullptr);
 
     void updateDepth();
 
