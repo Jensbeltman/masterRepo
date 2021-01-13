@@ -218,6 +218,24 @@ void AlgorithmTuner::update_ocs_and_gts(const QString &s) {
 }
 
 
+void getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn, chromosomeT chromosome, chromosomeT correct_ocs) {
+    for (int i = 0; i < correct_ocs.size(); i++) {
+        if (correct_ocs[i]) {
+            if (chromosome[i]) {
+                tp.emplace_back(i);
+            } else {
+                fn.emplace_back(i);
+            }
+        } else {
+            if (chromosome[i]) {
+                fp.emplace_back(i);
+            } else {
+                tn.emplace_back(i);
+            }
+        }
+    }
+}
+
 void getFPTN(int &tp, int &fp, int &tn, int &fn, chromosomeT chromosome, chromosomeT correct_ocs) {
     for (int i = 0; i < correct_ocs.size(); i++) {
         if (correct_ocs[i]) {
@@ -290,7 +308,7 @@ void AlgorithmTuner::run_enabled_methods() {
         baResult = baseline.solve();
     }
 
-    int ga_tp = 0, ga_fp = 0, ga_tn = 0, ga_fn = 0, ba_tp = 0, ba_fp = 0, ba_tn = 0, ba_fn = 0;
+    std::vector<int> ga_tp, ga_fp, ga_tn, ga_fn, ba_tp, ba_fp, ba_tn, ba_fn;
     getFPTN(ga_tp, ga_fp, ga_tn, ga_fn, gaResult.chromosome, correct_ocs);
     getFPTN(ba_tp, ba_fp, ba_tn, ba_fn, baResult.chromosome, correct_ocs);
 
@@ -299,21 +317,21 @@ void AlgorithmTuner::run_enabled_methods() {
         resultDockFormLayout->removeRow(0);
 
     resultDockFormLayout->addRow(QString::fromStdString("ga_tp"),
-                                 new QLabel(QString::fromStdString(std::to_string(ga_tp))));
+                                 new QLabel(QString::fromStdString(std::to_string(ga_tp.size()))));
     resultDockFormLayout->addRow(QString::fromStdString("ga_fp"),
-                                 new QLabel(QString::fromStdString(std::to_string(ga_fp))));
+                                 new QLabel(QString::fromStdString(std::to_string(ga_fp.size()))));
     resultDockFormLayout->addRow(QString::fromStdString("ga_tn"),
-                                 new QLabel(QString::fromStdString(std::to_string(ga_tn))));
+                                 new QLabel(QString::fromStdString(std::to_string(ga_tn.size()))));
     resultDockFormLayout->addRow(QString::fromStdString("ga_fn"),
-                                 new QLabel(QString::fromStdString(std::to_string(ga_fn))));
+                                 new QLabel(QString::fromStdString(std::to_string(ga_fn.size()))));
     resultDockFormLayout->addRow(QString::fromStdString("ba_tp"),
-                                 new QLabel(QString::fromStdString(std::to_string(ba_tp))));
+                                 new QLabel(QString::fromStdString(std::to_string(ba_tp.size()))));
     resultDockFormLayout->addRow(QString::fromStdString("ba_fp"),
-                                 new QLabel(QString::fromStdString(std::to_string(ba_fp))));
+                                 new QLabel(QString::fromStdString(std::to_string(ba_fp.size()))));
     resultDockFormLayout->addRow(QString::fromStdString("ba_tn"),
-                                 new QLabel(QString::fromStdString(std::to_string(ba_tn))));
+                                 new QLabel(QString::fromStdString(std::to_string(ba_tn.size()))));
     resultDockFormLayout->addRow(QString::fromStdString("ba_fn"),
-                                 new QLabel(QString::fromStdString(std::to_string(ba_fn))));
+                                 new QLabel(QString::fromStdString(std::to_string(ba_fn.size()))));
     resultDock->show();
 
     // VISUALISATION
