@@ -9,7 +9,7 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkWindowToImageFilter.h>
 #include <vtkMatrix4x4.h>
-
+#include <pcl/common/transforms.h>
 
 
 int main(){
@@ -65,13 +65,15 @@ int main(){
 
     chronometer.tic();
     pcRen.renderPointClouds(pcs);
+    for(auto& pc:pcs){}
     time = chronometer.toc();
     cout<<"Render all ocs took: "<<time<<" seconds"<<std::endl;
 
-
-
-    for(int i = 0;i<pcs.size();i++)
-        vis.addIdPointCloud(pcs[i],"pc_"+std::to_string(i),"pc_"+std::to_string(i),0,255,0);
+    for(int i = 0;i<pcs.size();i++) {
+        auto tmp_pc = pcl::make_shared<PointCloudT>();
+        pcl::transformPointCloud(*pcs[i],*tmp_pc,dp.ocs[i]);
+        vis.addIdPointCloud(tmp_pc, "pc_" + std::to_string(i), "pc_" + std::to_string(i), 0, 255, 0);
+    }
 
     vis.addCoordinateSystem(100);
     vis.resetCamera();
