@@ -40,27 +40,34 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     QObject::connect(evaluator_settings.evaluator_types_combo_box, &QComboBox::currentTextChanged, this,
                      &AlgorithmTuner::update_evaluator_type);
 
+    algorithms.push_back(std::make_shared<GAInterface>());
+    algorithms.push_back(std::make_shared<BAInterface>());
 
+    for(auto &alg:algorithms){
+        QWidget* widget = new QTabWidget();
+        QFormLayout* qFormLayout = new QFormLayout();
 
+        for(auto &var:alg->variables_b)
+            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)),var.checkBox);
+        for(auto &var:alg->variables_i)
+            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)),var.spinBox);
+        for(auto &var:alg->variables_d)
+            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)),var.spinBox);
+
+        widget->setLayout(qFormLayout);
+        settingsTabWidget->addTab(widget,QString::fromStdString(alg->name));
+    }
 
     //General Settings
     generalSettingsFormLayout->addRow(QString::fromStdString("ground_truth_t_thresh"),
                                       general_settings.ground_truth_t_thresh);
     generalSettingsFormLayout->addRow(QString::fromStdString("ground_truth_r_thresh"),
                                       general_settings.ground_truth_r_thresh);
-    generalSettingsFormLayout->addRow(QString::fromStdString("icp_inlier_thresh"), general_settings.icp_inlier_thresh);
-    //GA Settings
-    gaSettingsFormLayout->addRow(QString::fromStdString("enable"), ga_settings.enable);
-    gaSettingsFormLayout->addRow(QString::fromStdString("population_size"), ga_settings.population_size);
-    gaSettingsFormLayout->addRow(QString::fromStdString("generation_max"), ga_settings.generation_max);
-    gaSettingsFormLayout->addRow(QString::fromStdString("mutation_rate"), ga_settings.mutation_rate);
-    gaSettingsFormLayout->addRow(QString::fromStdString("elite_pct"), ga_settings.elite_pct);
-    gaSettingsFormLayout->addRow(QString::fromStdString("parent_pool_pct"), ga_settings.parent_pool_pct);
-    //BA Settings
-    baSettingsFormLayout->addRow(QString::fromStdString("enable"), ba_settings.enable);
+
     // Evaluator Settings
     evaluatorSettingsFormLayout->addRow(QString::fromStdString("Type"), evaluator_settings.evaluator_types_combo_box);
     update_evaluator_type(evaluator_settings.evaluator_types_combo_box->currentText());
+
 
     // Hide dataset and result dock as they will be reshown later
     datasetDock->hide();
@@ -139,16 +146,9 @@ void AlgorithmTuner::loadSettings() {
             qsettings.value("general_settings.ground_truth_t_thresh", "4").toDouble());
     general_settings.ground_truth_r_thresh->setValue(
             qsettings.value("general_settings.ground_truth_r_thresh", "5").toDouble());
-    general_settings.icp_inlier_thresh->setValue(
-            qsettings.value("general_settings.icp_inlier_thresh", "1.5").toDouble());
-    ga_settings.enable->setChecked(qsettings.value("ga_settings.enable", "1").toBool());
-    ga_settings.population_size->setValue(qsettings.value("ga_settings.population_size", "20").toInt());
-    ga_settings.generation_max->setValue(qsettings.value("ga_settings.generation_max", "50").toInt());
-    ga_settings.mutation_rate->setValue(qsettings.value("ga_settings.mutation_rate", "0.05").toDouble());
-    ga_settings.elite_pct->setValue(qsettings.value("ga_settings.elite_pct", "0.1").toDouble());
-    ga_settings.parent_pool_pct->setValue(qsettings.value("ga_settings.parent_pool_pct", "0.3").toDouble());
 
-    ba_settings.enable->setChecked(qsettings.value("ba_settings.enable", "1").toBool());
+    for(auto &alg:algorithms)
+        alg->load_settings(qsettings);
 
     loadEvaluatorSettings();
 }
@@ -160,16 +160,9 @@ void AlgorithmTuner::saveSettings() {
 
     qsettings.setValue("general_settings.ground_truth_t_thresh", general_settings.ground_truth_t_thresh->value());
     qsettings.setValue("general_settings.ground_truth_r_thresh", general_settings.ground_truth_r_thresh->value());
-    qsettings.setValue("general_settings.icp_inlier_thresh", general_settings.icp_inlier_thresh->value());
 
-    qsettings.setValue("ga_settings.enable", ga_settings.enable->isChecked());
-    qsettings.setValue("ga_settings.population_size", ga_settings.population_size->value());
-    qsettings.setValue("ga_settings.generation_max", ga_settings.generation_max->value());
-    qsettings.setValue("ga_settings.mutation_rate", ga_settings.mutation_rate->value());
-    qsettings.setValue("ga_settings.elite_pct", ga_settings.elite_pct->value());
-    qsettings.setValue("ga_settings.parent_pool_pct", ga_settings.parent_pool_pct->value());
-
-    qsettings.setValue("ba_settings.enable", ba_settings.enable->isChecked());
+    for(auto &alg:algorithms)
+        alg->save_settings(qsettings);
 
     saveEvaluatorSettings();
 }
@@ -319,57 +312,39 @@ void AlgorithmTuner::run_enabled_methods() {
         group_vis->resetCamera();
         group_vis->update_text();
 
-        // GA
-        if (ga_settings.enable->isChecked()) {
-            std::vector<int> ga_tp, ga_fp, ga_tn, ga_fn;
-            run_ga(geneticEvaluatorOCPtr, correct_ocs, ga_tp, ga_fp, ga_tn, ga_fn);
-            int n_ga_tp = ga_tp.size(), n_ga_fp = ga_fp.size(), n_ga_tn = ga_tn.size(), n_ga_fn = ga_fn.size();
 
-            resultDockFormLayout->addRow(QString::fromStdString("GA accuracy"),
-                                         new QLabel(QString::fromStdString(std::to_string(
-                                                 static_cast<double>(n_ga_tp + n_ga_tn) /
-                                                 static_cast<double>(n_ga_tp + n_ga_fp + n_ga_tn + n_ga_fn)))));
-            resultDockFormLayout->addRow(QString::fromStdString("ga_tp"),
-                                         new QLabel(QString::fromStdString(std::to_string(n_ga_tp))));
-            resultDockFormLayout->addRow(QString::fromStdString("ga_fp"),
-                                         new QLabel(QString::fromStdString(std::to_string(n_ga_fp))));
-            resultDockFormLayout->addRow(QString::fromStdString("ga_tn"),
-                                         new QLabel(QString::fromStdString(std::to_string(n_ga_tn))));
-            resultDockFormLayout->addRow(QString::fromStdString("ga_fn"),
-                                         new QLabel(QString::fromStdString(std::to_string(n_ga_fn))));
+        for(auto &alg:algorithms){
+            if(alg->enabled()) {
+                alg->update_variables();
+                std::vector<int> tp, fp, tn, fn;
+                alg->run(geneticEvaluatorOCPtr, correct_ocs, tp, fp, tn, fn);
+                int n_tp = tp.size(), n_fp = fp.size(), n_tn = tn.size(), n_fn = fn.size();
 
-            add_results_to_visualizer(geneticEvaluatorOCPtr, "GA", "ga", ga_tp, ga_fp, ga_tn, ga_fn);
+                resultDockFormLayout->addRow(QString::fromStdString(alg->name + " accuracy"),
+                                             new QLabel(QString::fromStdString(std::to_string(
+                                                     static_cast<double>(n_tp + n_tn) /
+                                                     static_cast<double>(n_tp + n_fp + n_tn + n_fn)))));
+                resultDockFormLayout->addRow(QString::fromStdString(alg->name + "(tp)"),
+                                             new QLabel(QString::fromStdString(std::to_string(n_tp))));
+                resultDockFormLayout->addRow(QString::fromStdString(alg->name + "(fp)"),
+                                             new QLabel(QString::fromStdString(std::to_string(n_fp))));
+                resultDockFormLayout->addRow(QString::fromStdString(alg->name + "(tn)"),
+                                             new QLabel(QString::fromStdString(std::to_string(n_tn))));
+                resultDockFormLayout->addRow(QString::fromStdString(alg->name + "(fn)"),
+                                             new QLabel(QString::fromStdString(std::to_string(n_fn))));
+
+                std::string prefix = alg->name;
+                std::for_each(prefix.begin(), prefix.end(), [](char &c) { c = std::tolower(c); });
+
+                add_results_to_visualizer(geneticEvaluatorOCPtr, alg->name, prefix, tp, fp, tn, fn);
+            }
         }
-
-
-        if (ba_settings.enable->isChecked()) {
-            std::vector<int> ba_tp, ba_fp, ba_tn, ba_fn;
-            run_ba(geneticEvaluatorOCPtr, correct_ocs, ba_tp, ba_fp, ba_tn, ba_fn);
-            int n_ba_tp = ba_tp.size(), n_ba_fp = ba_fp.size(), n_ba_tn = ba_tn.size(), n_ba_fn = ba_fn.size();
-
-            resultDockFormLayout->addRow(QString::fromStdString("BA accuracy"),
-                                         new QLabel(QString::fromStdString(std::to_string(
-                                                 static_cast<double>(n_ba_tp + n_ba_tn) /
-                                                 static_cast<double>(n_ba_tp + n_ba_fp + n_ba_tn + n_ba_fn)))));
-
-
-            resultDockFormLayout->addRow(QString::fromStdString("ba_tp"),
-                                         new QLabel(QString::fromStdString(std::to_string(n_ba_tp))));
-            resultDockFormLayout->addRow(QString::fromStdString("ba_fp"),
-                                         new QLabel(QString::fromStdString(std::to_string(n_ba_fp))));
-            resultDockFormLayout->addRow(QString::fromStdString("ba_tn"),
-                                         new QLabel(QString::fromStdString(std::to_string(n_ba_tn))));
-            resultDockFormLayout->addRow(QString::fromStdString("ba_fn"),
-                                         new QLabel(QString::fromStdString(std::to_string(n_ba_fn))));
-            resultDock->show();
-
-            add_results_to_visualizer(geneticEvaluatorOCPtr, "BA", "ba", ba_tp, ba_fp, ba_tn, ba_fn);
-        }
+        resultDock->show();
     }
 }
 
 void AlgorithmTuner::run_enabled_methods_on_dataset() {
-    // Clear Visualizer
+/*    // Clear Visualizer
     group_vis->clear();
 
     if (scapeDatasetPtr != nullptr) {
@@ -407,7 +382,7 @@ void AlgorithmTuner::run_enabled_methods_on_dataset() {
                     resultDockFormLayout->removeRow(0);
 
                 // GA
-                if (ga_settings.enable->isChecked()) {
+                if (ga_interface.enable->isChecked()) {
                     std::vector<int> ga_tp, ga_fp, ga_tn, ga_fn;
                     run_ga(geneticEvaluatorOCPtr, correct_ocs, ga_tp, ga_fp, ga_tn, ga_fn);
                     int n_ga_tp = ga_tp.size(), n_ga_fp = ga_fp.size(), n_ga_tn = ga_tn.size(), n_ga_fn = ga_fn.size();
@@ -438,7 +413,7 @@ void AlgorithmTuner::run_enabled_methods_on_dataset() {
                 }
 
 
-                if (ba_settings.enable->isChecked()) {
+                if (ba_interface.enable->isChecked()) {
                     std::vector<int> ba_tp, ba_fp, ba_tn, ba_fn;
                     run_ba(geneticEvaluatorOCPtr, correct_ocs, ba_tp, ba_fp, ba_tn, ba_fn);
                     int n_ba_tp = ba_tp.size(), n_ba_fp = ba_fp.size(), n_ba_tn = ba_tn.size(), n_ba_fn = ba_fn.size();
@@ -477,7 +452,7 @@ void AlgorithmTuner::run_enabled_methods_on_dataset() {
             std::vector<std::vector<int>> hist_ga_tp, hist_ga_fp, hist_ga_tn, hist_ga_fn ,hist_ba_tp, hist_ba_fp, hist_ba_tn, hist_ba_fn;
             std::vector<int> hist_n_ga_tp, hist_n_ga_fp, hist_n_ga_tn, hist_n_ga_fn,hist_n_ga_acc ,hist_n_ba_tp, hist_n_ba_fp, hist_n_ba_tn, hist_n_ba_fn,hist_n_ba_acc;
             std::vector<double> hist_ga_acc, hist_ba_acc;
-            if(ga_settings.enable->isChecked()) {
+            if(ga_interface.enable->isChecked()) {
 
                 datasetResultformLayout->addRow(QString::fromStdString(obj->name+"_ga_acc_avr"),
                                                 new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_ga_acc.begin(),hist_ga_acc.end(),0)/static_cast<double>(hist_ga_acc.size())))));
@@ -490,7 +465,7 @@ void AlgorithmTuner::run_enabled_methods_on_dataset() {
                 datasetResultformLayout->addRow(QString::fromStdString(obj->name+"ga_fn_avr"),
                                                 new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ga_fn.begin(),hist_n_ga_fn.end(),0)/static_cast<double>(hist_n_ga_fn.size())))));
             }
-            if(ba_settings.enable->isChecked()) {
+            if(ba_interface.enable->isChecked()) {
                 datasetResultformLayout->addRow(QString::fromStdString(obj->name+"_ba_acc_avr"),
                                                 new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_ba_acc.begin(),hist_ba_acc.end(),0)/static_cast<double>(hist_ba_acc.size())))));
                 datasetResultformLayout->addRow(QString::fromStdString(obj->name+"_ba_tp_avr"),
@@ -504,29 +479,7 @@ void AlgorithmTuner::run_enabled_methods_on_dataset() {
             }
             datasetResultDock->show();
         }
-    }
-}
-
-void AlgorithmTuner::run_ga(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs,
-                            std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn) {
-    GAResult gaResult;
-    auto &dp = geneticEvaluatorOcPtr->dp;
-
-    GA ga(dp.ocs.size(), ga_settings.population_size->value(), ga_settings.generation_max->value(),
-          ga_settings.mutation_rate->value(), ga_settings.elite_pct->value(),
-          ga_settings.parent_pool_pct->value());
-    ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorOcPtr);
-    gaResult = ga.solve();
-    getFPTN(tp, fp, tn, fn, gaResult.chromosome, correct_ocs);
-}
-
-void AlgorithmTuner::run_ba(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs,
-                            std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn) {
-    BAResult baResult;
-    Baseline baseline(geneticEvaluatorOcPtr);
-    baResult = baseline.solve();
-
-    getFPTN(tp, fp, tn, fn, baResult.chromosome, correct_ocs);
+    }*/
 }
 
 void AlgorithmTuner::add_results_to_visualizer(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::string group,

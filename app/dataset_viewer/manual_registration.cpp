@@ -147,9 +147,9 @@ void ManualRegistration::calculatePressed() {
     }
 
     if(ui_->useOCBox->isChecked()){
-        if(vis_dst_->group_ids.size()>1){
-            if(vis_dst_->group_ids_itt->first == "ocs"){
-                transform_ =  oc_id_to_t4[*(vis_dst_->ids_itt)].matrix().cast<float>();
+        if((!vis_dst_->current_group->nodes.empty()) && vis_dst_->current_group->selected_node->get() != nullptr){
+            if(vis_dst_->current_group->id == "ocs"){
+                transform_ =  oc_id_to_t4[vis_dst_->current_group->selected_node->get()->id].matrix().cast<float>();
                 std::cout<<transform_<<std::endl;
             }
         }
@@ -240,7 +240,7 @@ void ManualRegistration::calculatePressed() {
     new_gts_.emplace_back(transform_.cast<double>());
     new_gt_verified = false;
     vis_dst_->addIdPointCloud(tmp,"new_gt_"+std::to_string(new_gts_.size()),"new_gts",0,255,0);
-    vis_src_->updateSelector();
+    vis_src_->update_text();
 
 
     PCL_INFO("All done! The final refinement was done with an inlier threshold of %f, "
@@ -281,12 +281,9 @@ void ManualRegistration::clearPressed() {
     std::for_each(props_to_remove_dst.begin(), props_to_remove_dst.end(), [this](string& propstr) { vis_dst_->removeShape(propstr); });
 
     if(!new_gt_verified){
-        vis_dst_->removePointCloud(vis_dst_->group_ids["new_gts"].back());
-        new_gts_.pop_back();
-        vis_dst_->group_ids["new_gts"].pop_back();
-        if(vis_dst_->group_ids["new_gts"].empty())
-            vis_dst_->group_ids.erase("new_gts");
-        vis_dst_->updateSelector();
+        PCVGroupPtr new_gts_g = find_pcv_group_id(vis_dst_->pcv_root,"new_gts");
+        vis_dst_->remove_pcv_node(new_gts_g->nodes.back()->id);
+        vis_dst_->update_text();
     }
     new_gt_verified=true;
 }
@@ -437,8 +434,6 @@ void ManualRegistration::update_res() {
 void ManualRegistration::setup() {
     vis_dst_->resetCamera();
     vis_src_->resetCamera();
-    vis_dst_->updateSelector();
-    vis_src_->updateSelector();
     vis_dst_->update_text();
     vis_src_->update_text();
 }

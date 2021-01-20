@@ -15,6 +15,9 @@
 #include <QMetaType>
 #include <QSettings>
 #include <QVariant>
+#include "algorithm_interface.hpp"
+#include "ga_interface.hpp"
+#include "ba_interface.hpp"
 
 Q_DECLARE_METATYPE(QList<int>)
 
@@ -36,20 +39,6 @@ struct AlgorithmTunerSettings {
 struct GeneralSettings {
     QDoubleSpinBox *ground_truth_t_thresh = new QDoubleSpinBox();
     QDoubleSpinBox *ground_truth_r_thresh = new QDoubleSpinBox();
-    QDoubleSpinBox *icp_inlier_thresh = new QDoubleSpinBox();
-};
-
-struct GASettings {
-    QCheckBox *enable = new QCheckBox();
-    QSpinBox *population_size = new QSpinBox();
-    QSpinBox *generation_max = new QSpinBox();
-    QDoubleSpinBox *mutation_rate = new QDoubleSpinBox();
-    QDoubleSpinBox *elite_pct = new QDoubleSpinBox();
-    QDoubleSpinBox *parent_pool_pct = new QDoubleSpinBox();
-};
-
-struct BASettings {
-    QCheckBox *enable = new QCheckBox();
 };
 
 struct EvaluatorOCSettings {
@@ -58,10 +47,7 @@ struct EvaluatorOCSettings {
     std::vector<std::string> evaluator_types;
 
     QString current_evaluator_str;
-    QList<QString> hyper_param_names_d;
-    QList<double> hyper_params_d;
-    QList<QString> hyper_param_names_i;
-    QList<int> hyper_params_i;
+
 
     std::vector<QDoubleSpinBox *> currentDoubleSpinBoxes;
     std::vector<QSpinBox *> currentSpinBoxes;
@@ -90,8 +76,9 @@ public:
 private:
     AlgorithmTunerSettings settings;
     GeneralSettings general_settings;
-    GASettings ga_settings;
-    BASettings ba_settings;
+
+    std::vector<AlgorithmInterfacePtr> algorithms;
+
     EvaluatorOCSettings evaluator_settings;
 
     ScapeDatasetPtr scapeDatasetPtr = nullptr;
@@ -112,12 +99,6 @@ private:
     void saveEvaluatorSettings();
 
     void load_dataset();
-
-    void run_ga(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs,
-                std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
-
-    void run_ba(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs,
-                std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
 
     void add_results_to_visualizer(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr,std::string group,std::string node_prefix, std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
 
