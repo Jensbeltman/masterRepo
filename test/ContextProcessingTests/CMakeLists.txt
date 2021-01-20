@@ -5,3 +5,6 @@ project(ContextProcessingTests
 
 add_executable(ViewPointCloudTest ViewPointCloudTest.cpp)
 target_link_libraries(ViewPointCloudTest PUBLIC Dataset GA)
+
+add_executable(VisualizerTest VisualizerTest.cpp)
+target_link_libraries(VisualizerTest PUBLIC Dataset GA)
