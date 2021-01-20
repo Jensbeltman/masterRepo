@@ -17,7 +17,9 @@
 #include <QVariant>
 
 Q_DECLARE_METATYPE(QList<int>)
+
 Q_DECLARE_METATYPE(QList<double>)
+
 Q_DECLARE_METATYPE(QStringList)
 
 #include <dataset/scape/ScapeDataset.hpp>
@@ -31,28 +33,28 @@ struct AlgorithmTunerSettings {
     QString data_object_datapoint_n;
 };
 
-struct GeneralSettings{
-    QDoubleSpinBox* ground_truth_t_thresh = new QDoubleSpinBox();
-    QDoubleSpinBox* ground_truth_r_thresh = new QDoubleSpinBox();
-    QDoubleSpinBox* icp_inlier_thresh = new QDoubleSpinBox();
+struct GeneralSettings {
+    QDoubleSpinBox *ground_truth_t_thresh = new QDoubleSpinBox();
+    QDoubleSpinBox *ground_truth_r_thresh = new QDoubleSpinBox();
+    QDoubleSpinBox *icp_inlier_thresh = new QDoubleSpinBox();
 };
 
-struct GASettings{
-    QCheckBox* enable = new QCheckBox();
-    QSpinBox* population_size = new QSpinBox();
-    QSpinBox* generation_max = new QSpinBox();
-    QDoubleSpinBox* mutation_rate = new QDoubleSpinBox();
-    QDoubleSpinBox* elite_pct = new QDoubleSpinBox();
-    QDoubleSpinBox* parent_pool_pct = new QDoubleSpinBox();
+struct GASettings {
+    QCheckBox *enable = new QCheckBox();
+    QSpinBox *population_size = new QSpinBox();
+    QSpinBox *generation_max = new QSpinBox();
+    QDoubleSpinBox *mutation_rate = new QDoubleSpinBox();
+    QDoubleSpinBox *elite_pct = new QDoubleSpinBox();
+    QDoubleSpinBox *parent_pool_pct = new QDoubleSpinBox();
 };
 
-struct BASettings{
-    QCheckBox* enable = new QCheckBox();
+struct BASettings {
+    QCheckBox *enable = new QCheckBox();
 };
 
-struct EvaluatorOCSettings{
-    std::map<std::string,GeneticEvaluatorOCPtr> evaluator_map{{"GeneticEvaluatorOC", std::make_shared<GeneticEvaluatorOC>()}};
-    QComboBox* evaluator_types_combo_box = new QComboBox();
+struct EvaluatorOCSettings {
+    std::map<std::string, GeneticEvaluatorOCPtr> evaluator_map{{"GeneticEvaluatorOC", std::make_shared<GeneticEvaluatorOC>()}};
+    QComboBox *evaluator_types_combo_box = new QComboBox();
     std::vector<std::string> evaluator_types;
 
     QString current_evaluator_str;
@@ -61,11 +63,11 @@ struct EvaluatorOCSettings{
     QList<QString> hyper_param_names_i;
     QList<int> hyper_params_i;
 
-    std::vector<QDoubleSpinBox*> currentDoubleSpinBoxes;
-    std::vector<QSpinBox*> currentSpinBoxes;
+    std::vector<QDoubleSpinBox *> currentDoubleSpinBoxes;
+    std::vector<QSpinBox *> currentSpinBoxes;
 
-    EvaluatorOCSettings(){
-        for(auto & kvp:evaluator_map){
+    EvaluatorOCSettings() {
+        for (auto &kvp:evaluator_map) {
             evaluator_types.push_back(kvp.first);
             evaluator_types_combo_box->addItem(QString::fromStdString(kvp.first));
         }
@@ -92,7 +94,7 @@ private:
     BASettings ba_settings;
     EvaluatorOCSettings evaluator_settings;
 
-    ScapeDatasetPtr scapeDatasetPtr;
+    ScapeDatasetPtr scapeDatasetPtr = nullptr;
 
 
     vtkSmartPointer<vtkRenderWindow> render_window;
@@ -111,27 +113,34 @@ private:
 
     void load_dataset();
 
+    void run_ga(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs,
+                std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
 
+    void run_ba(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs,
+                std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
+
+    void add_results_to_visualizer(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr,std::string group,std::string node_prefix, std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
 
 private slots:
 
     void chose_dataset_folders();
 
+    void update_evaluator_type(const QString &s);
 
-    void update_evaluator_type(const QString & s);
-    void update_datapoint_spinbox(const QString & s);
+    void update_datapoint_spinbox(const QString &s);
 
     void update_ocs_and_gts(int i);
-    void update_ocs_and_gts(const QString & s);
+
+    void update_ocs_and_gts(const QString &s);
 
     void run_enabled_methods();
+
+    void run_enabled_methods_on_dataset();
 
     void timeoutSlot();
 
 
 };
-
-
 
 
 #endif //MASTER_ALGORITHM_TUNER_HPP
