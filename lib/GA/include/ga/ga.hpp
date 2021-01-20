@@ -50,7 +50,7 @@ public:
     int n_genes;
     int population_size;
     int generation_max;
-    float mutation_rate;
+    double mutation_rate;
     double elite_pct;
     double parent_pool_pct;
 
