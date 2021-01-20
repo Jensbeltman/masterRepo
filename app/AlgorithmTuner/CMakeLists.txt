@@ -16,7 +16,7 @@ include(${VTK_USE_FILE})
 
 add_executable(alogrithm_tuner)
 
-target_sources(alogrithm_tuner PRIVATE algorithm_tuner.ui main.cpp algorithm_tuner.cpp)
+target_sources(alogrithm_tuner PRIVATE algorithm_tuner.ui main.cpp algorithm_tuner.cpp algorithm_interface.cpp ga_interface.cpp ba_interface.cpp)
 
 target_include_directories(alogrithm_tuner PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${VTK_INCLUDE_DIRS})
 
