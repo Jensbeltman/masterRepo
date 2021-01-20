@@ -90,7 +90,8 @@ void PointCloudGroupVisualizer::updateSelector() {
         getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, current_point_size,
                                          current_group->selected_node->get()->id);
         if (current_point_size != 3)
-            setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, current_group->selected_node->get()->id);
+            setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3,
+                                             current_group->selected_node->get()->id);
     }
 }
 
@@ -105,8 +106,6 @@ void PointCloudGroupVisualizer::update_text() {
     pcl::visualization::Camera camera;
     getCameraParameters(camera);
     std::array<double, 3> rgb;
-
-
 
 
     if (current_group != nullptr) {
@@ -129,7 +128,7 @@ void PointCloudGroupVisualizer::update_text() {
             selected_group_text = lsym + selected_group->id;
 
         selected_group_text_color = selected_group->get_rgb();
-    }else{
+    } else {
         selected_group_text = "None";
         selected_group_text_color[0] = 0.5;
         selected_group_text_color[1] = 0.5;
@@ -151,7 +150,7 @@ void PointCloudGroupVisualizer::update_text() {
             selected_node_text = lsym + selected_node->id;
 
         selected_node_text_color = selected_node->rgb;
-    }else{
+    } else {
         selected_node_text = "None";
         selected_node_text_color[0] = 0.5;
         selected_node_text_color[1] = 0.5;
@@ -233,7 +232,7 @@ void PointCloudGroupVisualizer::keyboardCallback(const pcl::visualization::Keybo
                     ++current_group->selected_group;
                 } else if (key == "Left" && !is_first(current_group->selected_group, current_group->groups)) {
                     --current_group->selected_group;
-                }else if (key == "v") {
+                } else if (key == "v") {
                     toggle_group_opacity(*(current_group->selected_group));
                 }
             }
@@ -241,7 +240,7 @@ void PointCloudGroupVisualizer::keyboardCallback(const pcl::visualization::Keybo
 
             if (key == "Up") {
                 if (current_group->parent_group != nullptr) {
-                    if(!current_group->nodes.empty()) {
+                    if (!current_group->nodes.empty()) {
                         setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1,
                                                          current_group->selected_node->get()->id);
                     }
@@ -249,7 +248,7 @@ void PointCloudGroupVisualizer::keyboardCallback(const pcl::visualization::Keybo
                 }
             } else if (key == "Down") {
                 if (!(current_group->groups.empty())) {
-                    if(!current_group->nodes.empty()) {
+                    if (!current_group->nodes.empty()) {
                         setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1,
                                                          current_group->selected_node->get()->id);
                     }
@@ -264,13 +263,15 @@ void PointCloudGroupVisualizer::keyboardCallback(const pcl::visualization::Keybo
 
             if (!current_group->nodes.empty()) {
                 if (key == "Right" && !is_last(current_group->selected_node, current_group->nodes)) {
-                    setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, current_group->selected_node->get()->id);
+                    setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1,
+                                                     current_group->selected_node->get()->id);
 
                     ++current_group->selected_node;
                 } else if (key == "Left" && !is_first(current_group->selected_node, current_group->nodes)) {
-                    setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, current_group->selected_node->get()->id);
+                    setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1,
+                                                     current_group->selected_node->get()->id);
                     --current_group->selected_node;
-                }else if (key == "V") {
+                } else if (key == "V") {
                     toggle_opacity(*(current_group->selected_node));
                 }
             }
@@ -302,11 +303,10 @@ PCVGroupPtr PointCloudGroupVisualizer::getInsertionGroup(std::string group_id) {
             group_id.erase(0, pos);
 
         if (token != "") {
-            found_group = find_pcv_group_id(last_group, token);
+            found_group = ::find_pcv_group_id(last_group, token);
             if (found_group != nullptr) {
                 last_group = found_group;
             } else {
-                std::cout << "Created new Point Cloud Visualization Group (PCVGroup), " << token << std::endl;
                 last_group->push_back_group(std::shared_ptr<PCVGroup>(new PCVGroup{token, last_group}));
                 last_group = last_group->groups.back();
             }
@@ -358,7 +358,7 @@ void PointCloudGroupVisualizer::clear() {
 
 void PointCloudGroupVisualizer::clear(std::string group) {
 
-    auto found_group = find_pcv_group_id(pcv_root, group);
+    auto found_group = ::find_pcv_group_id(pcv_root, group);
     if (found_group != nullptr || found_group != pcv_root) {
         for (auto &node:found_group->nodes) {
             removePointCloud(node->id);
@@ -370,6 +370,30 @@ void PointCloudGroupVisualizer::clear(std::string group) {
 
     auto &containing_vector = found_group->parent_group->groups;
     containing_vector.erase(std::find(containing_vector.begin(), containing_vector.end(), found_group));
+}
+
+PCVGroupPtr PointCloudGroupVisualizer::find_pcv_group_id(std::string id) {
+    return ::find_pcv_group_id(pcv_root, id);
+}
+
+PCVNodePtr PointCloudGroupVisualizer::find_pcv_node_id(std::string id, bool recursive) {
+    return ::find_pcv_node_id(pcv_root, id, recursive);
+}
+
+void PointCloudGroupVisualizer::remove_pcv_group(std::string group_id) {
+    clear(group_id);
+}
+
+void PointCloudGroupVisualizer::remove_pcv_node(std::string id) {
+    if (contains(id)) { // if PCL visualizer contains id
+        removePointCloud(id);
+        auto group_with_id = find_pcv_group_containing_id(id);
+        group_with_id->nodes.erase(std::find_if(group_with_id->nodes.begin(),group_with_id->nodes.end(),[&id](PCVNodePtr np){return np->id==id;}));
+    }
+}
+
+PCVGroupPtr PointCloudGroupVisualizer::find_pcv_group_containing_id(std::string id) {
+    return ::find_pcv_group_containing_id(pcv_root, id);
 }
 
 
@@ -399,5 +423,19 @@ PCVNodePtr find_pcv_node_id(PCVGroupPtr &topPCVGroup, std::string id, bool recur
             return rres;
     }
 
+    return nullptr;
+}
+
+PCVGroupPtr find_pcv_group_containing_id(PCVGroupPtr topPCVGroup, std::string id) {
+    for (auto &node:topPCVGroup->nodes)
+        if (node->id == id)
+            return topPCVGroup;
+
+    PCVNodePtr rres = std::make_shared<PCVNode>();
+    for (auto &group:topPCVGroup->groups) {
+        rres = find_pcv_node_id(group, id);
+        if (rres != nullptr)
+            return group;
+    }
     return nullptr;
 }

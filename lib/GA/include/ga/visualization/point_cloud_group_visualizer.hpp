@@ -44,6 +44,8 @@ PCVGroupPtr find_pcv_group_id(PCVGroupPtr topPCVGroup, std::string id);
 //find pcv node by id
 PCVNodePtr find_pcv_node_id(PCVGroupPtr &topPCVGroup, std::string id, bool recursive = true);
 
+PCVGroupPtr find_pcv_group_containing_id(PCVGroupPtr topPCVGroup, std::string id);
+
 
 class PointCloudGroupVisualizer : public pcl::visualization::PCLVisualizer {
 public:
@@ -94,6 +96,21 @@ public:
     void clear(std::string group);
 
     void update_text();
+
+    //find pcv group by id
+    PCVGroupPtr find_pcv_group_id(std::string group_id);
+
+    //find pcv group by id
+    PCVGroupPtr find_pcv_group_containing_id(std::string id);
+
+    //find pcv node by id
+    PCVNodePtr find_pcv_node_id(std::string id, bool recursive = true);
+
+    //remove pcv group
+    void remove_pcv_group(std::string group_id);
+
+    //remove pcv node
+    void remove_pcv_node(std::string id);
 
 
 private:
