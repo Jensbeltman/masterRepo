@@ -151,7 +151,14 @@
        <item>
         <widget class="QPushButton" name="runEnabledMethodsButton">
          <property name="text">
-          <string>Run on Selected</string>
+          <string>Run on DP</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="runEnabledOnObjectButton">
+         <property name="text">
+          <string>Run on Group</string>
          </property>
         </widget>
        </item>
@@ -258,7 +265,7 @@
    <property name="minimumSize">
     <size>
      <width>200</width>
-     <height>58</height>
+     <height>60</height>
     </size>
    </property>
    <property name="windowTitle">

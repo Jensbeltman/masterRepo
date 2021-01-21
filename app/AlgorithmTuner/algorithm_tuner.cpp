@@ -268,6 +268,7 @@ void clearLayout(QLayout *layout) {
 
 
 void AlgorithmTuner::run_enabled_methods() {
+    QPushButton *button = (QPushButton *)sender();
     if (scapeDatasetPtr != nullptr) {
         DatasetObjectPtr ob = scapeDatasetPtr->get_object_by_name(objectNameComboBox->currentText().toStdString());
         GeneticEvaluatorOCPtr &geneticEvaluatorOCPtr = evaluator_settings.evaluator_map[evaluator_settings.evaluator_types_combo_box->currentText().toStdString()];
@@ -344,16 +345,23 @@ void AlgorithmTuner::run_enabled_methods() {
 }
 
 void AlgorithmTuner::run_enabled_methods_on_dataset() {
-/*    // Clear Visualizer
+    // Clear Visualizer
     group_vis->clear();
 
     if (scapeDatasetPtr != nullptr) {
         while (datasetResultformLayout->count() > 0)
             datasetResultformLayout->removeRow(0);
 
-        std::vector<std::vector<int>> hist_ga_tp, hist_ga_fp, hist_ga_tn, hist_ga_fn ,hist_ba_tp, hist_ba_fp, hist_ba_tn, hist_ba_fn;
-        std::vector<int> hist_n_ga_tp, hist_n_ga_fp, hist_n_ga_tn, hist_n_ga_fn,hist_n_ga_acc ,hist_n_ba_tp, hist_n_ba_fp, hist_n_ba_tn, hist_n_ba_fn,hist_n_ba_acc;
-        std::vector<double> hist_ga_acc, hist_ba_acc;
+        std::map<std::string, std::vector<std::array<std::vector<int>, 4>>> hist_tfpn;
+        std::map<std::string, std::array<std::vector<int>, 4>> hist_n_tfpn;
+        std::map<std::string, std::array<std::vector<double>, 4>> hist_pct_tfpn;
+        std::map<std::string, std::vector<double>> hist_accuracy;
+        for (auto &alg:algorithms) {
+            hist_n_tfpn.emplace(std::make_pair(alg->name, std::array<std::vector<int>, 4>()));
+            hist_tfpn.emplace(std::make_pair(alg->name, std::vector<std::array<std::vector<int>, 4>>()));
+            hist_pct_tfpn.emplace(std::make_pair(alg->name,  std::array<std::vector<double>,4>()));
+            hist_accuracy.emplace(std::make_pair(alg->name, std::vector<double>()));
+        }
 
         TransformUtility tu;
         GeneticEvaluatorOCPtr &geneticEvaluatorOCPtr = evaluator_settings.evaluator_map[evaluator_settings.evaluator_types_combo_box->currentText().toStdString()];
@@ -369,117 +377,76 @@ void AlgorithmTuner::run_enabled_methods_on_dataset() {
         geneticEvaluatorOCPtr->setHyperParameters_d(evaluator_hyper_params_d);
         geneticEvaluatorOCPtr->setHyperParameters_i(evaluator_hyper_params_i);
 
+
         for (auto &obj:scapeDatasetPtr->objects) {
+            int ndp = obj->data_points.size();
+            int cndp = 0;
             for (auto &dp:obj->data_points) {
+                if(!dp.gts.empty()) {
+                    std::cout << "\n Object: " << std::setw(12) << obj->name << ", Datapoint: " << std::setw(3)
+                              << ++cndp << "/" << std::setw(3) << ndp << ", Filename: " << dp.pcd_filename << std::endl;
 
-                geneticEvaluatorOCPtr->initialise_object(obj, datapointSpinBox->value());
+                    geneticEvaluatorOCPtr->initialise_object(obj, datapointSpinBox->value());
 
-                std::vector<bool> correct_ocs = tu.get_true_ocs(dp.ocs, dp.gts,
-                                                                general_settings.ground_truth_t_thresh->value(),
-                                                                general_settings.ground_truth_r_thresh->value());
-                // Clear old results
-                while (resultDockFormLayout->count() > 0)
-                    resultDockFormLayout->removeRow(0);
-
-                // GA
-                if (ga_interface.enable->isChecked()) {
-                    std::vector<int> ga_tp, ga_fp, ga_tn, ga_fn;
-                    run_ga(geneticEvaluatorOCPtr, correct_ocs, ga_tp, ga_fp, ga_tn, ga_fn);
-                    int n_ga_tp = ga_tp.size(), n_ga_fp = ga_fp.size(), n_ga_tn = ga_tn.size(), n_ga_fn = ga_fn.size();
-                    double accuracy = static_cast<double>(n_ga_tp + n_ga_tn) /
-                                      static_cast<double>(n_ga_tp + n_ga_fp + n_ga_tn + n_ga_fn);
-//                    resultDockFormLayout->addRow(QString::fromStdString("GA accuracy"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(accuracy
-//                                                         ))));
-//                    resultDockFormLayout->addRow(QString::fromStdString("ga_tp"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(n_ga_tp))));
-//                    resultDockFormLayout->addRow(QString::fromStdString("ga_fp"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(n_ga_fp))));
-//                    resultDockFormLayout->addRow(QString::fromStdString("ga_tn"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(n_ga_tn))));
-//                    resultDockFormLayout->addRow(QString::fromStdString("ga_fn"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(n_ga_fn))));
-                    hist_ga_tp.push_back(ga_tp);
-                    hist_ga_fp.push_back(ga_fp);
-                    hist_ga_tn.push_back(ga_tn);
-                    hist_ga_fn.push_back(ga_fn);
-
-                    hist_n_ga_tp.push_back(n_ga_tp);
-                    hist_n_ga_fp.push_back(n_ga_fp);
-                    hist_n_ga_tn.push_back(n_ga_tn);
-                    hist_n_ga_fn.push_back(n_ga_fn);
-                    hist_ga_acc.push_back(accuracy);
-                    resultDock->show();
-                }
+                    std::vector<bool> correct_ocs = tu.get_true_ocs(dp.ocs, dp.gts,
+                                                                    general_settings.ground_truth_t_thresh->value(),
+                                                                    general_settings.ground_truth_r_thresh->value());
+                    // Clear old results
+                    while (resultDockFormLayout->count() > 0)
+                        resultDockFormLayout->removeRow(0);
 
 
-                if (ba_interface.enable->isChecked()) {
-                    std::vector<int> ba_tp, ba_fp, ba_tn, ba_fn;
-                    run_ba(geneticEvaluatorOCPtr, correct_ocs, ba_tp, ba_fp, ba_tn, ba_fn);
-                    int n_ba_tp = ba_tp.size(), n_ba_fp = ba_fp.size(), n_ba_tn = ba_tn.size(), n_ba_fn = ba_fn.size();
+                    for (auto &alg:algorithms) {
+                        alg->update_variables();
+                        if (alg->enabled()) {
+                            std::vector<int> tp, fp, tn, fn;
+                            alg->run(geneticEvaluatorOCPtr, correct_ocs, tp, fp, tn, fn);
+                            int n_tp = tp.size(), n_fp = fp.size(), n_tn = tn.size(), n_fn = fn.size();
 
-                    double accuracy = static_cast<double>(n_ba_tp + n_ba_tn) /
-                                      static_cast<double>(n_ba_tp + n_ba_fp + n_ba_tn + n_ba_fn);
+                            hist_tfpn[alg->name].emplace_back(std::array<std::vector<int>, 4>{tp, fp, tn, fn});
+                            hist_n_tfpn[alg->name][0].emplace_back(n_tp);
+                            hist_n_tfpn[alg->name][1].emplace_back(n_fp);
+                            hist_n_tfpn[alg->name][2].emplace_back(n_tn);
+                            hist_n_tfpn[alg->name][3].emplace_back(n_fn);
+                            hist_pct_tfpn[alg->name][0].emplace_back(static_cast<double>(n_tp)/dp.ocs.size());
+                            hist_pct_tfpn[alg->name][1].emplace_back(static_cast<double>(n_fp)/dp.ocs.size());
+                            hist_pct_tfpn[alg->name][2].emplace_back(static_cast<double>(n_tn)/dp.ocs.size());
+                            hist_pct_tfpn[alg->name][3].emplace_back(static_cast<double>(n_fn)/dp.ocs.size());
 
-//                    resultDockFormLayout->addRow(QString::fromStdString("BA accuracy"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(
-//                                                         accuracy))));
-//
-//
-//                    resultDockFormLayout->addRow(QString::fromStdString("ba_tp"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(n_ba_tp))));
-//                    resultDockFormLayout->addRow(QString::fromStdString("ba_fp"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(n_ba_fp))));
-//                    resultDockFormLayout->addRow(QString::fromStdString("ba_tn"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(n_ba_tn))));
-//                    resultDockFormLayout->addRow(QString::fromStdString("ba_fn"),
-//                                                 new QLabel(QString::fromStdString(std::to_string(n_ba_fn))));
-
-                    hist_ba_tp.push_back(ba_tp);
-                    hist_ba_fp.push_back(ba_fp);
-                    hist_ba_tn.push_back(ba_tn);
-                    hist_ba_fn.push_back(ba_fn);
-
-                    hist_n_ba_tp.push_back(n_ba_tp);
-                    hist_n_ba_fp.push_back(n_ba_fp);
-                    hist_n_ba_tn.push_back(n_ba_tn);
-                    hist_n_ba_fn.push_back(n_ba_fn);
-                    hist_ba_acc.push_back(accuracy);
-                    resultDock->show();
+                            hist_accuracy[alg->name].emplace_back(
+                                    static_cast<double>(n_tp + n_tn) / static_cast<double>(n_tp + n_fp + n_tn + n_fn));
+                        }
+                    }
                 }
             }
-
-            std::vector<std::vector<int>> hist_ga_tp, hist_ga_fp, hist_ga_tn, hist_ga_fn ,hist_ba_tp, hist_ba_fp, hist_ba_tn, hist_ba_fn;
-            std::vector<int> hist_n_ga_tp, hist_n_ga_fp, hist_n_ga_tn, hist_n_ga_fn,hist_n_ga_acc ,hist_n_ba_tp, hist_n_ba_fp, hist_n_ba_tn, hist_n_ba_fn,hist_n_ba_acc;
-            std::vector<double> hist_ga_acc, hist_ba_acc;
-            if(ga_interface.enable->isChecked()) {
-
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"_ga_acc_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_ga_acc.begin(),hist_ga_acc.end(),0)/static_cast<double>(hist_ga_acc.size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"_ga_tp_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ga_tp.begin(),hist_n_ga_tp.end(),0)/static_cast<double>(hist_n_ga_tp.size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"ga_fp_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ga_fp.begin(),hist_n_ga_fp.end(),0)/static_cast<double>(hist_n_ga_fp.size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"ga_tn_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ga_tn.begin(),hist_n_ga_tn.end(),0)/static_cast<double>(hist_n_ga_tn.size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"ga_fn_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ga_fn.begin(),hist_n_ga_fn.end(),0)/static_cast<double>(hist_n_ga_fn.size())))));
-            }
-            if(ba_interface.enable->isChecked()) {
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"_ba_acc_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_ba_acc.begin(),hist_ba_acc.end(),0)/static_cast<double>(hist_ba_acc.size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"_ba_tp_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ba_tp.begin(),hist_n_ba_tp.end(),0)/static_cast<double>(hist_n_ba_tp.size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"ba_fp_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ba_fp.begin(),hist_n_ba_fp.end(),0)/static_cast<double>(hist_n_ba_fp.size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"ba_tn_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ba_tn.begin(),hist_n_ba_tn.end(),0)/static_cast<double>(hist_n_ba_tn.size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(obj->name+"ba_fn_avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(std::accumulate(hist_n_ba_fn.begin(),hist_n_ba_fn.end(),0)/static_cast<double>(hist_n_ba_fn.size())))));
-            }
-            datasetResultDock->show();
         }
-    }*/
+
+        for (auto &alg:algorithms) {
+            if (alg->enabled()) {
+                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " acc avr"),
+                                                new QLabel(QString::fromStdString(std::to_string(
+                                                        std::accumulate(hist_accuracy[alg->name].begin(), hist_accuracy[alg->name].end(), 0.0) /
+                                                        static_cast<double>(hist_accuracy[alg->name].size())))));
+                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " tp avr"),
+                                                new QLabel(QString::fromStdString(std::to_string(
+                                                        std::accumulate(hist_pct_tfpn[alg->name][0].begin(), hist_pct_tfpn[alg->name][0].end(), 0.0) /
+                                                        static_cast<double>(hist_pct_tfpn[alg->name][0].size())))));
+                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " fp avr"),
+                                                new QLabel(QString::fromStdString(std::to_string(
+                                                        std::accumulate(hist_pct_tfpn[alg->name][1].begin(), hist_pct_tfpn[alg->name][1].end(), 0.0) /
+                                                        static_cast<double>(hist_pct_tfpn[alg->name][1].size())))));
+                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " tn avr"),
+                                                new QLabel(QString::fromStdString(std::to_string(
+                                                        std::accumulate(hist_pct_tfpn[alg->name][2].begin(), hist_pct_tfpn[alg->name][2].end(), 0.0) /
+                                                        static_cast<double>(hist_pct_tfpn[alg->name][2].size())))));
+                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " fn avr"),
+                                                new QLabel(QString::fromStdString(std::to_string(
+                                                        std::accumulate(hist_pct_tfpn[alg->name][3].begin(), hist_pct_tfpn[alg->name][3].end(), 0.0) /
+                                                        static_cast<double>(hist_pct_tfpn[alg->name][3].size())))));
+            }
+        }
+        datasetResultDock->show();
+    }
 }
 
 void AlgorithmTuner::add_results_to_visualizer(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::string group,
