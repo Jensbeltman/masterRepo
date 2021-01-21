@@ -57,8 +57,8 @@ CollisionModelPtr get_coll_model(MeshPtr meshptr) {
             triangles.emplace_back(a,b,c);
         }
     }
-    if(n_vert)
-        std::cout<<n_vert<<" faces where not tris"<<std::endl;
+    if(non_tris)
+        std::cout<<non_tris<<" faces where not tris"<<std::endl;
 
 
 
