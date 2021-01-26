@@ -33,7 +33,10 @@ public:
 
     explicit DatasetObject(std::filesystem::path path = ".", std::string data_ext = ".PCD");
     // VIRTUAL BASECLASS FUNCTIONS
+//    int datapoint_index(DataPoint &dp);
+
     virtual pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n);
+    virtual pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(DataPoint &dp);
 
     virtual std::shared_ptr<cv::viz::Mesh> get_mesh();
 
@@ -52,6 +55,8 @@ public:
     virtual std::vector<double> get_scores(unsigned int n);
 
     virtual std::vector<T4> get_object_candidates(unsigned int n);
+
+    bool operator <(const DatasetObject& rhs) const;
 
 
 protected:

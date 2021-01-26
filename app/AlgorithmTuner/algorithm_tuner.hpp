@@ -18,22 +18,17 @@
 #include "algorithm_interface.hpp"
 #include "ga_interface.hpp"
 #include "ba_interface.hpp"
-
-Q_DECLARE_METATYPE(QList<int>)
-
-Q_DECLARE_METATYPE(QList<double>)
-
-Q_DECLARE_METATYPE(QStringList)
-
+#include "dataset/DatasetObject.hpp"
 #include <dataset/scape/ScapeDataset.hpp>
 #include "ga/visualization/point_cloud_group_visualizer.hpp"
 #include "vtkSmartPointer.h"
+#include "algorithm_data_proc.hpp"
+
 
 struct AlgorithmTunerSettings {
     QString data_folder;
     QString recognition_folder;
-    QString data_object_name;
-    QString data_object_datapoint_n;
+    QString data_save_file;
 };
 
 struct GeneralSettings {
@@ -47,8 +42,6 @@ struct EvaluatorOCSettings {
     std::vector<std::string> evaluator_types;
 
     QString current_evaluator_str;
-
-
     std::vector<QDoubleSpinBox *> currentDoubleSpinBoxes;
     std::vector<QSpinBox *> currentSpinBoxes;
 
@@ -73,6 +66,7 @@ public:
 
     void changeEvent(QEvent *e);
 
+
 private:
     AlgorithmTunerSettings settings;
     GeneralSettings general_settings;
@@ -83,6 +77,7 @@ private:
 
     ScapeDatasetPtr scapeDatasetPtr = nullptr;
 
+    AlgorithmDataProc algorithmDataProc;
 
     vtkSmartPointer<vtkRenderWindow> render_window;
     vtkSmartPointer<vtkRenderer> renderer;
@@ -102,6 +97,8 @@ private:
 
     void add_results_to_visualizer(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr,std::string group,std::string node_prefix, std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
 
+    void run_enabled_algorithms(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr,DatasetObjectPtr &obj, DataPoint &dp, rawDataMapAlgObjVecT &rawDataMapAlgObjVec);
+
 private slots:
 
     void chose_dataset_folders();
@@ -114,9 +111,11 @@ private slots:
 
     void update_ocs_and_gts(const QString &s);
 
-    void run_enabled_methods();
+    void run_enabled_algorithms();
 
-    void run_enabled_methods_on_dataset();
+    void save_data();
+
+    void bar_plot();
 
     void timeoutSlot();
 

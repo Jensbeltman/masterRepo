@@ -8,6 +8,9 @@
 //STL
 #include <iostream>
 
+//DATAUTIL
+#include "datautil/timeinfo.hpp"
+
 // QT
 #include <QEvent>
 #include <QDialog>
@@ -15,6 +18,7 @@
 #include <QFileDialog>
 #include <QTableWidget>
 #include <QDockWidget>
+#include <QEventLoop>
 
 //VTK
 #include <vtkRenderWindow.h>
@@ -26,6 +30,7 @@
 
 AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     setupUi(this);
+    this->setWindowTitle("Algorithm Tuner");
     QObject::connect(actionLoadDataset, &QAction::triggered, this, &AlgorithmTuner::chose_dataset_folders);
     QObject::connect(objectNameComboBox, &QComboBox::currentTextChanged, this,
                      &AlgorithmTuner::update_datapoint_spinbox);
@@ -33,46 +38,58 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
                      qOverload<const QString &>(&AlgorithmTuner::update_ocs_and_gts));
     QObject::connect(datapointSpinBox, qOverload<int>(&QSpinBox::valueChanged), this,
                      qOverload<int>(&AlgorithmTuner::update_ocs_and_gts));
-    QObject::connect(runEnabledMethodsButton, &QPushButton::pressed, this, &AlgorithmTuner::run_enabled_methods);
+    QObject::connect(runEnabledMethodsButton, &QPushButton::pressed, this,
+                     qOverload<>(&AlgorithmTuner::run_enabled_algorithms));
+    QObject::connect(runEnabledOnObjectButton, &QPushButton::pressed, this,
+                     qOverload<>(&AlgorithmTuner::run_enabled_algorithms));
     QObject::connect(runEnabledOnDatasetButton, &QPushButton::pressed, this,
-                     &AlgorithmTuner::run_enabled_methods_on_dataset);
-
+                     qOverload<>(&AlgorithmTuner::run_enabled_algorithms));
+    QObject::connect(dataProcSaveResultsButton, &QPushButton::pressed, this, &AlgorithmTuner::save_data);
+    QObject::connect(barPlotButton, &QPushButton::pressed, this, &AlgorithmTuner::bar_plot);
     QObject::connect(evaluator_settings.evaluator_types_combo_box, &QComboBox::currentTextChanged, this,
                      &AlgorithmTuner::update_evaluator_type);
 
+    // Disable button that arent currently usable
+    runEnabledMethodsButton->setEnabled(false);
+    runEnabledOnObjectButton->setEnabled(false);
+    runEnabledOnDatasetButton->setEnabled(false);
+    dataProcSaveResultsButton->setEnabled(false);
+
+    // Hide docks and widgets
+    datasetDock->hide();
+    resultDock->hide();
+    dataProcDock->hide();
+    progressBar->hide();
+
+    // Create algorithms interfaces and add variables to GUI
     algorithms.push_back(std::make_shared<GAInterface>());
     algorithms.push_back(std::make_shared<BAInterface>());
 
-    for(auto &alg:algorithms){
-        QWidget* widget = new QTabWidget();
-        QFormLayout* qFormLayout = new QFormLayout();
+    for (auto &alg:algorithms) {
+        QWidget *widget = new QTabWidget();
+        QFormLayout *qFormLayout = new QFormLayout();
 
-        for(auto &var:alg->variables_b)
-            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)),var.checkBox);
-        for(auto &var:alg->variables_i)
-            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)),var.spinBox);
-        for(auto &var:alg->variables_d)
-            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)),var.spinBox);
+        for (auto &var:alg->variables_b)
+            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)), var.checkBox);
+        for (auto &var:alg->variables_i)
+            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)), var.spinBox);
+        for (auto &var:alg->variables_d)
+            qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)), var.spinBox);
 
         widget->setLayout(qFormLayout);
-        settingsTabWidget->addTab(widget,QString::fromStdString(alg->name));
+        settingsTabWidget->addTab(widget, QString::fromStdString(alg->name));
     }
 
-    //General Settings
+    //Add general Settings to GUI
     generalSettingsFormLayout->addRow(QString::fromStdString("ground_truth_t_thresh"),
                                       general_settings.ground_truth_t_thresh);
     generalSettingsFormLayout->addRow(QString::fromStdString("ground_truth_r_thresh"),
                                       general_settings.ground_truth_r_thresh);
 
-    // Evaluator Settings
+    //Add Evaluator Settings to GUI
     evaluatorSettingsFormLayout->addRow(QString::fromStdString("Type"), evaluator_settings.evaluator_types_combo_box);
     update_evaluator_type(evaluator_settings.evaluator_types_combo_box->currentText());
 
-
-    // Hide dataset and result dock as they will be reshown later
-    datasetDock->hide();
-    resultDock->hide();
-    datasetResultDock->hide();
 
     // Construction Visualizer
     render_window = vtkSmartPointer<vtkRenderWindow>::New();
@@ -81,17 +98,12 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
 
     group_vis = pcl::make_shared<PointCloudGroupVisualizer>(renderer, render_window, "vis_src", false);
 
-    this->setWindowTitle("Algorithm Tuner");
-
     // Set up the source window
     vtkWidget->SetRenderWindow(render_window);
     group_vis->setShowFPS(true);
 
-
     // Set up the source wi
-
     vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor_src = vtkWidget->GetInteractor();
-
     group_vis->setupInteractor(renderWindowInteractor_src, vtkWidget->GetRenderWindow());
     group_vis->getInteractorStyle()->setKeyboardModifier(pcl::visualization::INTERACTOR_KB_MOD_SHIFT);
     group_vis->setShowFPS(false);
@@ -101,9 +113,7 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     //Create a timer
     vis_timer_ = new QTimer(this);
     vis_timer_->start(5);//5ms
-
     connect(vis_timer_, SIGNAL(timeout()), this, SLOT(timeoutSlot()));
-
 
     loadSettings(); // Load setting from prev session e.g. paths for dataset
 }
@@ -137,41 +147,6 @@ void AlgorithmTuner::chose_dataset_folders() {
 
 }
 
-void AlgorithmTuner::loadSettings() {
-    QSettings qsettings;
-    settings.data_folder = qsettings.value("data_folder", "/home").toString();
-    settings.recognition_folder = qsettings.value("recognition_folder", "/home").toString();
-
-    general_settings.ground_truth_t_thresh->setValue(
-            qsettings.value("general_settings.ground_truth_t_thresh", "4").toDouble());
-    general_settings.ground_truth_r_thresh->setValue(
-            qsettings.value("general_settings.ground_truth_r_thresh", "5").toDouble());
-
-    for(auto &alg:algorithms)
-        alg->load_settings(qsettings);
-
-    loadEvaluatorSettings();
-}
-
-void AlgorithmTuner::saveSettings() {
-    QSettings qsettings;
-    qsettings.setValue("data_folder", settings.data_folder);
-    qsettings.setValue("recognition_folder", settings.recognition_folder);
-
-    qsettings.setValue("general_settings.ground_truth_t_thresh", general_settings.ground_truth_t_thresh->value());
-    qsettings.setValue("general_settings.ground_truth_r_thresh", general_settings.ground_truth_r_thresh->value());
-
-    for(auto &alg:algorithms)
-        alg->save_settings(qsettings);
-
-    saveEvaluatorSettings();
-}
-
-AlgorithmTuner::~AlgorithmTuner() {
-    saveSettings();
-    delete this;
-}
-
 
 void AlgorithmTuner::load_dataset() {
     scapeDatasetPtr = std::make_shared<ScapeDataset>(settings.data_folder.toStdString(),
@@ -182,6 +157,9 @@ void AlgorithmTuner::load_dataset() {
         objectNameComboBox->addItem(QString::fromStdString(sobj->name));
     datapointSpinBox->setValue(0);
     datasetDock->show();
+    runEnabledMethodsButton->setEnabled(true);
+    runEnabledOnObjectButton->setEnabled(true);
+    runEnabledOnDatasetButton->setEnabled(true);
 }
 
 void AlgorithmTuner::update_datapoint_spinbox(const QString &s) {
@@ -213,45 +191,6 @@ void AlgorithmTuner::update_ocs_and_gts(const QString &s) {
     }
 }
 
-
-void
-getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn, chromosomeT chromosome,
-        chromosomeT correct_ocs) {
-    for (int i = 0; i < correct_ocs.size(); i++) {
-        if (correct_ocs[i]) {
-            if (chromosome[i]) {
-                tp.emplace_back(i);
-            } else {
-                fn.emplace_back(i);
-            }
-        } else {
-            if (chromosome[i]) {
-                fp.emplace_back(i);
-            } else {
-                tn.emplace_back(i);
-            }
-        }
-    }
-}
-
-void getFPTN(int &tp, int &fp, int &tn, int &fn, chromosomeT chromosome, chromosomeT correct_ocs) {
-    for (int i = 0; i < correct_ocs.size(); i++) {
-        if (correct_ocs[i]) {
-            if (chromosome[i]) {
-                tp++;
-            } else {
-                fn++;
-            }
-        } else {
-            if (chromosome[i]) {
-                fp++;
-            } else {
-                tn++;
-            }
-        }
-    }
-}
-
 void clearLayout(QLayout *layout) {
     QLayoutItem *item;
     while ((item = layout->takeAt(0))) {
@@ -267,10 +206,31 @@ void clearLayout(QLayout *layout) {
 }
 
 
-void AlgorithmTuner::run_enabled_methods() {
-    QPushButton *button = (QPushButton *)sender();
+void AlgorithmTuner::run_enabled_algorithms(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, DatasetObjectPtr &obj,
+                                            DataPoint &dp, rawDataMapAlgObjVecT &rawDataMapAlgObjVec) {
+    if (geneticEvaluatorOcPtr->datasetObjectPtr == nullptr) {
+        geneticEvaluatorOcPtr->initialise_object(obj, dp);
+    } else if (geneticEvaluatorOcPtr->datasetObjectPtr->name != obj->name) {
+        geneticEvaluatorOcPtr->initialise_object(obj, dp);
+    } else if ((geneticEvaluatorOcPtr->dp.oc_scores != dp.oc_scores) ||
+               (geneticEvaluatorOcPtr->dp.ground_truth_path != dp.ground_truth_path)) {
+        geneticEvaluatorOcPtr->initialise_datapoint(dp);
+    }
+
+    for (auto &alg:algorithms) {
+        alg->update_variables();
+        if (alg->enabled()) {
+            rawDataMapAlgObjVec[alg->name][obj].emplace_back(alg->run(geneticEvaluatorOcPtr));
+        }
+    }
+}
+
+
+void AlgorithmTuner::run_enabled_algorithms() {
+    progressBar->show();
     if (scapeDatasetPtr != nullptr) {
-        DatasetObjectPtr ob = scapeDatasetPtr->get_object_by_name(objectNameComboBox->currentText().toStdString());
+        QPushButton *button = (QPushButton *) sender();
+
         GeneticEvaluatorOCPtr &geneticEvaluatorOCPtr = evaluator_settings.evaluator_map[evaluator_settings.evaluator_types_combo_box->currentText().toStdString()];
 
         std::vector<double> evaluator_hyper_params_d;
@@ -284,170 +244,127 @@ void AlgorithmTuner::run_enabled_methods() {
         geneticEvaluatorOCPtr->setHyperParameters_d(evaluator_hyper_params_d);
         geneticEvaluatorOCPtr->setHyperParameters_i(evaluator_hyper_params_i);
 
+        rawDataMapAlgObjVecT rawDataMapAlgObjVec;
 
-        geneticEvaluatorOCPtr->initialise_object(ob, datapointSpinBox->value());
+        int n_dp = 0, tot_n_dp = 0;
 
-        auto &dp = ob->data_points[datapointSpinBox->value()];
+        if (button == runEnabledMethodsButton) {
+            DatasetObjectPtr obj = scapeDatasetPtr->get_object_by_name(objectNameComboBox->currentText().toStdString());
+            auto &dp = obj->data_points[datapointSpinBox->value()];
 
-        TransformUtility tu;
-        std::vector<bool> correct_ocs = tu.get_true_ocs(dp.ocs, dp.gts, general_settings.ground_truth_t_thresh->value(),
-                                                        general_settings.ground_truth_r_thresh->value());
+            run_enabled_algorithms(geneticEvaluatorOCPtr, obj, dp, rawDataMapAlgObjVec);
+        } else if (button == runEnabledOnObjectButton) {
+            DatasetObjectPtr obj = scapeDatasetPtr->get_object_by_name(objectNameComboBox->currentText().toStdString());
 
-        // Clear old results
-        while (resultDockFormLayout->count() > 0)
-            resultDockFormLayout->removeRow(0);
 
-        // Clear Visualizer
+            for (auto &dp:obj->data_points)
+                if (dp.gts.size() > 1)
+                    tot_n_dp++;
+            progressBar->setMaximum(tot_n_dp);
+
+            group_vis->clear();
+            for (auto &dp:obj->data_points) {
+                if (dp.gts.size() > 1) {
+                    run_enabled_algorithms(geneticEvaluatorOCPtr, obj, dp, rawDataMapAlgObjVec);
+                    progressBar->setValue(++n_dp);
+                    QCoreApplication::processEvents();
+                }
+            }
+
+        } else if (button == runEnabledOnDatasetButton) {
+            group_vis->clear();
+
+            for (auto &obj:scapeDatasetPtr->objects)
+                for (auto &dp:obj->data_points)
+                    if (dp.gts.size() > 1)
+                        tot_n_dp++;
+
+            for (auto &obj:scapeDatasetPtr->objects) {
+                for (auto &dp:obj->data_points) {
+                    if (dp.gts.size() > 1) {
+                        run_enabled_algorithms(geneticEvaluatorOCPtr, obj, dp, rawDataMapAlgObjVec);
+                        progressBar->setValue(++n_dp);
+                        QCoreApplication::processEvents();
+                    }
+                }
+            }
+        }
+        progressBar->hide();
+
+        algorithmDataProc = AlgorithmDataProc(rawDataMapAlgObjVec, general_settings.ground_truth_t_thresh->value(),
+                                              general_settings.ground_truth_r_thresh->value());
+        dataProcSaveResultsButton->setEnabled(true);
+
+
+        // Clear and update visualizer
         group_vis->clear();
         group_vis->addIdPointCloud(geneticEvaluatorOCPtr->pc, "Captured Point Cloud");
-        PointCloudT::Ptr mesh_pc = geneticEvaluatorOCPtr->pcm;
-
         // Add gt and data to visualization
-        PointCloudT::Ptr meshpc = ob->get_mesh_point_cloud();
+        auto obj = scapeDatasetPtr->get_object_by_name(algorithmDataProc.objNameVec.back());
+        auto &dp = rawDataMapAlgObjVec.begin()->second[obj].back().dp;
+        PointCloudT::Ptr meshpc = obj->get_mesh_point_cloud();
         for (int g = 0; g < dp.gts.size(); g++) {
             PointCloudT::Ptr gtpc_vis = pcl::make_shared<PointCloudT>();
             std::string id = "gt_" + std::to_string(g);
             pcl::transformPointCloud(*meshpc, *gtpc_vis, dp.gts[g]);
             group_vis->addIdPointCloud(gtpc_vis, id, "Ground Truth", 0, 255, 255);
         }
+
+        for (auto &alg:algorithms) {
+
+            size_t bi, ei;
+            algorithmDataProc.get_begin_end_index(bi, ei, alg->name, obj->name);
+
+            std::vector<int> tp, tn, fp, fn;
+            algorithmDataProc.getFPTN(tp, tn, fp, fn, *(algorithmDataProc.chromosomeVec.begin() + ei - 1),
+                                      *(algorithmDataProc.trueOCVec.begin() + ei - 1));
+            add_results_to_visualizer(geneticEvaluatorOCPtr, *(algorithmDataProc.algNameVec.begin() + ei - 1),
+                                      *(algorithmDataProc.algNameVec.begin() + ei - 1), tp, tn, fp, fn);
+        }
         group_vis->resetCamera();
         group_vis->update_text();
 
+        // Generate Result Table
+        std::vector<std::string> dataTypes = {"Acc", "Rec", "Pre"};
+        resultTableWidget->clear();
+        resultTableWidget->setColumnCount(algorithmDataProc.algNameUniqueVec.size());
+        resultTableWidget->setRowCount(dataTypes.size());
 
-        for(auto &alg:algorithms){
-            if(alg->enabled()) {
-                alg->update_variables();
-                std::vector<int> tp, fp, tn, fn;
-                alg->run(geneticEvaluatorOCPtr, correct_ocs, tp, fp, tn, fn);
-                int n_tp = tp.size(), n_fp = fp.size(), n_tn = tn.size(), n_fn = fn.size();
+        QStringList horizontalHeaders, verticalHeaders;
+        std::transform(algorithmDataProc.algNameUniqueVec.begin(), algorithmDataProc.algNameUniqueVec.end(),
+                       std::back_inserter(horizontalHeaders), [](std::string &s) { return QString::fromStdString(s); });
+        std::transform(dataTypes.begin(), dataTypes.end(), std::back_inserter(verticalHeaders),
+                       [](std::string &s) { return QString::fromStdString(s); });
+        resultTableWidget->setHorizontalHeaderLabels(horizontalHeaders);
+        resultTableWidget->setVerticalHeaderLabels(verticalHeaders);
 
-                resultDockFormLayout->addRow(QString::fromStdString(alg->name + " accuracy"),
-                                             new QLabel(QString::fromStdString(std::to_string(
-                                                     static_cast<double>(n_tp + n_tn) /
-                                                     static_cast<double>(n_tp + n_fp + n_tn + n_fn)))));
-                resultDockFormLayout->addRow(QString::fromStdString(alg->name + "(tp)"),
-                                             new QLabel(QString::fromStdString(std::to_string(n_tp))));
-                resultDockFormLayout->addRow(QString::fromStdString(alg->name + "(fp)"),
-                                             new QLabel(QString::fromStdString(std::to_string(n_fp))));
-                resultDockFormLayout->addRow(QString::fromStdString(alg->name + "(tn)"),
-                                             new QLabel(QString::fromStdString(std::to_string(n_tn))));
-                resultDockFormLayout->addRow(QString::fromStdString(alg->name + "(fn)"),
-                                             new QLabel(QString::fromStdString(std::to_string(n_fn))));
-
-                std::string prefix = alg->name;
-                std::for_each(prefix.begin(), prefix.end(), [](char &c) { c = std::tolower(c); });
-
-                add_results_to_visualizer(geneticEvaluatorOCPtr, alg->name, prefix, tp, fp, tn, fn);
-            }
+        int col_n = 0;
+        for (auto &alg:algorithmDataProc.algNameUniqueVec) {
+            resultTableWidget->setCellWidget(0, col_n, new QLabel(QString::fromStdString(
+                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.accuracyVec, alg)))));
+            resultTableWidget->setCellWidget(1, col_n, new QLabel(QString::fromStdString(
+                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.recallVec, alg)))));
+            resultTableWidget->setCellWidget(2, col_n, new QLabel(QString::fromStdString(
+                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.precisionVec, alg)))));
+            col_n++;
         }
+
+//        for(auto &alg:algorithmDataProc.algNameUniqueVec){
+//            double avr_alg_acc =algorithmDataProc.get_avr(algorithmDataProc.accuracyVec, alg);
+//            dataProcFormLayout->addRow(new QLabel(QString::fromStdString(alg)),new QLabel(QString::fromStdString(std::to_string(avr_alg_acc))));
+//            std::cout<<"avr_alg_acc: "<<avr_alg_acc<<std::endl;
+//            for(auto &obj:algorithmDataProc.objNameUniqueVec){
+//                double avr_obj_acc =algorithmDataProc.get_avr(algorithmDataProc.accuracyVec, alg,obj);
+//                dataProcFormLayout->addRow(new QLabel(QString::fromStdString(obj)),new QLabel(QString::fromStdString(std::to_string(avr_obj_acc))));
+//                std::cout<<"avr_obj_acc: "<<avr_obj_acc<<std::endl;
+//            }
+//        }
+
+        dataProcDock->show();
         resultDock->show();
     }
 }
 
-void AlgorithmTuner::run_enabled_methods_on_dataset() {
-    // Clear Visualizer
-    group_vis->clear();
-
-    if (scapeDatasetPtr != nullptr) {
-        while (datasetResultformLayout->count() > 0)
-            datasetResultformLayout->removeRow(0);
-
-        std::map<std::string, std::vector<std::array<std::vector<int>, 4>>> hist_tfpn;
-        std::map<std::string, std::array<std::vector<int>, 4>> hist_n_tfpn;
-        std::map<std::string, std::array<std::vector<double>, 4>> hist_pct_tfpn;
-        std::map<std::string, std::vector<double>> hist_accuracy;
-        for (auto &alg:algorithms) {
-            hist_n_tfpn.emplace(std::make_pair(alg->name, std::array<std::vector<int>, 4>()));
-            hist_tfpn.emplace(std::make_pair(alg->name, std::vector<std::array<std::vector<int>, 4>>()));
-            hist_pct_tfpn.emplace(std::make_pair(alg->name,  std::array<std::vector<double>,4>()));
-            hist_accuracy.emplace(std::make_pair(alg->name, std::vector<double>()));
-        }
-
-        TransformUtility tu;
-        GeneticEvaluatorOCPtr &geneticEvaluatorOCPtr = evaluator_settings.evaluator_map[evaluator_settings.evaluator_types_combo_box->currentText().toStdString()];
-
-        std::vector<double> evaluator_hyper_params_d;
-        for (auto &sp:evaluator_settings.currentDoubleSpinBoxes) {
-            evaluator_hyper_params_d.emplace_back(sp->value());
-        }
-        std::vector<int> evaluator_hyper_params_i;
-        for (auto &sp:evaluator_settings.currentSpinBoxes) {
-            evaluator_hyper_params_i.emplace_back(sp->value());
-        }
-        geneticEvaluatorOCPtr->setHyperParameters_d(evaluator_hyper_params_d);
-        geneticEvaluatorOCPtr->setHyperParameters_i(evaluator_hyper_params_i);
-
-
-        for (auto &obj:scapeDatasetPtr->objects) {
-            int ndp = obj->data_points.size();
-            int cndp = 0;
-            for (auto &dp:obj->data_points) {
-                if(!dp.gts.empty()) {
-                    std::cout << "\n Object: " << std::setw(12) << obj->name << ", Datapoint: " << std::setw(3)
-                              << ++cndp << "/" << std::setw(3) << ndp << ", Filename: " << dp.pcd_filename << std::endl;
-
-                    geneticEvaluatorOCPtr->initialise_object(obj, datapointSpinBox->value());
-
-                    std::vector<bool> correct_ocs = tu.get_true_ocs(dp.ocs, dp.gts,
-                                                                    general_settings.ground_truth_t_thresh->value(),
-                                                                    general_settings.ground_truth_r_thresh->value());
-                    // Clear old results
-                    while (resultDockFormLayout->count() > 0)
-                        resultDockFormLayout->removeRow(0);
-
-
-                    for (auto &alg:algorithms) {
-                        alg->update_variables();
-                        if (alg->enabled()) {
-                            std::vector<int> tp, fp, tn, fn;
-                            alg->run(geneticEvaluatorOCPtr, correct_ocs, tp, fp, tn, fn);
-                            int n_tp = tp.size(), n_fp = fp.size(), n_tn = tn.size(), n_fn = fn.size();
-
-                            hist_tfpn[alg->name].emplace_back(std::array<std::vector<int>, 4>{tp, fp, tn, fn});
-                            hist_n_tfpn[alg->name][0].emplace_back(n_tp);
-                            hist_n_tfpn[alg->name][1].emplace_back(n_fp);
-                            hist_n_tfpn[alg->name][2].emplace_back(n_tn);
-                            hist_n_tfpn[alg->name][3].emplace_back(n_fn);
-                            hist_pct_tfpn[alg->name][0].emplace_back(static_cast<double>(n_tp)/dp.ocs.size());
-                            hist_pct_tfpn[alg->name][1].emplace_back(static_cast<double>(n_fp)/dp.ocs.size());
-                            hist_pct_tfpn[alg->name][2].emplace_back(static_cast<double>(n_tn)/dp.ocs.size());
-                            hist_pct_tfpn[alg->name][3].emplace_back(static_cast<double>(n_fn)/dp.ocs.size());
-
-                            hist_accuracy[alg->name].emplace_back(
-                                    static_cast<double>(n_tp + n_tn) / static_cast<double>(n_tp + n_fp + n_tn + n_fn));
-                        }
-                    }
-                }
-            }
-        }
-
-        for (auto &alg:algorithms) {
-            if (alg->enabled()) {
-                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " acc avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(
-                                                        std::accumulate(hist_accuracy[alg->name].begin(), hist_accuracy[alg->name].end(), 0.0) /
-                                                        static_cast<double>(hist_accuracy[alg->name].size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " tp avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(
-                                                        std::accumulate(hist_pct_tfpn[alg->name][0].begin(), hist_pct_tfpn[alg->name][0].end(), 0.0) /
-                                                        static_cast<double>(hist_pct_tfpn[alg->name][0].size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " fp avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(
-                                                        std::accumulate(hist_pct_tfpn[alg->name][1].begin(), hist_pct_tfpn[alg->name][1].end(), 0.0) /
-                                                        static_cast<double>(hist_pct_tfpn[alg->name][1].size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " tn avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(
-                                                        std::accumulate(hist_pct_tfpn[alg->name][2].begin(), hist_pct_tfpn[alg->name][2].end(), 0.0) /
-                                                        static_cast<double>(hist_pct_tfpn[alg->name][2].size())))));
-                datasetResultformLayout->addRow(QString::fromStdString(alg->name + " fn avr"),
-                                                new QLabel(QString::fromStdString(std::to_string(
-                                                        std::accumulate(hist_pct_tfpn[alg->name][3].begin(), hist_pct_tfpn[alg->name][3].end(), 0.0) /
-                                                        static_cast<double>(hist_pct_tfpn[alg->name][3].size())))));
-            }
-        }
-        datasetResultDock->show();
-    }
-}
 
 void AlgorithmTuner::add_results_to_visualizer(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::string group,
                                                std::string node_prefix, std::vector<int> &tp, std::vector<int> &fp,
@@ -543,6 +460,70 @@ void AlgorithmTuner::saveEvaluatorSettings() {
         qsettings.setValue(evaluator_settings.current_evaluator_str + "/" +
                            qobject_cast<QLabel *>(evaluatorSettingsFormLayout->labelForField(sb))->text(), sb->value());
 
+}
+
+void AlgorithmTuner::loadSettings() {
+    QSettings qsettings;
+    settings.data_folder = qsettings.value("data_folder", "/home").toString();
+    settings.recognition_folder = qsettings.value("recognition_folder", "/home").toString();
+    settings.data_save_file = qsettings.value("data_save_folder", "/home").toString();
+
+    general_settings.ground_truth_t_thresh->setValue(
+            qsettings.value("general_settings.ground_truth_t_thresh", "4").toDouble());
+    general_settings.ground_truth_r_thresh->setValue(
+            qsettings.value("general_settings.ground_truth_r_thresh", "5").toDouble());
+
+    for (auto &alg:algorithms)
+        alg->load_settings(qsettings);
+
+    loadEvaluatorSettings();
+}
+
+void AlgorithmTuner::saveSettings() {
+    QSettings qsettings;
+    qsettings.setValue("data_folder", settings.data_folder);
+    qsettings.setValue("recognition_folder", settings.recognition_folder);
+    qsettings.setValue("data_save_folder", settings.data_save_file);
+
+    qsettings.setValue("general_settings.ground_truth_t_thresh", general_settings.ground_truth_t_thresh->value());
+    qsettings.setValue("general_settings.ground_truth_r_thresh", general_settings.ground_truth_r_thresh->value());
+
+    for (auto &alg:algorithms)
+        alg->save_settings(qsettings);
+
+    saveEvaluatorSettings();
+}
+
+AlgorithmTuner::~AlgorithmTuner() {
+    saveSettings();
+    delete this;
+}
+
+void AlgorithmTuner::save_data() {
+    auto last_save_folder = std::filesystem::path(settings.data_save_file.toStdString()).parent_path();
+    QString proposed_file_name = QString::fromStdString(
+            (last_save_folder / (getTimeString("%Y-%d-%m-%H-%M-%S") + "-AlgorithmTunerData.csv")).string());
+    settings.data_save_file = QFileDialog::getSaveFileName(this, "Save Data", proposed_file_name);
+
+    algorithmDataProc.save_data(settings.data_save_file.toStdString());
+}
+
+void AlgorithmTuner::bar_plot() {
+    std::string plotDataType = plotComboBox->currentText().toStdString();
+    if (plotDataType == "Accuracy")
+        algorithmDataProc.bar_plot(algorithmDataProc.accuracyVec);
+    if (plotDataType == "Precision")
+        algorithmDataProc.bar_plot(algorithmDataProc.precisionVec);
+    if (plotDataType == "Recall")
+        algorithmDataProc.bar_plot(algorithmDataProc.recallVec);
+    if (plotDataType == "TP")
+        algorithmDataProc.bar_plot(algorithmDataProc.tpVec);
+    if (plotDataType == "TN")
+        algorithmDataProc.bar_plot(algorithmDataProc.tnVec);
+    if (plotDataType == "FP")
+        algorithmDataProc.bar_plot(algorithmDataProc.fpVec);
+    if (plotDataType == "FN")
+        algorithmDataProc.bar_plot(algorithmDataProc.fnVec);
 }
 
 

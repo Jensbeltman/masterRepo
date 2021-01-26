@@ -5,6 +5,7 @@
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr DatasetObject::get_pcd(int n) { return nullptr; }
+pcl::PointCloud<pcl::PointXYZ>::Ptr DatasetObject::get_pcd(DataPoint &dp) {return nullptr;}
 
 std::shared_ptr<cv::viz::Mesh> DatasetObject::get_mesh() {
     std::shared_ptr<cv::viz::Mesh> meshptr = std::make_shared<cv::viz::Mesh>(cv::viz::Mesh::load(mesh_path));
@@ -41,3 +42,16 @@ void DatasetObject::get_filenames_with_ext_from_dir(std::string ext, std::string
             vofs.push_back(p.path().stem().string());
         }
     }
+
+bool DatasetObject::operator<(const DatasetObject &rhs) const {
+    return name < rhs.name;
+}
+
+//int DatasetObject::datapoint_index(DataPoint &dp) {
+//    auto found_it = std::find(data_points.begin(),data_points.end(),dp);
+//    if(found_it!=data_points.end())
+//        return std::distance(data_points.begin(),found_it);
+//    else
+//        return -1;
+//}
+//

@@ -12,8 +12,7 @@ class GAInterface : public AlgorithmInterface {
 public:
     GAInterface();
     GA ga;
-    void run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs, std::vector<int> &tp,
-             std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn) override;
+    rawDataT run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr) override;
 };
 
 typedef std::shared_ptr<GAInterface> GAInterfacePtr;
