@@ -25,8 +25,10 @@ public:
                        double oc_inlier_multiplier = 0.5);
 
     void initialise_object(DatasetObjectPtr &datasetObjectPtr, int datapoint_n = 0);
+    void initialise_object(DatasetObjectPtr &datasetObjectPtr, DataPoint &datapoint_n);
 
     void initialise_datapoint(int datapoint_n);
+    void initialise_datapoint(DataPoint &datapoint_n);
 
     DatasetObjectPtr datasetObjectPtr;
     DataPoint dp;

@@ -33,19 +33,25 @@ GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr datasetObjectPtr, int da
 }
 
 void GeneticEvaluatorOC::initialise_object(DatasetObjectPtr &newDatasetObjectPtr, int datapoint_n) {
+    initialise_object(newDatasetObjectPtr,newDatasetObjectPtr->data_points[datapoint_n]);
+}
+
+void GeneticEvaluatorOC::initialise_object(DatasetObjectPtr &newDatasetObjectPtr, DataPoint &datapoint) {
     datasetObjectPtr = newDatasetObjectPtr;
     pcm = datasetObjectPtr->get_mesh_point_cloud();
     ncm = datasetObjectPtr->get_mesh_normal_cloud();
     meshPtr = datasetObjectPtr->get_mesh();
     camera_pose = datasetObjectPtr->camera_pose;
 
-    initialise_datapoint(datapoint_n);
+    initialise_datapoint(datapoint);
+}
+void GeneticEvaluatorOC::initialise_datapoint(int datapoint_n) {
+    initialise_datapoint(datasetObjectPtr->data_points[datapoint_n]);
 }
 
-
-void GeneticEvaluatorOC::initialise_datapoint(int datapoint_n) {
-    dp = datasetObjectPtr->data_points[datapoint_n];
-    pc = datasetObjectPtr->get_pcd(datapoint_n);
+void GeneticEvaluatorOC::initialise_datapoint(DataPoint &datapoint) {
+    dp = datapoint;
+    pc = datasetObjectPtr->get_pcd(dp);
     // KdTree of cloud data
     kdtree = pcl::make_shared<pcl::KdTreeFLANN<PointT>>();
     kdtree->setInputCloud(pc);
@@ -80,7 +86,7 @@ void GeneticEvaluatorOC::init_visible_inliers() {
         }
         oc_visible_inlier_pt_idxs.push_back(inlier_pts);
     }
-    std::cout << "Inliers and visiblity init elapsed time: " << chronometer.toc() << "s," << "Render Time: "
+    std::cout << "Inliers time: " << chronometer.toc() << "s," << "Render Time: "
               << render_time << "s\n";
 }
 
@@ -169,6 +175,7 @@ void GeneticEvaluatorOC::setHyperParameters_d(vector<double> &params) {
     sigmoid_falloff_scale=params[2];
     oc_inlier_threshold=params[3];
 }
+
 
 
 
