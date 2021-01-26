@@ -10,7 +10,8 @@
 #include <QCheckBox>
 #include <QSettings>
 #include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
-
+#include "algorithm_interface.hpp"
+#include "chronometer.h"
 struct var_b{
    bool* val;
    QCheckBox* checkBox;
@@ -30,6 +31,11 @@ struct var_d{
    std::string default_val_string = "0.0";
 };
 
+struct rawDataT{
+    DataPoint dp;
+    chromosomeT chromsome;
+    double time;
+};
 
 class AlgorithmInterface {
 public:
@@ -41,13 +47,17 @@ public:
     std::vector<var_i> variables_i;
     std::vector<var_d> variables_d;
 
+    Chronometer chronometer;
+
     void update_variables();
     void load_settings(QSettings& qsettings);
     void save_settings(QSettings& qsettings);
 
     bool enabled();
 
-    virtual void run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs, std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
+    virtual rawDataT run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr);
+
+    bool operator <(const AlgorithmInterface& rhs) const;
 
 protected:
     QVariant get_setting_variant(QSettings &qsettings, std::string key, std::string default_val);
@@ -55,21 +65,11 @@ protected:
     void getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn, chromosomeT chromosome,
             chromosomeT correct_ocs);
 
-/*
-    template<typename dT, typename vT>
-    dT* get_variable(std::string variable_name,std::vector<vT> variables){
-        for(auto& var:variables) {
-            auto found_variable = std::find_if(variables.begin(),variables.end(),[&variable_name](vT &vt){return vt.name == variable_name;});
-            if(found_variable!=variables.end())
-                return ((*found_variable).val);
-        }
-        return nullptr
-    }
-*/
-
-
 };
 
+typedef std::vector<rawDataT> rawDataVecT;
+typedef std::map<DatasetObjectPtr, rawDataVecT> rawDataMapObjVecT;
+typedef std::map<std::string,rawDataMapObjVecT> rawDataMapAlgObjVecT;
 typedef std::shared_ptr<AlgorithmInterface> AlgorithmInterfacePtr;
 
 #endif //MASTER_ALGORITHM_INTERFACE_HPP

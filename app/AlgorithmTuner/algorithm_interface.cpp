@@ -56,9 +56,8 @@ QVariant AlgorithmInterface::get_setting_variant(QSettings &qsettings, std::stri
     return qsettings.value(QString::fromStdString(key),QString::fromStdString(default_val));
 }
 
-void AlgorithmInterface::run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr, std::vector<bool> &correct_ocs,
-                             std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn) {
-
+rawDataT AlgorithmInterface::run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr) {
+    return rawDataT{DataPoint(), chromosomeT(), std::numeric_limits<double>::max()};
 }
 
 void AlgorithmInterface::getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn,
@@ -83,8 +82,11 @@ void AlgorithmInterface::getFPTN(std::vector<int> &tp, std::vector<int> &fp, std
 bool AlgorithmInterface::enabled() {
     auto enabled_var_it = std::find_if(variables_b.begin(),variables_b.end(),[](var_b vb){return vb.name=="enable";});
     if( enabled_var_it != variables_b.end())
-        return (*enabled_var_it).val;
+        return *(enabled_var_it->val);
     else
         return false;
 }
 
+bool AlgorithmInterface::operator<(const AlgorithmInterface &rhs) const {
+        return name < rhs.name;
+}
