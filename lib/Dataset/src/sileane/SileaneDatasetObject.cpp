@@ -26,6 +26,14 @@ SileaneDatasetObject::SileaneDatasetObject(std::filesystem::path path, std::stri
     }
 }
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr SileaneDatasetObject::get_pcd(DataPoint &dp) {
+    auto it = std::find(pcd_filenames.begin(),pcd_filenames.end(),dp.pcd_filename);
+    if (it!=pcd_filenames.end())
+        return get_pcd(std::distance(pcd_filenames.begin(),it),false);
+    else
+        return nullptr;
+}
+
 pcl::PointCloud<pcl::PointXYZ>::Ptr SileaneDatasetObject::get_pcd(int n) { return get_pcd(n, false); }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr SileaneDatasetObject::get_pcd(int n, bool gt) {
@@ -121,3 +129,4 @@ SileaneDatasetObject::sileane_depth_to_pcd(std::string path, SileaneCameraParams
 
     return pc;
 }
+

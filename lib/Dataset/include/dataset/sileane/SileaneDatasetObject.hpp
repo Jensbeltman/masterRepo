@@ -37,6 +37,8 @@ public:
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n);
 
+    pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(DataPoint &dp);
+
     pcl::PointCloud<pcl::PointXYZ>::Ptr get_pcd(int n, bool gt);
 
     cv::Mat get_color(int n, bool gt = false);
