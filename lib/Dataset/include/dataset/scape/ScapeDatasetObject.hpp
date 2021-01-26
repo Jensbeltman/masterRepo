@@ -35,6 +35,8 @@ public:
 
     PointCloudT::Ptr get_pcd(int n) override;
 
+    PointCloudT::Ptr get_pcd(DataPoint &dp) override;
+
     void load_gt(std::string path, std::vector<T4> &gts);
 private:
     int get_corners(std::filesystem::path path);

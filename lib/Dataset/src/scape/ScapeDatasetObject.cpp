@@ -109,11 +109,15 @@ std::vector<T4> ScapeDatasetObject::get_object_candidates(unsigned int n) {
 
 int ScapeDatasetObject::size() const { return scape_data_points.size(); }
 
-PointCloudT::Ptr ScapeDatasetObject::get_pcd(int n) {
+PointCloudT::Ptr ScapeDatasetObject::get_pcd(DataPoint &dp) {
     PointCloudT::Ptr pc = pcl::make_shared<PointCloudT>();
-    pcl::io::loadPCDFile(path.string() + "/" + data_points[n].pcd_filename + pc_data_ext, *pc);
+    pcl::io::loadPCDFile(path.string() + "/" + dp.pcd_filename + pc_data_ext, *pc);
     return pc;
-};
+}
+
+PointCloudT::Ptr ScapeDatasetObject::get_pcd(int n) {
+    return get_pcd(data_points[n]);
+}
 
 int ScapeDatasetObject::get_corners(std::filesystem::path path) {
     std::ifstream oc_file(path);
