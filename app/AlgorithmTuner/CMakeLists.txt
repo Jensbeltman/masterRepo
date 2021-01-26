@@ -16,10 +16,10 @@ include(${VTK_USE_FILE})
 
 add_executable(alogrithm_tuner)
 
-target_sources(alogrithm_tuner PRIVATE algorithm_tuner.ui main.cpp algorithm_tuner.cpp algorithm_interface.cpp ga_interface.cpp ba_interface.cpp)
+target_sources(alogrithm_tuner PRIVATE algorithm_tuner.ui main.cpp algorithm_tuner.cpp algorithm_interface.cpp ga_interface.cpp ba_interface.cpp algorithm_data_proc.cpp)
 
 target_include_directories(alogrithm_tuner PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${VTK_INCLUDE_DIRS})
 
-target_link_libraries(alogrithm_tuner PUBLIC Chronometer ${PCL_LIBRARIES}  ${VTK_LIBRARIES} Qt5::Widgets Dataset GA Baseline)
+target_link_libraries(alogrithm_tuner PUBLIC Chronometer ${PCL_LIBRARIES}  ${VTK_LIBRARIES} Qt5::Widgets Dataset GA Baseline DataUtil  Matplot++::matplot)
 
 target_compile_features(alogrithm_tuner PUBLIC cxx_std_17)
