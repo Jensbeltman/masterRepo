@@ -28,6 +28,7 @@ public:
     std::vector<std::string> pcd_filenames;
 
     std::vector<DataPoint> data_points;
+    std::vector<T4> symmetry_transforms;
     T4 camera_pose;
 
 
