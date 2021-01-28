@@ -48,7 +48,7 @@ TransformUtility::get_noisy_transform(Eigen::Transform<double, 3, Eigen::Affine>
 }
 
 std::vector<bool>
-TransformUtility::get_true_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh) {
+TransformUtility::get_true_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh, std::vector<T4> symmetry_transforms = std::vector<T4>{}) {
     std::vector<bool> true_ocs(ocs.size(), false);
 
 
@@ -58,22 +58,34 @@ TransformUtility::get_true_ocs(std::vector<T4> ocs, std::vector<T4> gts, double 
         double best_r_diff = std::numeric_limits<double>::max();
         std::vector<int> chosen;
 
-        for (int i = 0; i < ocs.size(); i++) {
-            Eigen::Vector3d oc_t = ocs[i].matrix().block<3, 1>(0, 3);
-            Eigen::Vector3d gt_t = gt.matrix().block<3, 1>(0, 3);
-            Eigen::Matrix3d oc_r = ocs[i].matrix().block<3, 3>(0, 0);
-            Eigen::Matrix3d gt_r = gt.matrix().block<3, 3>(0, 0);
-            Eigen::Vector3d t = oc_t - gt_t;
-            Eigen::Matrix3d R = gt_r.transpose() * oc_r;
+        std::vector<T4> gt_with_symmetry = {gt};
+        for(auto &st:symmetry_transforms)
+            gt_with_symmetry.emplace_back(gt*st);
 
-            double t_diff = t.lpNorm<2>();
-            double r_diff = std::acos((R.trace()-1)/2)*(180.0/M_PI);
-            if ((t_diff <= t_thresh) && (r_diff <= r_thresh)) {
-                if (t_diff < best_t_diff && r_diff < best_r_diff) {
-                    if(std::find(chosen.begin(),chosen.end(),i)==chosen.end()) {
-                        best_i = i;
-                        best_t_diff = t_diff;
-                        best_r_diff = r_diff;
+        for (int i = 0; i < ocs.size(); i++) {//Todo add symmetry transforms to loop
+            {
+                for(auto &gtws:gt_with_symmetry)
+                {
+/*                    Eigen::Vector3d oc_t = ocs[i].matrix().block<3, 1>(0, 3);
+                    Eigen::Vector3d gt_t = gt.matrix().block<3, 1>(0, 3);
+                    Eigen::Matrix3d oc_r = ocs[i].matrix().block<3, 3>(0, 0);
+                    Eigen::Matrix3d gt_r = gt.matrix().block<3, 3>(0, 0);
+                    Eigen::Vector3d t = oc_t - gt_t;
+                    Eigen::Matrix3d R = gt_r.transpose() * oc_r;*/
+                    T4 diff = gtws.inverse()*ocs[i];
+                    Eigen::Vector3d t_diff_vec = diff.matrix().block<3,1>(0,3);
+                    Eigen::Matrix3d r_diff_mat = diff.matrix().block<3,3>(0,0);
+
+                    double t_diff = t_diff_vec.lpNorm<2>();
+                    double r_diff = std::acos((r_diff_mat.trace() - 1) / 2) * (180.0 / M_PI);
+                    if ((t_diff <= t_thresh) && (r_diff <= r_thresh)) {
+                        if (t_diff < best_t_diff && r_diff < best_r_diff) {
+                            if (std::find(chosen.begin(), chosen.end(), i) == chosen.end()) {
+                                best_i = i;
+                                best_t_diff = t_diff;
+                                best_r_diff = r_diff;
+                            }
+                        }
                     }
                 }
             }
