@@ -29,7 +29,7 @@
 #include <pcl/visualization/point_cloud_handlers.h>
 
 // Custom visualizer
-#include "ga/visualization/point_cloud_group_visualizer.hpp"
+#include "hypothesis_verification/visualization/point_cloud_group_visualizer.hpp"
 
 //VTK
 #include "vtkGenericOpenGLRenderWindow.h"
