@@ -68,6 +68,7 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     // Create algorithms and evaluator interfaces and add variables to GUI
     hv_algorithms.push_back(std::make_shared<GAInterface>());
     hv_algorithms.push_back(std::make_shared<SPInterface>());
+    hv_algorithms.push_back(std::make_shared<BaselineInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorOCInterface>());
 
     loadSettings(); // Load setting from prev session e.g. paths for dataset
