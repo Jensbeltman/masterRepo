@@ -20,6 +20,6 @@ target_sources(dataset_viewer PRIVATE dataset_viewer.ui manual_registration.ui m
 
 target_include_directories(dataset_viewer PUBLIC ./ ../manual_registration ${CMAKE_CURRENT_BINARY_DIR} ${VTK_INCLUDE_DIRS})
 
-target_link_libraries(dataset_viewer PUBLIC ${PCL_LIBRARIES}  ${VTK_LIBRARIES} Qt5::Widgets Dataset GA)
+target_link_libraries(dataset_viewer PUBLIC ${PCL_LIBRARIES}  ${VTK_LIBRARIES} Qt5::Widgets Dataset HV)
 
 target_compile_features(dataset_viewer PUBLIC cxx_std_17)
