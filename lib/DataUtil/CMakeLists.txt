@@ -5,5 +5,5 @@ project(DataUtil
 
 add_library(DataUtil INTERFACE)
 target_include_directories(DataUtil INTERFACE include)
-target_link_libraries(DataUtil INTERFACE GA)
+target_link_libraries(DataUtil INTERFACE HV)
 target_compile_features(DataUtil INTERFACE cxx_std_17)

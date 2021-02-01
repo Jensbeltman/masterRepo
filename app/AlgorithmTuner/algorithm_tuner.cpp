@@ -1,6 +1,6 @@
 #include "algorithm_tuner.hpp"
-#include "ga/ga.hpp"
-#include "baseline/baseline.hpp"
+#include "hypothesis_verification/hv_alg/ga.hpp"
+#include "../../lib/HypothesisVerificaiton/include/hypothesis_verification/hv_alg/sequential_prior.hpp"
 #include "dataset/transform_utility.hpp"
 #include <dataset/scape/ScapeDataset.hpp>
 
@@ -67,7 +67,7 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
 
     // Create algorithms and evaluator interfaces and add variables to GUI
     hv_algorithms.push_back(std::make_shared<GAInterface>());
-    hv_algorithms.push_back(std::make_shared<BAInterface>());
+    hv_algorithms.push_back(std::make_shared<SPInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorOCInterface>());
 
     loadSettings(); // Load setting from prev session e.g. paths for dataset

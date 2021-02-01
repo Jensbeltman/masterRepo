@@ -1,14 +1,14 @@
 #include "hv_interfaces.hpp"
 
 //BA
-BAInterface::BAInterface(): HVInterface()  {
-    name="BA";
+SPInterface::SPInterface(): HVInterface()  {
+    name="SP";
 }
 
-rawDataT BAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
+rawDataT SPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     chronometer.tic();
-    BAResult baResult;
-    Baseline baseline(geneticEvaluatorPtr);
+    SPResult baResult;
+    SequentialPrior baseline(geneticEvaluatorPtr);
     baResult = baseline.solve();
     return rawDataT{geneticEvaluatorPtr->dp,baResult.chromosome,chronometer.toc()};
 }

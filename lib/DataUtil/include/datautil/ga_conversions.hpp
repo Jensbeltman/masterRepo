@@ -1,7 +1,7 @@
 #ifndef MASTER_GA_CONVERSIONS_HPP
 #define MASTER_GA_CONVERSIONS_HPP
 #include "rapidcsv.h"
-#include "ga/typedefinitions.hpp"
+#include "hypothesis_verification/typedefinitions.hpp"
 
 namespace rapidcsv
 {

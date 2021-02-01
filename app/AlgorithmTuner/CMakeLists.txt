@@ -20,6 +20,6 @@ target_sources(alogrithm_tuner PRIVATE algorithm_tuner.ui main.cpp algorithm_tun
 
 target_include_directories(alogrithm_tuner PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${VTK_INCLUDE_DIRS})
 
-target_link_libraries(alogrithm_tuner PUBLIC Chronometer ${PCL_LIBRARIES}  ${VTK_LIBRARIES} Qt5::Widgets Dataset GA Baseline DataUtil  Matplot++::matplot)
+target_link_libraries(alogrithm_tuner PUBLIC Chronometer ${PCL_LIBRARIES}  ${VTK_LIBRARIES} Qt5::Widgets Dataset HV DataUtil  Matplot++::matplot)
 
 target_compile_features(alogrithm_tuner PUBLIC cxx_std_17)

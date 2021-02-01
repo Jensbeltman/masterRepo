@@ -20,8 +20,8 @@
 #include "genetic_evaluator_oc_interface.hpp"
 #include "dataset/DatasetObject.hpp"
 #include <dataset/scape/ScapeDataset.hpp>
-#include "ga/visualization/point_cloud_group_visualizer.hpp"
-#include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
+#include "hypothesis_verification/visualization/point_cloud_group_visualizer.hpp"
+#include "hypothesis_verification/evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include "vtkSmartPointer.h"
 #include "algorithm_data_proc.hpp"
 

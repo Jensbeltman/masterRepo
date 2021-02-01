@@ -1,4 +1,4 @@
-#include <baseline/baseline.hpp>
+#include "../../lib/HypothesisVerificaiton/include/hypothesis_verification/hv_alg/sequential_prior.hpp"
 #include <ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp>
 #include <ga/ga_functions.hpp>
 #include <ga/visualization/point_cloud_group_visualizer.hpp>
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
         GA ga(100, 20, 50, 0.05, 0.1, 0.3);
         ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorOCPtr);
 
-        Baseline baseline(geneticEvaluatorOCPtr);
+        SequentialPrior baseline(geneticEvaluatorOCPtr);
 
         for (int sample_n = 0; sample_n < ob->size(); sample_n++) {
             if (ob->has_gt(sample_n)) {
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
                 std::cout << "Sample number: " << sample_n << " pc file "
                           << ob->scape_data_points[sample_n].pcd_filename << std::endl;
 
-                BAResult baResult = baseline.solve();
+                SPResult baResult = baseline.solve();
 
                 //GA
                 ga.n_genes = dp.ocs.size(); // Update chromosome size

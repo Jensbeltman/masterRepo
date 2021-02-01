@@ -13,7 +13,7 @@
 #include <QLabel>
 #include <QWidget>
 #include <QTabWidget>
-#include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
+#include "hypothesis_verification/evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include "algorithm_interface.hpp"
 #include "chronometer.h"
 
