@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     TransformUtility tu;
 
     // Logging
-    rapidcsv::CSVWriteDoc ga_cost_hist_doc(output_folder + "/gaCostHist.csv",
+    rapidcsv::CSVWriteDoc ga_cost_hist_doc(outputfolder + "/gaCostHist.csv",
                                            rapidcsv::LabelParams(-1, 0));
     rapidcsv::CSVWriteDoc ba_cost_hist_doc(output_folder + "/baCostHist.csv",
                                            rapidcsv::LabelParams(-1, 0));
