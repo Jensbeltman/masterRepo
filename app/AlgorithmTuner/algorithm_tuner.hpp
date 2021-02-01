@@ -16,8 +16,7 @@
 #include <QSettings>
 #include <QVariant>
 #include "algorithm_interface.hpp"
-#include "ga_interface.hpp"
-#include "ba_interface.hpp"
+#include "hv_interfaces.hpp"
 #include "genetic_evaluator_oc_interface.hpp"
 #include "dataset/DatasetObject.hpp"
 #include <dataset/scape/ScapeDataset.hpp>
@@ -37,23 +36,6 @@ struct GeneralSettings {
     QDoubleSpinBox *ground_truth_t_thresh = new QDoubleSpinBox();
     QDoubleSpinBox *ground_truth_r_thresh = new QDoubleSpinBox();
 };
-
-/*struct EvaluatorOCSettings {
-    std::map<std::string, GeneticEvaluatorPtr> evaluator_map{{"GeneticEvaluatorOC", std::make_shared<GeneticEvaluatorOC>()}};
-
-    std::vector<std::string> evaluator_types;
-
-    QString current_evaluator_str;
-    std::vector<QDoubleSpinBox *> currentDoubleSpinBoxes;
-    std::vector<QSpinBox *> currentSpinBoxes;
-
-    EvaluatorOCSettings() {
-        for (auto &kvp:evaluator_map) {
-            evaluator_types.push_back(kvp.first);
-            evaluator_types_combo_box->addItem(QString::fromStdString(kvp.first));
-        }
-    }
-};*/
 
 namespace Ui {
     class AlgorithmTuner;
@@ -76,7 +58,6 @@ private:
     std::vector<HVInterfacePtr> hv_algorithms;
     std::vector<EvaluatorInterfacePtr> evaluators;
     QString current_evaluator_text;
-    //EvaluatorOCSettings evaluator_settings;
 
     ScapeDatasetPtr scapeDatasetPtr = nullptr;
 

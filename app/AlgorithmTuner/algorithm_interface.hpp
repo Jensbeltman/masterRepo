@@ -16,6 +16,7 @@
 #include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include "algorithm_interface.hpp"
 #include "chronometer.h"
+
 struct var_b{
    bool* val;
    QCheckBox* checkBox;
@@ -79,6 +80,7 @@ protected:
             chromosomeT correct_ocs);
 
 };
+
 
 class EvaluatorInterface: public AlgorithmInterface {
 public:
