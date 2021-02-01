@@ -4,6 +4,7 @@
 #include <ga/collision/collision_checking.hpp>
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
+
 #include "chronometer.h"
 #include <fcl/fcl.h>
 #include "ga/point_cloud_processing/point_cloud_renderer.hpp"
@@ -16,7 +17,9 @@ GeneticEvaluatorOC::GeneticEvaluatorOC(double inlier_threshold, double sigmoid_f
         : nn_inlier_threshold(inlier_threshold),
           sigmoid_falloff_center(sigmoid_falloff_center),
           sigmoid_falloff_scale(sigmoid_falloff_scale),
-          oc_inlier_threshold(oc_inlier_threshold){
+          oc_inlier_threshold(oc_inlier_threshold),
+          voxelGridPtr(new pcl::VoxelGrid<PointT>){
+
     type = "GeneticEvaluatorOC";
 }
 
@@ -26,10 +29,12 @@ GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr datasetObjectPtr, int da
         : nn_inlier_threshold(inlier_threshold),
           sigmoid_falloff_center(sigmoid_falloff_center),
           sigmoid_falloff_scale(sigmoid_falloff_scale),
-          oc_inlier_threshold(oc_inlier_threshold){
+          oc_inlier_threshold(oc_inlier_threshold),
+          voxelGridPtr(new pcl::VoxelGrid<PointT>){
 
     type = "GeneticEvaluatorOC";
     initialise_object(datasetObjectPtr, datapoint_n);
+
 }
 
 void GeneticEvaluatorOC::initialise_object(DatasetObjectPtr &newDatasetObjectPtr, int datapoint_n) {
@@ -39,6 +44,7 @@ void GeneticEvaluatorOC::initialise_object(DatasetObjectPtr &newDatasetObjectPtr
 void GeneticEvaluatorOC::initialise_object(DatasetObjectPtr &newDatasetObjectPtr, DataPoint &datapoint) {
     datasetObjectPtr = newDatasetObjectPtr;
     pcm = datasetObjectPtr->get_mesh_point_cloud();
+
     ncm = datasetObjectPtr->get_mesh_normal_cloud();
     meshPtr = datasetObjectPtr->get_mesh();
     camera_pose = datasetObjectPtr->camera_pose;
@@ -69,7 +75,17 @@ void GeneticEvaluatorOC::init_visible_inliers() {
     visible_oc_pcs.clear();
     visible_oc_pcs.reserve(dp.ocs.size());
     pc_render.renderPointClouds(visible_oc_pcs);
+
     double render_time = chronometer.toc();
+
+    // Down sample
+    voxelGridPtr->setLeafSize(vg_leaf_size,vg_leaf_size,vg_leaf_size);
+    voxelGridPtr->setInputCloud(pc);
+    voxelGridPtr->filter(*pc);
+    for(auto &vpc:visible_oc_pcs){
+        voxelGridPtr->setInputCloud(vpc);
+        voxelGridPtr->filter(*vpc);
+    }
 
     // Vectors for knn
     std::vector<int> k_indices;
@@ -148,34 +164,9 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
     return cost;
 }
 
-double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome, std::vector<double> coefficients) {
-    return 0;
-}
 
 double GeneticEvaluatorOC::sigmoid_fall_off(double x) {
     return 1 /
            (1 + std::exp(-sigmoid_falloff_scale * (x - sigmoid_falloff_center)));
 }
-
-void GeneticEvaluatorOC::getHyperParameters_d(std::vector<std::string> &names, std::vector<double *> &params) {
-    params.emplace_back(&nn_inlier_threshold);
-    params.emplace_back(&sigmoid_falloff_center);
-    params.emplace_back(&sigmoid_falloff_scale);
-    params.emplace_back(&oc_inlier_threshold);
-
-    names.emplace_back("nn_inlier_threshold");
-    names.emplace_back("sigmoid_falloff_center");
-    names.emplace_back("sigmoid_falloff_scale");
-    names.emplace_back("oc_inlier_threshold");
-}
-
-void GeneticEvaluatorOC::setHyperParameters_d(vector<double> &params) {
-    nn_inlier_threshold=params[0];
-    sigmoid_falloff_center=params[1];
-    sigmoid_falloff_scale=params[2];
-    oc_inlier_threshold=params[3];
-}
-
-
-
 
