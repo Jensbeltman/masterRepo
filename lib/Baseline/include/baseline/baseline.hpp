@@ -10,10 +10,10 @@ struct BAResult {
 
 class Baseline {
 public:
-    Baseline(GeneticEvaluatorOCPtr geneticEvaluatorOCPtr);
+    Baseline(GeneticEvaluatorPtr geneticEvaluatorPtr);
     BAResult solve();
 
-    GeneticEvaluatorOCPtr geneticEvaluatorOCPtr;
+    GeneticEvaluatorPtr geneticEvaluatorPtr;
 private:
     template<typename T>
     std::vector<size_t> sorted_idxs(std::vector<T> &vec);

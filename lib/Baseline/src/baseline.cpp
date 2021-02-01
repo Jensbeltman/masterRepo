@@ -1,15 +1,15 @@
 #include "baseline/baseline.hpp"
 
-Baseline::Baseline(GeneticEvaluatorOCPtr geneticEvaluatorOCPtr):geneticEvaluatorOCPtr(geneticEvaluatorOCPtr) {
+Baseline::Baseline(GeneticEvaluatorPtr geneticEvaluatorPtr):geneticEvaluatorPtr(geneticEvaluatorPtr) {
 
 }
 
 BAResult Baseline::solve() {
     // BASELINE
     BAResult result;
-    std::vector<T4> &object_candidates = geneticEvaluatorOCPtr->dp.ocs;
-    std::vector<T4> &gts = geneticEvaluatorOCPtr->dp.gts;
-    std::vector<double> &object_candidates_scores = geneticEvaluatorOCPtr->dp.oc_scores;
+    std::vector<T4> &object_candidates = geneticEvaluatorPtr->dp.ocs;
+    std::vector<T4> &gts = geneticEvaluatorPtr->dp.gts;
+    std::vector<double> &object_candidates_scores = geneticEvaluatorPtr->dp.oc_scores;
     std::vector<size_t> sorted_score_idx = sorted_idxs(object_candidates_scores);
 
     result.chromosome = chromosomeT(object_candidates.size(), false);
@@ -17,7 +17,7 @@ BAResult Baseline::solve() {
     double cost;
     for (auto &i:sorted_score_idx) {
         result.chromosome[i] = true;
-        cost = geneticEvaluatorOCPtr->evaluate_chromosome(result.chromosome);
+        cost = geneticEvaluatorPtr->evaluate_chromosome(result.chromosome);
         if (cost < result.cost) {
             result.cost = cost;
         } else {
