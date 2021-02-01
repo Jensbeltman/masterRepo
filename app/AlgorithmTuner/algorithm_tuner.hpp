@@ -18,9 +18,11 @@
 #include "algorithm_interface.hpp"
 #include "ga_interface.hpp"
 #include "ba_interface.hpp"
+#include "genetic_evaluator_oc_interface.hpp"
 #include "dataset/DatasetObject.hpp"
 #include <dataset/scape/ScapeDataset.hpp>
 #include "ga/visualization/point_cloud_group_visualizer.hpp"
+#include "ga/genetic_evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include "vtkSmartPointer.h"
 #include "algorithm_data_proc.hpp"
 
@@ -36,9 +38,9 @@ struct GeneralSettings {
     QDoubleSpinBox *ground_truth_r_thresh = new QDoubleSpinBox();
 };
 
-struct EvaluatorOCSettings {
-    std::map<std::string, GeneticEvaluatorOCPtr> evaluator_map{{"GeneticEvaluatorOC", std::make_shared<GeneticEvaluatorOC>()}};
-    QComboBox *evaluator_types_combo_box = new QComboBox();
+/*struct EvaluatorOCSettings {
+    std::map<std::string, GeneticEvaluatorPtr> evaluator_map{{"GeneticEvaluatorOC", std::make_shared<GeneticEvaluatorOC>()}};
+
     std::vector<std::string> evaluator_types;
 
     QString current_evaluator_str;
@@ -51,7 +53,7 @@ struct EvaluatorOCSettings {
             evaluator_types_combo_box->addItem(QString::fromStdString(kvp.first));
         }
     }
-};
+};*/
 
 namespace Ui {
     class AlgorithmTuner;
@@ -71,9 +73,10 @@ private:
     AlgorithmTunerSettings settings;
     GeneralSettings general_settings;
 
-    std::vector<AlgorithmInterfacePtr> algorithms;
-
-    EvaluatorOCSettings evaluator_settings;
+    std::vector<HVInterfacePtr> hv_algorithms;
+    std::vector<EvaluatorInterfacePtr> evaluators;
+    QString current_evaluator_text;
+    //EvaluatorOCSettings evaluator_settings;
 
     ScapeDatasetPtr scapeDatasetPtr = nullptr;
 
@@ -95,10 +98,11 @@ private:
 
     void load_dataset();
 
-    void add_results_to_visualizer(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr,std::string group,std::string node_prefix, std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
+    void add_results_to_visualizer(GeneticEvaluatorPtr &geneticEvaluatorPtr,std::string group,std::string node_prefix, std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
 
-    void run_enabled_algorithms(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr,DatasetObjectPtr &obj, DataPoint &dp, rawDataMapAlgObjVecT &rawDataMapAlgObjVec);
-
+    void run_enabled_algorithms(GeneticEvaluatorPtr &geneticEvaluatorPtr,DatasetObjectPtr &obj, DataPoint &dp, rawDataMapAlgObjVecT &rawDataMapAlgObjVec);
+private:
+    EvaluatorInterfacePtr get_evaluator_interface(QString name);
 private slots:
 
     void chose_dataset_folders();
