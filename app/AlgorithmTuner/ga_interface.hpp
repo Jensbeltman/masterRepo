@@ -8,11 +8,11 @@
 #include "algorithm_interface.hpp"
 #include "ga/ga.hpp"
 
-class GAInterface : public AlgorithmInterface {
+class GAInterface : public HVInterface {
 public:
     GAInterface();
     GA ga;
-    rawDataT run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr) override;
+    rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr) override;
 };
 
 typedef std::shared_ptr<GAInterface> GAInterfacePtr;

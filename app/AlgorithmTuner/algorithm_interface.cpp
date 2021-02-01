@@ -5,10 +5,7 @@
 #include "algorithm_interface.hpp"
 #include <QString>
 
-AlgorithmInterface::AlgorithmInterface() {
-    variables_b.emplace_back(var_b{&enable,new QCheckBox,"enable","false"});
-}
-
+// Algorithm
 void AlgorithmInterface::update_variables() {
     for(auto& var:variables_b){
         *var.val = var.checkBox->isChecked();
@@ -56,12 +53,41 @@ QVariant AlgorithmInterface::get_setting_variant(QSettings &qsettings, std::stri
     return qsettings.value(QString::fromStdString(key),QString::fromStdString(default_val));
 }
 
-rawDataT AlgorithmInterface::run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr) {
+
+void AlgorithmInterface::add_variable_to_formlayout(QFormLayout *qFormLayout){
+    for (auto &var:variables_b)
+        qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)), var.checkBox);
+    for (auto &var:variables_i)
+        qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)), var.spinBox);
+    for (auto &var:variables_d)
+        qFormLayout->addRow(new QLabel(QString::fromStdString(var.name)), var.spinBox);
+}
+
+void AlgorithmInterface::add_variable_to_tabwidget(QTabWidget *qTabWidget){
+
+        QWidget *widget = new QTabWidget();
+        QFormLayout *qFormLayout = new QFormLayout();
+
+        add_variable_to_formlayout(qFormLayout);
+
+        widget->setLayout(qFormLayout);
+        qTabWidget->addTab(widget, QString::fromStdString(name));
+
+}
+bool AlgorithmInterface::operator<(const AlgorithmInterface &rhs) const {
+    return name < rhs.name;
+}
+
+// HV
+HVInterface::HVInterface() {
+    variables_b.emplace_back(var_b{&enable,new QCheckBox,"enable","false"});
+}
+rawDataT HVInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     return rawDataT{DataPoint(), chromosomeT(), std::numeric_limits<double>::max()};
 }
 
-void AlgorithmInterface::getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn,
-                                 chromosomeT chromosome, chromosomeT correct_ocs) {
+void HVInterface::getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn,
+                          chromosomeT chromosome, chromosomeT correct_ocs) {
     for (int i = 0; i < correct_ocs.size(); i++) {
         if (correct_ocs[i]) {
             if (chromosome[i]) {
@@ -79,14 +105,4 @@ void AlgorithmInterface::getFPTN(std::vector<int> &tp, std::vector<int> &fp, std
     }
 }
 
-bool AlgorithmInterface::enabled() {
-    auto enabled_var_it = std::find_if(variables_b.begin(),variables_b.end(),[](var_b vb){return vb.name=="enable";});
-    if( enabled_var_it != variables_b.end())
-        return *(enabled_var_it->val);
-    else
-        return false;
-}
-
-bool AlgorithmInterface::operator<(const AlgorithmInterface &rhs) const {
-        return name < rhs.name;
-}
+// Evaulator

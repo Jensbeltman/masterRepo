@@ -4,14 +4,14 @@
 
 #include "ba_interface.hpp"
 
-BAInterface::BAInterface():AlgorithmInterface()  {
+BAInterface::BAInterface(): HVInterface()  {
     name="BA";
 }
 
-rawDataT BAInterface::run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr) {
+rawDataT BAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     chronometer.tic();
     BAResult baResult;
-    Baseline baseline(geneticEvaluatorOcPtr);
+    Baseline baseline(geneticEvaluatorPtr);
     baResult = baseline.solve();
-    return rawDataT{geneticEvaluatorOcPtr->dp,baResult.chromosome,chronometer.toc()};
+    return rawDataT{geneticEvaluatorPtr->dp,baResult.chromosome,chronometer.toc()};
 }

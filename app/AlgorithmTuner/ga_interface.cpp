@@ -4,7 +4,7 @@
 
 #include "ga_interface.hpp"
 
-GAInterface::GAInterface(): AlgorithmInterface() {
+GAInterface::GAInterface(): HVInterface() {
     name="GA";
     // Creating Variables
     variables_i.emplace_back(var_i{&ga.population_size,new QSpinBox,"population_size",std::to_string(ga.population_size)});
@@ -19,11 +19,11 @@ GAInterface::GAInterface(): AlgorithmInterface() {
         var.spinBox->setMaximum(10000);
 }
 
-rawDataT GAInterface::run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr) {
+rawDataT GAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     chronometer.tic();
     GAResult gaResult;
-    ga.n_genes = geneticEvaluatorOcPtr->dp.ocs.size();
-    ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorOcPtr);
+    ga.n_genes = geneticEvaluatorPtr->dp.ocs.size();
+    ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorPtr);
     gaResult =  ga.solve();
-    return rawDataT{geneticEvaluatorOcPtr->dp,gaResult.chromosome,chronometer.toc()};
+    return rawDataT{geneticEvaluatorPtr->dp, gaResult.chromosome, chronometer.toc()};
 }

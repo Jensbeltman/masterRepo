@@ -5,10 +5,10 @@
 #include "baseline/baseline.hpp"
 
 
-class BAInterface: public AlgorithmInterface {
+class BAInterface: public HVInterface {
 public:
     BAInterface();
-    rawDataT run(GeneticEvaluatorOCPtr &geneticEvaluatorOcPtr) override;
+    rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr) override;
 };
 typedef std::shared_ptr<BAInterface> BAInterfacePtr;
 #endif //MASTER_BA_INTERFACE_HPP
