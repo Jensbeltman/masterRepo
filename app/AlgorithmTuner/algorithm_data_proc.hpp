@@ -6,13 +6,13 @@
 #define MASTER_ALGORITHM_DATA_PROC_HPP
 #include "algorithm_interface.hpp"
 #include "dataset/transform_utility.hpp"
-
+#include "matplot/matplot.h"
 class AlgorithmDataProc {
 public:
     AlgorithmDataProc();
     AlgorithmDataProc(rawDataMapAlgObjVecT rawDataMapAlgObjVec,double t_thresh, double r_thresh);
     void generate_data(double t_thresh, double r_thresh);
-    void update_data(double t_thresh, double r_thresh);
+//    void update_data(double t_thresh, double r_thresh);
 
     rawDataMapAlgObjVecT rawDataMapAlgObjVec;
 
@@ -34,8 +34,9 @@ public:
 
     void getFPTN(int &tp, int &fp, int &tn, int &fn, chromosomeT chromosome, chromosomeT correct_ocs);
 
-    void bar_plot(std::vector<int> &valVec);
-    void bar_plot(std::vector<double> &valVec);
+
+    matplot::figure_handle  bar_plot(std::vector<int> &valVec);
+    matplot::figure_handle  bar_plot(std::vector<double> &valVec);
 
     size_t begin_index(std::string key,std::vector<std::string> &keys);
     size_t end_index(std::string key,std::vector<std::string> &keys);

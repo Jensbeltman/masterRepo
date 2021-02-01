@@ -5,7 +5,7 @@
 #include "algorithm_data_proc.hpp"
 #include "datautil/ga_conversions.hpp"
 #include "datautil/csv_doc.hpp"
-#include "matplot/matplot.h"
+
 
 AlgorithmDataProc::AlgorithmDataProc(): rawDataMapAlgObjVec(rawDataMapAlgObjVecT()) {
 }
@@ -56,7 +56,7 @@ void AlgorithmDataProc::generate_data(double t_thresh, double r_thresh) {
     for (auto &alg_pair:rawDataMapAlgObjVec) {
         for (auto &obj_pair:alg_pair.second) {
             for (auto &rawData:obj_pair.second) {
-                std::vector<bool> true_ocs = tu.get_true_ocs(rawData.dp.ocs, rawData.dp.gts, t_thresh, r_thresh);
+                std::vector<bool> true_ocs = tu.get_true_ocs(rawData.dp.ocs, rawData.dp.gts, t_thresh, r_thresh,obj_pair.first->symmetry_transforms);
                 algNameVec.emplace_back(alg_pair.first);
                 objNameVec.emplace_back(obj_pair.first->name);
 
@@ -64,7 +64,7 @@ void AlgorithmDataProc::generate_data(double t_thresh, double r_thresh) {
                 chromosomeVec.emplace_back(rawData.chromsome);
                 ocVec.emplace_back(rawData.dp.ocs);
                 gtVec.emplace_back(rawData.dp.gts);
-                trueOCVec.emplace_back(tu.get_true_ocs(ocVec.back(), gtVec.back(), t_thresh, r_thresh));
+                trueOCVec.emplace_back(true_ocs);
                 timeVec.emplace_back(rawData.time);
 
                 tpIVec.emplace_back();
@@ -91,8 +91,6 @@ void AlgorithmDataProc::generate_data(double t_thresh, double r_thresh) {
                 if(std::isnan(accuracyVec.back())) accuracyVec.back() = 0;
                 if(std::isnan(recallVec.back())) recallVec.back() = 0;
                 if(std::isnan(precisionVec.back())) precisionVec.back() = 0;
-
-
             }
         }
     }
@@ -104,6 +102,7 @@ void AlgorithmDataProc::generate_data(double t_thresh, double r_thresh) {
     objNameUniqueVec.erase( unique( objNameUniqueVec.begin(), objNameUniqueVec.end() ), objNameUniqueVec.end() );
 }
 
+/*
 void AlgorithmDataProc::update_data(double t_thresh, double r_thresh) {
     tpVec.clear();
     tnVec.clear();
@@ -149,7 +148,7 @@ void AlgorithmDataProc::update_data(double t_thresh, double r_thresh) {
     }
 
 }
-
+*/
 
 
 
@@ -233,12 +232,12 @@ size_t AlgorithmDataProc::end_index(std::string key, std::vector<std::string> &k
     return std::distance(keys.begin(),std::find(keys.rbegin(),keys.rend(),key).base());
 }
 
-void AlgorithmDataProc::bar_plot(std::vector<int> &valVec) {
+matplot::figure_handle  AlgorithmDataProc::bar_plot(std::vector<int> &valVec) {
     std::vector<double> vec = VecIToVecD(valVec);
-    bar_plot(vec);
+    return bar_plot(vec);
 }
 
-void AlgorithmDataProc::bar_plot(std::vector<double> &valVec) {
+matplot::figure_handle  AlgorithmDataProc::bar_plot(std::vector<double> &valVec) {
     using namespace matplot;
     auto f = figure(true);
     auto ax = f->current_axes();
@@ -252,16 +251,21 @@ void AlgorithmDataProc::bar_plot(std::vector<double> &valVec) {
     }
 
     auto bar_handle = ax->bar(y);
-    ax->xlabel("Object Type");
-    ax->ylabel("Accuracy");
+    std::string xl = "Object Type(";
+    for(auto &alg:algNameUniqueVec)
+        xl+=alg+", ";
+    xl = xl.substr(0,xl.npos-2)+")";
+    ax->xlabel(xl);
     ax->x_axis().ticklabels(objNameUniqueVec);
 
     std::vector<std::string> legends;
     for(auto &alg:algNameUniqueVec)
         legends.emplace_back(alg + " obj avr");
-    ax->legend(legends);
+    auto legend_handle = legend(ax);
 
     f->draw();
+    return f;
+
 }
 
 bool AlgorithmDataProc::get_begin_end_index(size_t &bi, size_t &ei, std::string alg_key, std::string obj_key) {
