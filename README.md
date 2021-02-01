@@ -15,8 +15,9 @@ This is the software repository for the my master thesis named: "Improving the F
 
 - QT 5.12
   - Lower version might also workout
-- VTK 9.0: https://github.com/Kitware/VTK/tree/v9.0.0
-  - Moved to 9.0 as 7.1 had errors related to it.
+- VTK 7.1: https://github.com/Kitware/VTK/tree/v7.1.0
+  - ~~Moved to 9.0 as 7.1 had errors related to it.~~
+  - Moved back to 7.1 as PCL did not support and pull request that did gave unsolvable errors.
 - OpenCV 4.4* and OpenCV contribution modules: https://github.com/opencv 
   - Build with VTK
 - PCL 1.10: https://github.com/PointCloudLibrary/pcl/pull/4262
