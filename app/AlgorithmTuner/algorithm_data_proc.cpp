@@ -86,7 +86,7 @@ void AlgorithmDataProc::generate_data(double t_thresh, double r_thresh) {
                 int &fn = fnVec.back();
 
                 accuracyVec.emplace_back(static_cast<double>( tp + tn) / static_cast<double>(tp + tn + fp + fn));
-                recallVec.emplace_back(static_cast<double>(tp) / static_cast<double>(tp + fn));
+                recallVec.emplace_back(static_cast<double>(tp) /gtVec.back().size());
                 precisionVec.emplace_back(static_cast<double>( tp) / static_cast<double>(tp + fp));
                 if(std::isnan(accuracyVec.back())) accuracyVec.back() = 0;
                 if(std::isnan(recallVec.back())) recallVec.back() = 0;
@@ -101,55 +101,6 @@ void AlgorithmDataProc::generate_data(double t_thresh, double r_thresh) {
     sort( objNameUniqueVec.begin(), objNameUniqueVec.end() );
     objNameUniqueVec.erase( unique( objNameUniqueVec.begin(), objNameUniqueVec.end() ), objNameUniqueVec.end() );
 }
-
-/*
-void AlgorithmDataProc::update_data(double t_thresh, double r_thresh) {
-    tpVec.clear();
-    tnVec.clear();
-    fpVec.clear();
-    fnVec.clear();
-    trueOCVec.clear();
-    accuracyVec.clear();
-    precisionVec.clear();
-    recallVec.clear();
-
-    auto oc_it = ocVec.begin();
-    auto gt_it = gtVec.begin();
-    auto c_it = chromosomeVec.begin();
-    for(;(oc_it!=ocVec.end()) && (gt_it!=gtVec.end()) && (c_it!=chromosomeVec.end());oc_it++,gt_it++,c_it++) {
-        trueOCVec.emplace_back(tu.get_true_ocs(*oc_it, *gt_it, t_thresh, r_thresh));
-
-
-        tpIVec.emplace_back();
-        tnIVec.emplace_back();
-        fpIVec.emplace_back();
-        fnIVec.emplace_back();
-        std::vector<int> &tpI = tpIVec.back();
-        std::vector<int> &tnI = tnIVec.back();
-        std::vector<int> &fpI = fpIVec.back();
-        std::vector<int> &fnI = fnIVec.back();
-        getFPTN(tpI, tnI, fpI, fnI, *c_it, trueOCVec.back());
-        tpVec.emplace_back(tpI.size());
-        tnVec.emplace_back(tnI.size());
-        fpVec.emplace_back(fpI.size());
-        fnVec.emplace_back(fnI.size());
-        int &tp = tpVec.back();
-        int &tn = tnVec.back();
-        int &fp = fpVec.back();
-        int &fn = fnVec.back();
-
-        accuracyVec.emplace_back(static_cast<double>( tp + tn) / static_cast<double>(tp + tn + fp + fn));
-        recallVec.emplace_back(static_cast<double>(tp) / static_cast<double>(tp + fn));
-        precisionVec.emplace_back(static_cast<double>( tp) / static_cast<double>(tp + fp));
-        if(std::isnan(accuracyVec.back())) accuracyVec.back() = 0;
-        if(std::isnan(recallVec.back())) recallVec.back() = 0;
-        if(std::isnan(precisionVec.back())) precisionVec.back() = 0;
-
-    }
-
-}
-*/
-
 
 
 void AlgorithmDataProc::save_data(std::string filename) {
