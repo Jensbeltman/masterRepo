@@ -37,3 +37,12 @@ rawDataT GAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     gaResult =  ga.solve();
     return rawDataT{geneticEvaluatorPtr->dp, gaResult.chromosome, chronometer.toc()};
 }
+
+BaselineInterface::BaselineInterface(): HVInterface()  {
+    name="BL";
+}
+
+rawDataT BaselineInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
+    chronometer.tic();
+    return rawDataT{geneticEvaluatorPtr->dp,chromosomeT(geneticEvaluatorPtr->dp.ocs.size(),true),chronometer.toc()};
+}

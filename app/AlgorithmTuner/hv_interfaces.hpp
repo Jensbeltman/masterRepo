@@ -20,6 +20,13 @@ public:
 };
 typedef std::shared_ptr<GAInterface> GAInterfacePtr;
 
+class BaselineInterface : public HVInterface {
+public:
+    BaselineInterface();
+    rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr) override;
+};
+typedef std::shared_ptr<BaselineInterface> BaselineInterfacePtr;
+
 
 
 #endif //MASTER_HV_INTERFACES_HPP
