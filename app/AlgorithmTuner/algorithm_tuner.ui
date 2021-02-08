@@ -451,41 +451,6 @@
          <property name="sizeAdjustPolicy">
           <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
          </property>
-         <item>
-          <property name="text">
-           <string>Accuracy</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Recall</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Precision</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>TP</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>TN</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>FP</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>FN</string>
-          </property>
-         </item>
         </widget>
        </item>
        <item>
