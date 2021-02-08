@@ -8,12 +8,12 @@
 #include <QObject>
 #include <QSettings>
 
-
 // VTK
 #include <vtkRenderWindow.h>
 #include <vtkRendererCollection.h>
 #include <vtkCamera.h>
 #include <vtkPointPicker.h>
+#include <vtkPLYReader.h>
 
 // PCL
 #include <pcl/filters/voxel_grid.h>
@@ -23,6 +23,7 @@
 
 // filesystem
 #include <filesystem>
+#include <fstream>
 
 using namespace pcl;
 using namespace std;
@@ -47,6 +48,7 @@ ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent)
 
     vis_src_ = pcl::make_shared<PointCloudGroupVisualizer>(renderer_src_, render_window_src_, "vis_src", false);
     vis_dst_ = pcl::make_shared<PointCloudGroupVisualizer>(renderer_dst_, render_window_dst_, "vis_dst", false);
+
 
     //Create a timer
     vis_timer_ = new QTimer(this);
@@ -97,8 +99,10 @@ ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent)
     connect(ui_->calculateButton, SIGNAL(clicked()), this, SLOT(calculatePressed()));
     connect(ui_->clearButton, SIGNAL(clicked()), this, SLOT(clearPressed()));
     connect(ui_->verifyButton, SIGNAL(clicked()), this, SLOT(verifyPressed()));
-    connect(ui_->applySettingsButton,SIGNAL(clicked()),this,  SLOT(update_pick_tolerance()));
+    connect(ui_->pickTolerancedoubleSpinBox, qOverload<double>(&QDoubleSpinBox::valueChanged),this, &ManualRegistration::update_pick_tolerance);
     connect(ui_->actionSave,SIGNAL(triggered()),this,  SLOT(save_anotation()));
+    connect(ui_->removeGTButton,SIGNAL(clicked()),this,SLOT(removeGT()));
+    connect(ui_->undoRemoveGTButton,SIGNAL(clicked()),this,SLOT(undoGTRemoval()));
 
     cloud_src_modified_ = true; // first iteration is always a new pointcloud
     cloud_dst_modified_ = true;
@@ -130,11 +134,13 @@ void ManualRegistration::calculatePressed() {
                              QString("You haven't selected an equal amount of points, please do so!"));
         return;
     }
-    const double voxel_size = 5 * res_;
+    const double voxel_size = 3 * res_;
     const double inlier_threshold_ransac = 2 * voxel_size;
     const double inlier_threshold_icp = 2 * voxel_size;
 
     PointCloudT::Ptr cloud_src_ds = pcl::make_shared<PointCloudT>();
+    PointCloudT::Ptr cloud_src_partial = pcl::make_shared<PointCloudT>();
+    PointCloudT::Ptr cloud_src_partial_ds = pcl::make_shared<PointCloudT>();
     PointCloudT::Ptr cloud_dst_ds = pcl::make_shared<PointCloudT>();
     if (ui_->robustBox->isChecked() || ui_->refineBox->isChecked()) {
         PCL_INFO("Downsampling point clouds with a voxel size of %f...\n", voxel_size);
@@ -150,7 +156,6 @@ void ManualRegistration::calculatePressed() {
         if((!vis_dst_->current_group->nodes.empty()) && vis_dst_->current_group->selected_node->get() != nullptr){
             if(vis_dst_->current_group->id == "ocs"){
                 transform_ =  oc_id_to_t4[vis_dst_->current_group->selected_node->get()->id].matrix().cast<float>();
-                std::cout<<transform_<<std::endl;
             }
         }
     }
@@ -187,15 +192,27 @@ void ManualRegistration::calculatePressed() {
         }
     }
 
-    if (ui_->refineBox->isChecked()) {
+    T4 updateT(transform_.cast<double>());
+    pointCloudRenderer->updateActor(0,updateT);
+    pointCloudRenderer->fitCameraAndResolution();
+    pointCloudRenderer->renderPointCloud(cloud_src_partial,updateT);
+    pcl::VoxelGrid<PointT> grid;
+    grid.setLeafSize(res_, res_, res_);
+    grid.setInputCloud(cloud_src_partial);
+    grid.filter(*cloud_src_partial);
+    grid.setLeafSize(voxel_size, voxel_size, voxel_size);
+    grid.setInputCloud(cloud_src_partial);
+    grid.filter(*cloud_src_partial_ds);
 
+
+    if (ui_->refineBox->isChecked()) {
         pcl::IterativeClosestPoint<PointT, PointT> icp;
         PointCloudT::Ptr tmp = pcl::make_shared<PointCloudT>();
 
         PCL_INFO("Refining pose using ICP with an inlier threshold of %f...\n", inlier_threshold_icp);
-        icp.setInputSource(cloud_src_ds);
+        icp.setInputSource(cloud_src_partial_ds);
         icp.setInputTarget(cloud_dst_ds);
-        icp.setMaximumIterations(100);
+        icp.setMaximumIterations(1000);
         icp.setMaxCorrespondenceDistance(inlier_threshold_icp);
         icp.align(*tmp, transform_);
 
@@ -220,7 +237,7 @@ void ManualRegistration::calculatePressed() {
         }
 
         PCL_INFO("Rerunning ultra-fine ICP at full resolution with an inlier threshold of %f...\n", res_);
-        icp.setInputSource(cloud_src_);
+        icp.setInputSource(cloud_src_partial);
         icp.setInputTarget(cloud_dst_);
         icp.setMaximumIterations(25);
         icp.setMaxCorrespondenceDistance(res_);
@@ -236,7 +253,7 @@ void ManualRegistration::calculatePressed() {
     }
 
     PointCloudT::Ptr tmp= pcl::make_shared<PointCloudT>();
-    transformPointCloud(*cloud_src_, *tmp,transform_);
+    transformPointCloud(*cloud_src_partial, *tmp,transform_);
     new_gts_.emplace_back(transform_.cast<double>());
     new_gt_verified = false;
     vis_dst_->addIdPointCloud(tmp,"new_gt_"+std::to_string(new_gts_.size()),"new_gts",0,255,0);
@@ -299,13 +316,26 @@ void ManualRegistration::timeoutSlot() {
     ui_->qvtk_widget_dst->update();
 }
 
-void ManualRegistration::setSrcCloud(PointCloudT::Ptr cloud_src) {
+void ManualRegistration::setSrcCloud(PointCloudT::Ptr cloud_src, std::string new_mesh_ply_path) {
+    mesh_ply_path = new_mesh_ply_path;
+    pointCloudRenderer = std::make_shared<PointCloudRenderer>();
+    auto identity = T4::Identity();
+    pointCloudRenderer->addActorPLY(mesh_ply_path,identity);
     pcl::Indices idcs;
     removeNaNFromPointCloud(*cloud_src,*cloud_src_,idcs);
+
+    auto reader = vtkSmartPointer<vtkPLYReader>::New();
+    reader->SetFileName(mesh_ply_path.c_str());
+    auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(reader->GetOutputPort());
+    auto ply_actor = vtkSmartPointer<vtkActor>::New();
+    ply_actor->SetMapper(mapper);
+    vis_src_->getRendererCollection()->GetFirstRenderer()->AddActor(ply_actor);
+
     vis_src_->addIdPointCloud(cloud_src_,
                               pcl::visualization::PointCloudColorHandlerGenericField<PointT>(cloud_src_, "z"),
                               "cloud_src_");
-    vis_src_->resetCameraViewpoint("cloud_src_");
+    vis_src_->resetCameraViewpoint("ply_src_");
 }
 
 void ManualRegistration::setResolution(double res) {
@@ -325,14 +355,49 @@ void ManualRegistration::setDstCloud(PointCloudT::Ptr cloud_dst) {
 void ManualRegistration::setGTs(vector<T4> &gts, std::string path) {
     orig_gts_ = gts;
     ground_truth_path = path;
+
+    if(vis_dst_->find_pcv_group_id("gts")!=nullptr)
+        vis_dst_->remove_pcv_group("gts");
+
+
     for(int i = 0;i<gts.size();i++){
         PointCloudT::Ptr gtpc(new PointCloudT);
         pcl::transformPointCloud(*cloud_src_,*gtpc,gts[i]);
         std::string id = "gt_"+std::to_string(i);
         vis_dst_->addIdPointCloud(gtpc, id, "gts", 0, 180, 0);
     }
+}
+
+void ManualRegistration::removeGT() {
+    if( (vis_dst_->current_group->id == "gts") && !vis_dst_->current_group->nodes.empty()){
+        string id = vis_dst_->current_group->selected_node->get()->id;
+        gts_to_be_removed.emplace_back(std::stoi(id.substr(3)));
+        vis_dst_->remove_pcv_node(id);
+    }
+}
+
+void ManualRegistration::undoGTRemoval() {
+    setGTs(orig_gts_,ground_truth_path);
+    gts_to_be_removed.clear();
+}
 
 
+void ManualRegistration::removeGTsFromFile(std::vector<int> gt_indexes) {
+    std::ifstream infile(ground_truth_path,ios::in);
+    std::ofstream tmpfile("./tmpfile",ios::out);
+
+    char data[256];
+    int i = 0;
+    while(infile.getline(data,256)){
+        if(std::find(gt_indexes.begin(),gt_indexes.end(),i/4)==gt_indexes.end()){
+            tmpfile<<data<<"\n";
+        }
+        i++;
+    }
+    tmpfile.close();
+    infile.close();
+    std::remove(ground_truth_path.c_str());
+    std::rename("./tmpfile",ground_truth_path.c_str());
 }
 
 void ManualRegistration::setOCs(vector<T4> &ocs) {
@@ -452,12 +517,17 @@ void ManualRegistration::save_settings() {
     qsettings.setValue("point_picker_tolerance_double", settings.point_picker_tolerance);
 }
 
-void ManualRegistration::update_pick_tolerance() {
-    pointPicker_dst->SetTolerance(ui_->pickTolerancedoubleSpinBox->value());
-    pointPicker_src->SetTolerance(ui_->pickTolerancedoubleSpinBox->value());
+void ManualRegistration::update_pick_tolerance(double pt) {
+    pointPicker_dst->SetTolerance(pt);
+    pointPicker_src->SetTolerance(pt);
+    std::string s = std::to_string(static_cast<int>((*render_window_src_->GetScreenSize())*pt))+"/"+std::to_string(static_cast<int>((*render_window_dst_->GetScreenSize())*pt))+" [px]";
+    ui_->toleranceLabel->setText(QString::fromStdString(s));
 }
 
 void ManualRegistration::save_anotation() {
+    if(!gts_to_be_removed.empty())
+        removeGTsFromFile(gts_to_be_removed);
+
     if(!new_gts_.empty()){
         std::ofstream outfile;
         if (std::filesystem::exists(ground_truth_path)) {
@@ -470,7 +540,7 @@ void ManualRegistration::save_anotation() {
             std::cout<<"File was not saved !! Check if path is invalid "<< ground_truth_path << std::endl;
         }else{
             for (auto &ngt:new_gts_) {
-                outfile << ngt.matrix();
+                outfile << ngt.matrix()<<"\n";
             }
             outfile.close();
         }
@@ -480,4 +550,9 @@ void ManualRegistration::save_anotation() {
 
     this->close();
 }
+
+
+
+
+
 
