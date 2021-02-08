@@ -28,8 +28,10 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/point_cloud_handlers.h>
 
-// Custom visualizer
+// Visualizer dataobject and renders
 #include "hypothesis_verification/visualization/point_cloud_group_visualizer.hpp"
+#include "dataset/scape/ScapeDatasetObject.hpp"
+#include "hypothesis_verification/evaluator/point_cloud_renderer.hpp"
 
 //VTK
 #include "vtkGenericOpenGLRenderWindow.h"
@@ -68,13 +70,15 @@ public:
 
     void DstPointPickCallback(const pcl::visualization::PointPickingEvent &event, void *);
 
-    void setSrcCloud(PointCloudT::Ptr cloud_src);
+    void setSrcCloud(PointCloudT::Ptr cloud_src, std::string mesh_ply_path);
 
     void setResolution(double res);
 
     void setDstCloud(PointCloudT::Ptr cloud_dst);
 
     void setGTs(std::vector<T4> & gts, std::string path);
+
+    void removeGTsFromFile(std::vector<int> gt_indexes);
 
     void setOCs(std::vector<T4> & ocs);
 
@@ -83,7 +87,6 @@ public:
 
 
 protected:
-
     vtkSmartPointer<vtkRenderWindow> render_window_src_;
     vtkSmartPointer<vtkRenderWindow> render_window_dst_;
     vtkSmartPointer<vtkRenderer> renderer_src_;
@@ -94,8 +97,13 @@ protected:
 
     std::vector<T4> orig_gts_;
     std::vector<T4> new_gts_;
+    std::vector<int> gts_to_be_removed;
     bool new_gt_verified = true;
     std::string ground_truth_path;
+    std::string mesh_ply_path;
+
+    PointCloudRendererPtr pointCloudRenderer;
+
     std::map<std::string,T4> oc_id_to_t4;
 
 
@@ -137,9 +145,13 @@ public slots:
 
     void verifyPressed();
 
-    void update_pick_tolerance();
+    void update_pick_tolerance(double pt);
 
     void save_anotation();
+
+    void removeGT();
+
+    void undoGTRemoval();
 
 private slots:
 
