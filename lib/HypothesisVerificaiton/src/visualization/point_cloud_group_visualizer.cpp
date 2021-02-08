@@ -389,6 +389,7 @@ void PointCloudGroupVisualizer::remove_pcv_node(std::string id) {
         removePointCloud(id);
         auto group_with_id = find_pcv_group_containing_id(id);
         group_with_id->nodes.erase(std::find_if(group_with_id->nodes.begin(),group_with_id->nodes.end(),[&id](PCVNodePtr np){return np->id==id;}));
+        group_with_id->selected_node =  group_with_id->nodes.begin();
     }
 }
 
