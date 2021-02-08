@@ -49,6 +49,8 @@ ManualRegistration::ManualRegistration(QMainWindow *parent): QMainWindow(parent)
     vis_src_ = pcl::make_shared<PointCloudGroupVisualizer>(renderer_src_, render_window_src_, "vis_src", false);
     vis_dst_ = pcl::make_shared<PointCloudGroupVisualizer>(renderer_dst_, render_window_dst_, "vis_dst", false);
 
+    vis_src_->registerKeyboardCallback(&ManualRegistration::srcKeyboardCallback,*this);
+    vis_dst_->registerKeyboardCallback(&ManualRegistration::dstKeyboardCallback,*this);
 
     //Create a timer
     vis_timer_ = new QTimer(this);
@@ -415,6 +417,7 @@ void ManualRegistration::setOCs(vector<T4> &ocs) {
 void ManualRegistration::SourcePointPickCallback(const pcl::visualization::PointPickingEvent &event, void *) {
     // Check to see if we got a valid point. Early exit.
     int idx = event.getPointIndex();
+
     if (idx == -1)
         return;
 
@@ -433,6 +436,7 @@ void ManualRegistration::SourcePointPickCallback(const pcl::visualization::Point
         oss << src_pc_->size();
         std::string id = "sphere_src_" + oss.str();
         vis_src_->addSphere<PointT>(src_point_, 3, 0, 1, 0, id);
+        src_pc_id_.emplace_back(id);
         vis_src_->getShapeActorMap()->at(id)->SetPickable(0);
         vtkProp * prop = vis_src_->getShapeActorMap()->at(id);
         vtkLODActor * actor = dynamic_cast<vtkLODActor*>(prop);
@@ -466,12 +470,45 @@ void ManualRegistration::DstPointPickCallback(const pcl::visualization::PointPic
         oss << dst_pc_->size();
         std::string id = "sphere_dst_" + oss.str();
         vis_dst_->addSphere<PointT>(dst_point_, 3, 0, 1, 0, id);
+        dst_pc_id_.emplace_back(id);
         vis_dst_->getShapeActorMap()->at(id)->SetPickable(0);
         vtkProp * prop = vis_dst_->getShapeActorMap()->at(id);
         vtkLODActor * actor = dynamic_cast<vtkLODActor*>(prop);
         actor->GetProperty()->SetInterpolationToGouraud();
     } else {
         PCL_INFO ("Please select a point in the destination window first\n");
+    }
+}
+void ManualRegistration::srcKeyboardCallback(const visualization::KeyboardEvent &event, void *viewer_void) {
+    if (event.isCtrlPressed()) {
+        if (event.keyDown()) {
+            std::string key = event.getKeySym();
+            if(key=="z" || key=="Z") {
+                if (!src_pc_->empty() && !src_pc_id_.empty()) {
+                    src_pc_->erase(src_pc_->end() - 1);
+                    vis_src_->removeShape(src_pc_id_.back());
+                    src_pc_id_.pop_back();
+                    PCL_INFO ("Removed src point, %d left\n", src_pc_->points.size());
+                }
+            }
+        }
+    }
+}
+
+void ManualRegistration::dstKeyboardCallback(const visualization::KeyboardEvent &event, void *viewer_void) {
+    if (event.isCtrlPressed()) {
+        if (event.keyDown()) {
+            std::string key = event.getKeySym();
+            if(key=="z" || key=="Z") {
+                if (!dst_pc_->empty() && !dst_pc_id_.empty()) {
+                    dst_pc_->erase(dst_pc_->end() - 1);
+                    vis_dst_->removeShape(dst_pc_id_.back());
+                    dst_pc_id_.pop_back();
+                    PCL_INFO ("Removed dst point, %d left\n", dst_pc_->points.size());
+
+                }
+            }
+        }
     }
 }
 
@@ -550,7 +587,6 @@ void ManualRegistration::save_anotation() {
 
     this->close();
 }
-
 
 
 

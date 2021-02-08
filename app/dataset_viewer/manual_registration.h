@@ -70,6 +70,10 @@ public:
 
     void DstPointPickCallback(const pcl::visualization::PointPickingEvent &event, void *);
 
+    void srcKeyboardCallback(const pcl::visualization::KeyboardEvent &event, void *viewer_void);
+    void dstKeyboardCallback(const pcl::visualization::KeyboardEvent &event, void *viewer_void);
+
+
     void setSrcCloud(PointCloudT::Ptr cloud_src, std::string mesh_ply_path);
 
     void setResolution(double res);
@@ -127,11 +131,12 @@ protected:
 
     bool dst_point_selected_;
     PointT src_point_;
-
     PointT dst_point_;
-    PointCloudT::Ptr src_pc_;
 
+    PointCloudT::Ptr src_pc_;
     PointCloudT::Ptr dst_pc_;
+    std::vector<std::string> src_pc_id_;
+    std::vector<std::string> dst_pc_id_;
 
     Eigen::Matrix4f transform_;
 private:
