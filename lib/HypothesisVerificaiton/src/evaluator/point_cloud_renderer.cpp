@@ -26,14 +26,19 @@ PointCloudRenderer::PointCloudRenderer(int xres, int yres) : xres(xres), yres(yr
 }
 
 
-void PointCloudRenderer::renderPointCloud(PointCloudT::Ptr &pc) {
+void PointCloudRenderer::renderPointCloud(PointCloudT::Ptr &pc,T4 inverse_transform) {
     renWin->Render();
     updateDepth();
 
     pc->points.reserve(xres * yres);
 
     getWorldCoordMatrix(mat);
-    convertDepthToPointCloud(pc);
+
+    if (!inverse_transform.isApprox(T4::Identity()))
+        convertDepthToPointCloud(pc,&(inverse_transform));
+    else
+        convertDepthToPointCloud(pc);
+
 }
 
 void PointCloudRenderer::check_pcs(std::vector<PointCloudT::Ptr> &pcs) {
@@ -233,7 +238,9 @@ void PointCloudRenderer::convertDepthToPointCloud(PointCloudT::Ptr &pc, T4* obje
         }
     }
 }
-
+void PointCloudRenderer::addActorPLY(std::string path, T4 t) {
+    addActorsPLY(path,std::vector<T4>{t});
+}
 
 void PointCloudRenderer::addActorsPLY(std::string path, std::vector<T4> ts) {
     actor_transforms = ts;
@@ -252,14 +259,7 @@ void PointCloudRenderer::addActorsPLY(std::string path, std::vector<T4> ts) {
 //        actor->GetProperty()->SetInterpolationToFlat();
 //        actor->GetProperty()->LightingOff();
 
-        vtkMatrix4x4 *mat = vtkMatrix4x4::New();
-        for (int r = 0; r < t.matrix().rows(); r++) {
-            for (int c = 0; c < t.matrix().cols(); c++) {
-                mat->SetElement(r, c, t.matrix()(r, c));
-            }
-        }
-
-        actor->SetUserMatrix(mat);
+        actor->SetUserMatrix(t4ToVTK(t));
 
         renderer->AddActor(actor);
         actors.emplace_back(actor);
@@ -295,6 +295,27 @@ void PointCloudRenderer::fitCameraAndResolution() {
 
 PointCloudRenderer::~PointCloudRenderer() {
 }
+
+vtkMatrix4x4 *PointCloudRenderer::t4ToVTK(T4 &t4) {
+    vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+    for (int r = 0; r < t4.matrix().rows(); r++) {
+        for (int c = 0; c < t4.matrix().cols(); c++) {
+            mat->SetElement(r, c, t4.matrix()(r, c));
+        }
+    }
+    return mat;
+}
+
+bool PointCloudRenderer::updateActor(int i, T4 &t) {
+    if(actors.size()>i){
+        actors[i]->SetUserMatrix(t4ToVTK(t));
+        return true;
+    }else{
+        return false;
+    }
+}
+
+
 
 
 

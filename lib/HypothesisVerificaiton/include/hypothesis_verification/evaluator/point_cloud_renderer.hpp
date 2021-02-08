@@ -19,15 +19,16 @@ public:
 
     float *depth = nullptr;
 
-
     PointCloudRenderer(int xres = 1920, int yres = 1080);
     ~PointCloudRenderer();
 
-    void renderPointCloud(PointCloudT::Ptr &pc);
+    void renderPointCloud(PointCloudT::Ptr &pc,T4 inverse_transform = T4::Identity());
 
     void renderPointClouds(std::vector<PointCloudT::Ptr> &pcs,bool apply_inverse_transform = false);
 
     void addActorsPLY(std::string path, std::vector<T4> ts);
+    void addActorPLY(std::string path,T4 t);
+    bool updateActor(int i,T4 &t);
 
     void fitCameraAndResolution();
 
@@ -35,6 +36,7 @@ public:
 
     void getRes(int &x, int &y);
 
+    static vtkMatrix4x4* t4ToVTK(T4 &t4);
 
 private:
     void init();
@@ -49,6 +51,8 @@ private:
 
     void updateColor();
 
+
+
     int xres;
     int yres;
     Eigen::Matrix4f mat;
@@ -60,9 +64,8 @@ private:
     void renderPointsCloudsNoOcclusion(std::vector<PointCloudT::Ptr> &pcs, double occlusion_dist_sq);
 
     void renderPointCloudsAllAtOnce(std::vector<PointCloudT::Ptr> &pcs);
-
-
 };
 
+typedef std::shared_ptr<PointCloudRenderer> PointCloudRendererPtr;
 
 #endif //MASTER_POINT_CLOUD_RENDERER_HPP
