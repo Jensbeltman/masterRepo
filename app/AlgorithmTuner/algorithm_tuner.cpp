@@ -296,7 +296,7 @@ void AlgorithmTuner::run_enabled_algorithms() {
         group_vis->clear();
         group_vis->addIdPointCloud(geneticEvaluatorPtr->pc, "Captured Point Cloud");
         // Add gt and data to visualization
-        auto obj = scapeDatasetPtr->get_object_by_name(algorithmDataProc.objNameVec.back());
+        auto obj = scapeDatasetPtr->get_object_by_name(algorithmDataProc.objName.back());
         auto &dp = rawDataMapAlgObjVec.begin()->second[obj].back().dp;
         PointCloudT::Ptr meshpc = obj->get_mesh_point_cloud();
 
@@ -323,15 +323,16 @@ void AlgorithmTuner::run_enabled_algorithms() {
         group_vis->toggle_group_opacity(group_vis->find_pcv_group_id("Ground Truth"));
 
         for (auto &alg:hv_algorithms) {
+            if (alg->enable) {
+                size_t bi, ei;
+                algorithmDataProc.get_begin_end_index(bi, ei, alg->name, obj->name);
 
-            size_t bi, ei;
-            algorithmDataProc.get_begin_end_index(bi, ei, alg->name, obj->name);
-
-            std::vector<int> tp, tn, fp, fn;
-            algorithmDataProc.getFPTN(tp, tn, fp, fn, *(algorithmDataProc.chromosomeVec.begin() + ei - 1),
-                                      *(algorithmDataProc.trueOCVec.begin() + ei - 1));
-            add_results_to_visualizer(geneticEvaluatorPtr, *(algorithmDataProc.algNameVec.begin() + ei - 1),
-                                      *(algorithmDataProc.algNameVec.begin() + ei - 1), tp, tn, fp, fn);
+                std::vector<int> tp, tn, fp, fn;
+                algorithmDataProc.getFPTN(tp, tn, fp, fn, *(algorithmDataProc.chromosome.begin() + ei - 1),
+                                          *(algorithmDataProc.trueOCVec.begin() + ei - 1));
+                add_results_to_visualizer(geneticEvaluatorPtr, *(algorithmDataProc.algName.begin() + ei - 1),
+                                          *(algorithmDataProc.algName.begin() + ei - 1), tp, tn, fp, fn);
+            }
         }
         group_vis->resetCamera();
         group_vis->update_text();
@@ -339,11 +340,11 @@ void AlgorithmTuner::run_enabled_algorithms() {
         // Generate Result Table
         std::vector<std::string> dataTypes = {"Acc", "Rec", "Pre"};
         resultTableWidget->clear();
-        resultTableWidget->setColumnCount(algorithmDataProc.algNameUniqueVec.size());
+        resultTableWidget->setColumnCount(algorithmDataProc.uniqAlgNames.size());
         resultTableWidget->setRowCount(dataTypes.size());
 
         QStringList horizontalHeaders, verticalHeaders;
-        std::transform(algorithmDataProc.algNameUniqueVec.begin(), algorithmDataProc.algNameUniqueVec.end(),
+        std::transform(algorithmDataProc.uniqAlgNames.begin(), algorithmDataProc.uniqAlgNames.end(),
                        std::back_inserter(horizontalHeaders), [](std::string &s) { return QString::fromStdString(s); });
         std::transform(dataTypes.begin(), dataTypes.end(), std::back_inserter(verticalHeaders),
                        [](std::string &s) { return QString::fromStdString(s); });
@@ -351,26 +352,23 @@ void AlgorithmTuner::run_enabled_algorithms() {
         resultTableWidget->setVerticalHeaderLabels(verticalHeaders);
 
         int col_n = 0;
-        for (auto &alg:algorithmDataProc.algNameUniqueVec) {
+        for (auto &alg:algorithmDataProc.uniqAlgNames) {
             resultTableWidget->setCellWidget(0, col_n, new QLabel(QString::fromStdString(
-                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.accuracyVec, alg)))));
+                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.accuracy, alg)))));
             resultTableWidget->setCellWidget(1, col_n, new QLabel(QString::fromStdString(
-                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.recallVec, alg)))));
+                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.recall, alg)))));
             resultTableWidget->setCellWidget(2, col_n, new QLabel(QString::fromStdString(
-                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.precisionVec, alg)))));
+                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.precision, alg)))));
             col_n++;
         }
 
-//        for(auto &alg:algorithmDataProc.algNameUniqueVec){
-//            double avr_alg_acc =algorithmDataProc.get_avr(algorithmDataProc.accuracyVec, alg);
-//            dataProcFormLayout->addRow(new QLabel(QString::fromStdString(alg)),new QLabel(QString::fromStdString(std::to_string(avr_alg_acc))));
-//            std::cout<<"avr_alg_acc: "<<avr_alg_acc<<std::endl;
-//            for(auto &obj:algorithmDataProc.objNameUniqueVec){
-//                double avr_obj_acc =algorithmDataProc.get_avr(algorithmDataProc.accuracyVec, alg,obj);
-//                dataProcFormLayout->addRow(new QLabel(QString::fromStdString(obj)),new QLabel(QString::fromStdString(std::to_string(avr_obj_acc))));
-//                std::cout<<"avr_obj_acc: "<<avr_obj_acc<<std::endl;
-//            }
-//        }
+        plotComboBox->clear();
+
+        auto names = algorithmDataProc.derivedCSVDocPtr->GetColumnNames();
+        for(int i = 0;i<names.size();i++)
+            if(i>3)
+                plotComboBox->addItem(QString::fromStdString(names[i]));
+
 
         dataProcDock->show();
         resultDock->show();
@@ -525,50 +523,20 @@ AlgorithmTuner::~AlgorithmTuner() {
 
 void AlgorithmTuner::save_data() {
     auto last_save_folder = std::filesystem::path(settings.data_save_file.toStdString()).parent_path();
-    QString proposed_file_name = QString::fromStdString(
-            (last_save_folder / (getTimeString("%Y-%d-%m-%H-%M-%S") + "-AlgorithmTunerData.csv")).string());
-    settings.data_save_file = QFileDialog::getSaveFileName(this, "Save Data", proposed_file_name);
+    QString proposed_file_name = QString::fromStdString((last_save_folder / (getTimeString("%Y-%d-%m-%H-%M-%S") + "-AlgorithmTunerData.csv")).string());
+    settings.data_save_file = QFileDialog::getSaveFileName(this, "Save Dynamic Data", proposed_file_name);
 
-    algorithmDataProc.save_data(settings.data_save_file.toStdString());
+    std::string proposed_dynamic_file_name = std::filesystem::path(proposed_file_name.toStdString()).replace_extension("-Dynamic.csv");
+    std::string proposed_static_file_name = std::filesystem::path(proposed_file_name.toStdString()).replace_extension("-Static.csv");
+    algorithmDataProc.save_data(proposed_dynamic_file_name,proposed_static_file_name);
 }
 
 void AlgorithmTuner::bar_plot() {
     std::string plotDataType = plotComboBox->currentText().toStdString();
-    if (plotDataType == "Accuracy") {
-        auto f = algorithmDataProc.bar_plot(algorithmDataProc.accuracyVec);
-        f->current_axes()->ylabel("Accuracy");
-        f->draw();
-    }
-    if (plotDataType == "Precision") {
-        auto f = algorithmDataProc.bar_plot(algorithmDataProc.precisionVec);
-        f->current_axes()->ylabel("Precision");
-        f->draw();
-    }
-    if (plotDataType == "Recall") {
-        auto f = algorithmDataProc.bar_plot(algorithmDataProc.recallVec);
-        f->current_axes()->ylabel("Recall");
-        f->draw();
-    }
-    if (plotDataType == "TP") {
-        auto f = algorithmDataProc.bar_plot(algorithmDataProc.tpVec);
-        f->current_axes()->ylabel("TP");
-        f->draw();
-    }
-    if (plotDataType == "TN") {
-        auto f = algorithmDataProc.bar_plot(algorithmDataProc.tnVec);
-        f->current_axes()->ylabel("TN");
-        f->draw();
-    }
-    if (plotDataType == "FP") {
-        auto f = algorithmDataProc.bar_plot(algorithmDataProc.fpVec);
-        f->current_axes()->ylabel("FP");
-        f->draw();
-    }
-    if (plotDataType == "FN") {
-        auto f = algorithmDataProc.bar_plot(algorithmDataProc.fnVec);
-        f->current_axes()->ylabel("FN");
-        f->draw();
-    }
+
+    auto f = algorithmDataProc.bar_plot(plotDataType);
+    f->current_axes()->ylabel(plotDataType);
+    f->draw();
 }
 
 EvaluatorInterfacePtr AlgorithmTuner::get_evaluator_interface(QString name) {
