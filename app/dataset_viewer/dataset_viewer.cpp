@@ -119,8 +119,7 @@ void DatasetViewer::open_anotator(int row, int column) {
         ScapeDatasetObjectPtr datasetObjPtr = scapeDatasetPtr->get_scape_object_by_name(tableWidget->item(row,0)->text().toStdString());
 
         auto &dp = datasetObjPtr->data_points[obj_ns[row][0]];
-
-        mr->setSrcCloud(datasetObjPtr->get_mesh_point_cloud());
+        mr->setSrcCloud(datasetObjPtr->get_mesh_point_cloud(),datasetObjPtr->mesh_path);
         mr->setDstCloud(datasetObjPtr->get_pcd(obj_ns[row][0])); // Chose pcd based on first dp as they all should have the same
         if(dp.ground_truth_path.empty()) {
             std::filesystem::path p = datasetObjPtr->path;
