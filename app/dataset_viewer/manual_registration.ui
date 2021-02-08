@@ -135,6 +135,27 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>GT Actions</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="removeGTButton">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="undoRemoveGTButton">
+          <property name="text">
+           <string>Undo All</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="actionsLable">
           <property name="font">
            <font>
@@ -223,8 +244,15 @@
             <pointsize>12</pointsize>
            </font>
           </property>
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
           <property name="text">
-           <string>Pick Tolerance</string>
+           <string>Pick Tolerance 
+ Fraction</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -237,7 +265,7 @@
            <number>6</number>
           </property>
           <property name="singleStep">
-           <double>0.010000000000000</double>
+           <double>0.001000000000000</double>
           </property>
           <property name="value">
            <double>0.050000000000000</double>
@@ -245,9 +273,16 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="applySettingsButton">
+         <widget class="QLabel" name="toleranceLabel">
           <property name="text">
-           <string>Apply</string>
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string/>
           </property>
          </widget>
         </item>
