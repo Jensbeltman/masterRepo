@@ -1,12 +1,12 @@
 #ifndef MASTER_GA_CONVERSIONS_HPP
 #define MASTER_GA_CONVERSIONS_HPP
-#include "rapidcsv.h"
+#include "datautil/rapidcsv.h"
 #include "hypothesis_verification/typedefinitions.hpp"
 
 namespace rapidcsv
 {
     template<>
-    void Converter<chromosomeT>::ToVal(const std::string& pStr, chromosomeT& pVal) const
+    inline void Converter<chromosomeT>::ToVal(const std::string& pStr, chromosomeT& pVal) const
     {
         pVal.clear();
         pVal.reserve(pStr.size());
@@ -16,7 +16,7 @@ namespace rapidcsv
     }
 
     template<>
-    void Converter<chromosomeT>::ToStr(const chromosomeT& pVal, std::string& pStr) const
+    inline void Converter<chromosomeT>::ToStr(const chromosomeT& pVal, std::string& pStr) const
     {
         pStr.clear();
         pStr.reserve(pStr.size());
