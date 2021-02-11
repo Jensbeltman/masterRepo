@@ -40,23 +40,25 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
                      &AlgorithmTuner::update_datapoint_spinbox);
     QObject::connect(objectNameComboBox, qOverload<const QString &>(&QComboBox::currentIndexChanged), this,
                      qOverload<const QString &>(&AlgorithmTuner::update_ocs_and_gts));
+    QObject::connect(algComboBox, qOverload<const QString &>(&QComboBox::currentIndexChanged), this,
+                     qOverload<const QString &>(&AlgorithmTuner::update_range_params));
+    QObject::connect(paramComboBox, qOverload<const QString &>(&QComboBox::currentIndexChanged), this,
+                     qOverload<const QString &>(&AlgorithmTuner::update_range_param_limits));
+
+//    algComboBox
     QObject::connect(datapointSpinBox, qOverload<int>(&QSpinBox::valueChanged), this,
                      qOverload<int>(&AlgorithmTuner::update_ocs_and_gts));
     QObject::connect(runEnabledMethodsButton, &QPushButton::pressed, this,
                      qOverload<>(&AlgorithmTuner::run_enabled_algorithms));
-    QObject::connect(runEnabledOnObjectButton, &QPushButton::pressed, this,
-                     qOverload<>(&AlgorithmTuner::run_enabled_algorithms));
-    QObject::connect(runEnabledOnDatasetButton, &QPushButton::pressed, this,
-                     qOverload<>(&AlgorithmTuner::run_enabled_algorithms));
     QObject::connect(dataProcSaveResultsButton, &QPushButton::pressed, this, &AlgorithmTuner::save_data);
     QObject::connect(barPlotButton, &QPushButton::pressed, this, &AlgorithmTuner::bar_plot);
+    QObject::connect(paramTestPlotButton, &QPushButton::pressed, this, &AlgorithmTuner::param_test_plot);
+
     QObject::connect(evaluator_types_combo_box, &QComboBox::currentTextChanged, this,
                      &AlgorithmTuner::update_evaluator_type);
 
     // Disable button that arent currently usable
     runEnabledMethodsButton->setEnabled(false);
-    runEnabledOnObjectButton->setEnabled(false);
-    runEnabledOnDatasetButton->setEnabled(false);
     dataProcSaveResultsButton->setEnabled(false);
 
     // Hide docks and widgets
@@ -67,9 +69,15 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
 
     // Create algorithms and evaluator interfaces and add variables to GUI
     hv_algorithms.push_back(std::make_shared<GAInterface>());
+    hv_algorithms.push_back(std::make_shared<GAWInterface>());
     hv_algorithms.push_back(std::make_shared<SPInterface>());
     hv_algorithms.push_back(std::make_shared<BaselineInterface>());
+    algorithms.insert(algorithms.end(),hv_algorithms.begin(),hv_algorithms.end());
     evaluators.push_back(std::make_shared<GeneticEvaluatorOCInterface>());
+    algorithms.insert(algorithms.end(),evaluators.begin(),evaluators.end());
+
+    for(auto &alg:algorithms)
+        algComboBox->addItem(QString::fromStdString(alg->name));
 
     loadSettings(); // Load setting from prev session e.g. paths for dataset
 
@@ -162,8 +170,6 @@ void AlgorithmTuner::load_dataset() {
     datapointSpinBox->setValue(0);
     datasetDock->show();
     runEnabledMethodsButton->setEnabled(true);
-    runEnabledOnObjectButton->setEnabled(true);
-    runEnabledOnDatasetButton->setEnabled(true);
 }
 
 void AlgorithmTuner::update_datapoint_spinbox(const QString &s) {
@@ -229,66 +235,103 @@ void AlgorithmTuner::run_enabled_algorithms(GeneticEvaluatorPtr &geneticEvaluato
     }
 }
 
+std::vector<double> AlgorithmTuner::get_param_test_values() {
+    std::vector<double> param_test_values;
+
+    double paramTestMin = paramMinDoubleSpinBox->value();
+    double paramTestMax = paramMaxDoubleSpinBox->value();
+    double paramTestStep = paramStepDoubleSpinBox->value();
+
+    param_test_values.resize(static_cast<int>((paramTestMax - paramTestMin) / paramTestStep)+1);
+    std::iota(param_test_values.begin(), param_test_values.end(), 0); // Generate step indices
+    std::transform(param_test_values.begin(), param_test_values.end(), param_test_values.begin(),[paramTestMin,paramTestStep](double &c) {return paramTestMin+c * paramTestStep;}); // multiply each step with step index length
+    return param_test_values;
+}
+
 
 void AlgorithmTuner::run_enabled_algorithms() {
     progressBar->show();
+    algorithmDataProcs.clear();
+    rawData.clear();
     if (scapeDatasetPtr != nullptr) {
-        QPushButton *button = (QPushButton *) sender();
+        std::vector<double> param_test_values;
+        if(paramComboBox->count()>0)
+            param_test_values = get_param_test_values();
+        double initial_param_test_value = getSpinBoxWidgetValue(parameter_test_widget);
+
+        std::vector<std::pair<DatasetObjectPtr,std::vector<DataPoint>>> object_and_datapoint_pairs;
+        if (runEnabledMethodsComboBox->currentIndex() == 0){
+            DatasetObjectPtr obj = scapeDatasetPtr->get_object_by_name(objectNameComboBox->currentText().toStdString());
+            object_and_datapoint_pairs.emplace_back(obj,std::vector{obj->data_points[datapointSpinBox->value()]});
+        }else if (runEnabledMethodsComboBox->currentIndex() == 1) {
+            DatasetObjectPtr obj = scapeDatasetPtr->get_object_by_name(objectNameComboBox->currentText().toStdString());
+            object_and_datapoint_pairs.emplace_back(obj,std::vector<DataPoint>{});
+            for (auto &dp:obj->data_points) {
+                if (dp.gts.size() > 1)
+                    object_and_datapoint_pairs.back().second.emplace_back(dp);
+            }
+        }
+        else if (runEnabledMethodsComboBox->currentIndex() == 2) {
+            for (auto &obj:scapeDatasetPtr->objects) {
+                object_and_datapoint_pairs.emplace_back(obj,std::vector<DataPoint>{});
+                for (auto &dp:obj->data_points) {
+                    if (dp.gts.size() > 1) {
+                        object_and_datapoint_pairs.back().second.emplace_back(dp);
+                    }
+                }
+            }
+        }
+
 
         EvaluatorInterfacePtr evaluatorInterfacePtr = get_evaluator_interface(evaluator_types_combo_box->currentText());
         evaluatorInterfacePtr->update_variables();
         GeneticEvaluatorPtr &geneticEvaluatorPtr = evaluatorInterfacePtr->geneticEvaluatorPtr;
 
-        rawDataMapAlgObjVecT rawDataMapAlgObjVec;
-
         int n_dp = 0, tot_n_dp = 0;
-
-        if (button == runEnabledMethodsButton) {
-            DatasetObjectPtr obj = scapeDatasetPtr->get_object_by_name(objectNameComboBox->currentText().toStdString());
-            auto &dp = obj->data_points[datapointSpinBox->value()];
-
-            run_enabled_algorithms(geneticEvaluatorPtr, obj, dp, rawDataMapAlgObjVec);
-        } else if (button == runEnabledOnObjectButton) {
-            DatasetObjectPtr obj = scapeDatasetPtr->get_object_by_name(objectNameComboBox->currentText().toStdString());
+        for(auto &obj_dp_pair:object_and_datapoint_pairs) {
+            tot_n_dp += obj_dp_pair.second.size();
+        }
+        progressBar->setMaximum(tot_n_dp);
+        progressBar->show();
 
 
-            for (auto &dp:obj->data_points)
-                if (dp.gts.size() > 1)
-                    tot_n_dp++;
-            progressBar->setMaximum(tot_n_dp);
-
-            group_vis->clear();
-            for (auto &dp:obj->data_points) {
-                if (dp.gts.size() > 1) {
-                    run_enabled_algorithms(geneticEvaluatorPtr, obj, dp, rawDataMapAlgObjVec);
-                    progressBar->setValue(++n_dp);
-                    QCoreApplication::processEvents();
-                }
-            }
-
-        } else if (button == runEnabledOnDatasetButton) {
-            group_vis->clear();
-
-            for (auto &obj:scapeDatasetPtr->objects)
-                for (auto &dp:obj->data_points)
-                    if (dp.gts.size() > 1)
-                        tot_n_dp++;
-            progressBar->setMaximum(tot_n_dp);
-
-            for (auto &obj:scapeDatasetPtr->objects) {
-                for (auto &dp:obj->data_points) {
-                    if (dp.gts.size() > 1) {
-                        run_enabled_algorithms(geneticEvaluatorPtr, obj, dp, rawDataMapAlgObjVec);
-                        progressBar->setValue(++n_dp);
+        rawData.clear();
+        if(paramComboBox->count()>0) {
+            rawData.resize(param_test_values.size());
+            for (auto &obj_dp_pair:object_and_datapoint_pairs) {
+                for (auto &dp:obj_dp_pair.second) {
+                    for (int i = 0;i<param_test_values.size();i++) {
+                        auto &val = param_test_values[i];
+                        setSpinBoxWidgetValue(parameter_test_widget, val);
+                        evaluatorInterfacePtr->update_variables();
+                        run_enabled_algorithms(geneticEvaluatorPtr, obj_dp_pair.first, dp, rawData[i]);
+                        progressBar->setValue(++n_dp/param_test_values.size());
                         QCoreApplication::processEvents();
                     }
                 }
             }
+            setSpinBoxWidgetValue(parameter_test_widget, initial_param_test_value);
         }
+        else{
+            rawData.emplace_back();
+            for (auto &obj_dp_pair:object_and_datapoint_pairs) {
+                for (auto &dp:obj_dp_pair.second) {
+                    evaluatorInterfacePtr->update_variables();
+                    run_enabled_algorithms(geneticEvaluatorPtr, obj_dp_pair.first, dp, rawData.back());
+                    progressBar->setValue(++n_dp);
+                    QCoreApplication::processEvents();
+                }
+            }
+        }
+
+
         progressBar->hide();
 
-        algorithmDataProc = AlgorithmDataProc(rawDataMapAlgObjVec, general_settings.ground_truth_t_thresh->value(),
-                                              general_settings.ground_truth_r_thresh->value());
+        rawDataMapAlgObjVecT& rawDataMapAlgObjVec = rawData[0];
+
+        for(auto &d:rawData)
+            algorithmDataProcs.emplace_back(d, general_settings.ground_truth_t_thresh->value(),general_settings.ground_truth_r_thresh->value());
+
         dataProcSaveResultsButton->setEnabled(true);
 
 
@@ -296,7 +339,7 @@ void AlgorithmTuner::run_enabled_algorithms() {
         group_vis->clear();
         group_vis->addIdPointCloud(geneticEvaluatorPtr->pc, "Captured Point Cloud");
         // Add gt and data to visualization
-        auto obj = scapeDatasetPtr->get_object_by_name(algorithmDataProc.objName.back());
+        auto obj = scapeDatasetPtr->get_object_by_name(algorithmDataProcs[0].objName.back());
         auto &dp = rawDataMapAlgObjVec.begin()->second[obj].back().dp;
         PointCloudT::Ptr meshpc = obj->get_mesh_point_cloud();
 
@@ -325,13 +368,13 @@ void AlgorithmTuner::run_enabled_algorithms() {
         for (auto &alg:hv_algorithms) {
             if (alg->enable) {
                 size_t bi, ei;
-                algorithmDataProc.get_begin_end_index(bi, ei, alg->name, obj->name);
+                algorithmDataProcs[0].get_begin_end_index(bi, ei, alg->name, obj->name);
 
                 std::vector<int> tp, tn, fp, fn;
-                algorithmDataProc.getFPTN(tp, tn, fp, fn, *(algorithmDataProc.chromosome.begin() + ei - 1),
-                                          *(algorithmDataProc.trueOCVec.begin() + ei - 1));
-                add_results_to_visualizer(geneticEvaluatorPtr, *(algorithmDataProc.algName.begin() + ei - 1),
-                                          *(algorithmDataProc.algName.begin() + ei - 1), tp, tn, fp, fn);
+                algorithmDataProcs[0].getFPTN(tp, tn, fp, fn, *(algorithmDataProcs[0].chromosome.begin() + ei - 1),
+                                           *(algorithmDataProcs[0].trueOCVec.begin() + ei - 1));
+                add_results_to_visualizer(geneticEvaluatorPtr, *(algorithmDataProcs[0].algName.begin() + ei - 1),
+                                          *(algorithmDataProcs[0].algName.begin() + ei - 1), tp, tn, fp, fn);
             }
         }
         group_vis->resetCamera();
@@ -340,11 +383,11 @@ void AlgorithmTuner::run_enabled_algorithms() {
         // Generate Result Table
         std::vector<std::string> dataTypes = {"Acc", "Rec", "Pre"};
         resultTableWidget->clear();
-        resultTableWidget->setColumnCount(algorithmDataProc.uniqAlgNames.size());
+        resultTableWidget->setColumnCount(algorithmDataProcs[0].uniqAlgNames.size());
         resultTableWidget->setRowCount(dataTypes.size());
 
         QStringList horizontalHeaders, verticalHeaders;
-        std::transform(algorithmDataProc.uniqAlgNames.begin(), algorithmDataProc.uniqAlgNames.end(),
+        std::transform(algorithmDataProcs[0].uniqAlgNames.begin(), algorithmDataProcs[0].uniqAlgNames.end(),
                        std::back_inserter(horizontalHeaders), [](std::string &s) { return QString::fromStdString(s); });
         std::transform(dataTypes.begin(), dataTypes.end(), std::back_inserter(verticalHeaders),
                        [](std::string &s) { return QString::fromStdString(s); });
@@ -352,23 +395,21 @@ void AlgorithmTuner::run_enabled_algorithms() {
         resultTableWidget->setVerticalHeaderLabels(verticalHeaders);
 
         int col_n = 0;
-        for (auto &alg:algorithmDataProc.uniqAlgNames) {
+        for (auto &alg:algorithmDataProcs[0].uniqAlgNames) {
             resultTableWidget->setCellWidget(0, col_n, new QLabel(QString::fromStdString(
-                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.accuracy, alg)))));
+                    std::to_string(algorithmDataProcs[0].get_avr(algorithmDataProcs[0].accuracy, alg)))));
             resultTableWidget->setCellWidget(1, col_n, new QLabel(QString::fromStdString(
-                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.recall, alg)))));
+                    std::to_string(algorithmDataProcs[0].get_avr(algorithmDataProcs[0].recall, alg)))));
             resultTableWidget->setCellWidget(2, col_n, new QLabel(QString::fromStdString(
-                    std::to_string(algorithmDataProc.get_avr(algorithmDataProc.precision, alg)))));
+                    std::to_string(algorithmDataProcs[0].get_avr(algorithmDataProcs[0].precision, alg)))));
             col_n++;
         }
 
         plotComboBox->clear();
-
-        auto names = algorithmDataProc.derivedCSVDocPtr->GetColumnNames();
+        auto names = algorithmDataProcs[0].derivedCSVDocPtr->GetColumnNames();
         for(int i = 0;i<names.size();i++)
             if(i>3)
                 plotComboBox->addItem(QString::fromStdString(names[i]));
-
 
         dataProcDock->show();
         resultDock->show();
@@ -419,70 +460,6 @@ void AlgorithmTuner::update_evaluator_type(const QString &s) {
     }
 }
 
-/*void AlgorithmTuner::loadEvaluatorSettings() {    // Remove all setting form entries besides the combobox(first)
-    for (auto &sb:evaluator_settings.currentDoubleSpinBoxes) {
-        evaluatorSettingsFormLayout->labelForField(sb)->deleteLater();
-        sb->deleteLater();
-    }
-    for (auto &sb:evaluator_settings.currentSpinBoxes) {
-        evaluatorSettingsFormLayout->labelForField(sb)->deleteLater();
-        sb->deleteLater();
-    }
-
-    //Clear the vector keeping track of setting spin boxes
-    evaluator_settings.currentDoubleSpinBoxes.clear();
-    evaluator_settings.currentSpinBoxes.clear();
-
-    // Load hyper parameter names and values
-    std::vector<std::string> hyper_param_names_d;
-    std::vector<double *> hyper_params_d;
-    std::vector<std::string> hyper_param_names_i;
-    std::vector<int *> hyper_params_i;
-    evaluator_settings.evaluator_map[evaluator_settings.current_evaluator_str.toStdString()]->getHyperParameters_d(
-            hyper_param_names_d, hyper_params_d);
-    evaluator_settings.evaluator_map[evaluator_settings.current_evaluator_str.toStdString()]->getHyperParameters_i(
-            hyper_param_names_i, hyper_params_i);
-
-
-    // Load hyper parameter from qsetting and create new spinboxes and form entries for each. Default value is taken from evaluator type defaults.
-    QSettings qsettings;
-    for (int i = 0; i < hyper_param_names_d.size(); i++) {
-        auto &param_name = hyper_param_names_d[i];
-        auto &param_value_ptr = hyper_params_d[i];
-        QDoubleSpinBox *qDoubleSpinBox = new QDoubleSpinBox;
-        qDoubleSpinBox->setValue(
-                qsettings.value(evaluator_settings.current_evaluator_str + "/" + QString::fromStdString(param_name),
-                                *param_value_ptr).toDouble());
-        evaluator_settings.currentDoubleSpinBoxes.push_back(qDoubleSpinBox);
-        evaluatorSettingsFormLayout->addRow(QString::fromStdString(param_name), qDoubleSpinBox);
-    }
-
-    for (int i = 0; i < hyper_param_names_i.size(); i++) {
-        auto &param_name = hyper_param_names_i[i];
-        auto &param_value_ptr = hyper_params_i[i];
-        QSpinBox *qSpinBox = new QSpinBox;
-        qSpinBox->setValue(
-                qsettings.value(evaluator_settings.current_evaluator_str + "/" + QString::fromStdString(param_name),
-                                *param_value_ptr).toInt());
-        evaluator_settings.currentSpinBoxes.push_back(qSpinBox);
-        evaluatorSettingsFormLayout->addRow(QString::fromStdString(param_name), qSpinBox);
-    }
-}*/
-
-/*
-void AlgorithmTuner::saveEvaluatorSettings() {
-    QSettings qsettings;
-    for (auto &dsb:evaluator_settings.currentDoubleSpinBoxes)
-        qsettings.setValue(evaluator_settings.current_evaluator_str + "/" +
-                           qobject_cast<QLabel *>(evaluatorSettingsFormLayout->labelForField(dsb))->text(),
-                           dsb->value());
-
-    for (auto &sb:evaluator_settings.currentSpinBoxes)
-        qsettings.setValue(evaluator_settings.current_evaluator_str + "/" +
-                           qobject_cast<QLabel *>(evaluatorSettingsFormLayout->labelForField(sb))->text(), sb->value());
-
-}
-*/
 
 void AlgorithmTuner::loadSettings() {
     QSettings qsettings;
@@ -526,15 +503,17 @@ void AlgorithmTuner::save_data() {
     QString proposed_file_name = QString::fromStdString((last_save_folder / (getTimeString("%Y-%d-%m-%H-%M-%S") + "-AlgorithmTunerData.csv")).string());
     settings.data_save_file = QFileDialog::getSaveFileName(this, "Save Dynamic Data", proposed_file_name);
 
-    std::string proposed_dynamic_file_name = std::filesystem::path(proposed_file_name.toStdString()).replace_extension("-Dynamic.csv");
-    std::string proposed_static_file_name = std::filesystem::path(proposed_file_name.toStdString()).replace_extension("-Static.csv");
-    algorithmDataProc.save_data(proposed_dynamic_file_name,proposed_static_file_name);
+    for(int i = 0;i<algorithmDataProcs.size();i++) {
+        std::string proposed_dynamic_file_name = std::filesystem::path(proposed_file_name.toStdString()).replace_extension("-Dynamic_"+std::to_string(i)+".csv");
+        std::string proposed_static_file_name = std::filesystem::path(proposed_file_name.toStdString()).replace_extension("-Static_"+std::to_string(i)+".csv");
+        algorithmDataProcs[i].save_data(proposed_dynamic_file_name, proposed_static_file_name);
+    }
 }
 
 void AlgorithmTuner::bar_plot() {
     std::string plotDataType = plotComboBox->currentText().toStdString();
 
-    auto f = algorithmDataProc.bar_plot(plotDataType);
+    auto f = algorithmDataProcs[0].bar_plot(plotDataType);
     f->current_axes()->ylabel(plotDataType);
     f->draw();
 }
@@ -547,4 +526,140 @@ EvaluatorInterfacePtr AlgorithmTuner::get_evaluator_interface(QString name) {
         return nullptr;
 }
 
+void AlgorithmTuner::update_range_params(const QString &s) {
+    paramComboBox->clear();
+
+    auto it = std::find_if(algorithms.begin(),algorithms.end(),[&s](const AlgorithmInterfacePtr &algIPtr){return (*algIPtr) == s.toStdString();});
+
+    if(it != algorithms.end())
+    {
+        for(auto& param:(*it)->variables_i)
+            paramComboBox->addItem(QString::fromStdString(param.name));
+        for(auto& param:(*it)->variables_d)
+            paramComboBox->addItem(QString::fromStdString(param.name));
+    }
+}
+
+void AlgorithmTuner::update_range_param_limits(const QString &s) {
+
+    auto it = std::find_if(algorithms.begin(),algorithms.end(),[this](const AlgorithmInterfacePtr &algIPtr){return (*algIPtr) == algComboBox->currentText().toStdString();});
+    if(it != algorithms.end()){
+        auto it_i = std::find_if((*it)->variables_i.begin(),(*it)->variables_i.end(),[s](const var_i &vi){return vi.name == s.toStdString();});
+        auto it_d = std::find_if((*it)->variables_d.begin(),(*it)->variables_d.end(),[s](const var_d &vd){return vd.name == s.toStdString();});
+
+        if(it_i != (*it)->variables_i.end()) {
+            paramMinDoubleSpinBox->setDecimals(0);
+            paramMaxDoubleSpinBox->setDecimals(0);
+            paramStepDoubleSpinBox->setDecimals(0);
+            paramMinDoubleSpinBox->setMinimum(it_i->spinBox->minimum());
+            paramMaxDoubleSpinBox->setMaximum(it_i->spinBox->maximum());
+            parameter_test_widget = it_i->spinBox;
+            parameter_test_name = it_i->name;
+        }
+        if(it_d != (*it)->variables_d.end()) {
+            paramMinDoubleSpinBox->setDecimals(3);
+            paramMaxDoubleSpinBox->setDecimals(3);
+            paramStepDoubleSpinBox->setDecimals(3);
+            paramMinDoubleSpinBox->setMinimum(it_d->spinBox->minimum());
+            paramMaxDoubleSpinBox->setMaximum(it_d->spinBox->maximum());
+            parameter_test_widget = it_d->spinBox;
+            parameter_test_name = it_d->name;
+        }
+    }
+}
+
+void AlgorithmTuner::param_test_plot() {
+
+    QHBoxLayout* qhBoxLayout = new QHBoxLayout;
+    QFormLayout* qFormLayout_dt = new QFormLayout;
+    QFormLayout* qFormLayout_alg = new QFormLayout;
+    std::vector<QCheckBox*> checkBoxes_dt;
+    std::vector<QCheckBox*> checkBoxes_alg;
+
+    for(int i = 0;i<plotComboBox->count();i++){
+        checkBoxes_dt.emplace_back(new QCheckBox());
+        qFormLayout_dt->addRow(new QLabel(plotComboBox->itemText(i)), checkBoxes_dt.back());
+    }
+
+    for(auto& algName: algorithmDataProcs[0].uniqAlgNames) {
+        checkBoxes_alg.emplace_back(new QCheckBox());
+        qFormLayout_alg->addRow(new QLabel(QString::fromStdString(algName)), checkBoxes_alg.back());
+    }
+
+    qhBoxLayout->addLayout(qFormLayout_alg);
+    qhBoxLayout->addLayout(qFormLayout_dt);
+
+    QDialog* qDialog = new QDialog(this);
+    qDialog->setLayout(qhBoxLayout);
+    qDialog->exec();
+
+    std::vector<std::string> data_types,algs;
+    for(int i = 0; i < checkBoxes_dt.size(); i++) {
+        if (checkBoxes_dt[i]->isChecked()) {
+            data_types.emplace_back(qobject_cast<QLabel*>(qFormLayout_dt->labelForField(checkBoxes_dt[i]))->text().toStdString());
+        }
+    }
+    for(int i = 0; i < checkBoxes_alg.size(); i++) {
+        if (checkBoxes_alg[i]->isChecked()) {
+            algs.emplace_back(qobject_cast<QLabel*>(qFormLayout_alg->labelForField(checkBoxes_alg[i]))->text().toStdString());
+        }
+    }
+
+    std::vector<std::vector<std::vector<double>>> data(data_types.size());
+    for(auto&v:data)
+        v.resize(algs.size());
+
+
+    for(auto& dataProc:algorithmDataProcs) {
+        for (int dt = 0; dt < data_types.size(); dt++) {
+            auto dataVec = dataProc.derivedCSVDocPtr->GetColumn<double>(data_types[dt]);
+            for(int a = 0;a<algs.size();a++) {
+                data[dt][a].emplace_back(dataProc.get_avr(dataVec, algs[a]));
+            }
+        }
+    }
+
+    std::vector<std::string> legends;
+    for (auto& dt : data_types) {
+        for(auto&a : algs){
+            legends.emplace_back(a+" "+dt);
+        }
+    }
+
+    using namespace matplot;
+    auto f = figure(true);
+    auto ax = f->current_axes();
+
+    std::vector<double> param_test_values = get_param_test_values();
+
+    hold(on);
+    for(auto&dt:data) {
+        for(auto&ad:dt) {
+            ax->plot(param_test_values,ad);
+        }
+    }
+    hold(off);
+
+    ax->xlabel(parameter_test_name);
+    legend(ax,legends);
+
+    f->draw();
+
+}
+
+void AlgorithmTuner::setSpinBoxWidgetValue(QWidget *widget, double val) {
+    if (QSpinBox *sb = qobject_cast<QSpinBox *>(widget))
+        sb->setValue(val);
+    if (QDoubleSpinBox *sb = qobject_cast<QDoubleSpinBox *>(widget))
+        sb->setValue(val);
+}
+
+double AlgorithmTuner::getSpinBoxWidgetValue(QWidget *widget) {
+    if (QSpinBox *sb = qobject_cast<QSpinBox *>(widget))
+        return sb->value();
+    if (QDoubleSpinBox *sb = qobject_cast<QDoubleSpinBox *>(widget))
+        return sb->value();
+
+    return -1;
+}
 

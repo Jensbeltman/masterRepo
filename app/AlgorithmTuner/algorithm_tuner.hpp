@@ -55,19 +55,24 @@ private:
     AlgorithmTunerSettings settings;
     GeneralSettings general_settings;
 
+    std::vector<AlgorithmInterfacePtr> algorithms;
     std::vector<HVInterfacePtr> hv_algorithms;
     std::vector<EvaluatorInterfacePtr> evaluators;
     QString current_evaluator_text;
 
     ScapeDatasetPtr scapeDatasetPtr = nullptr;
 
-    AlgorithmDataProc algorithmDataProc;
+    std::vector<AlgorithmDataProc> algorithmDataProcs;
+
+    std::vector<rawDataMapAlgObjVecT> rawData;
 
     vtkSmartPointer<vtkRenderWindow> render_window;
     vtkSmartPointer<vtkRenderer> renderer;
     pcl::shared_ptr<PointCloudGroupVisualizer> group_vis;
     QTimer *vis_timer_;
 
+    QWidget* parameter_test_widget = nullptr;
+    std::string parameter_test_name;
 
     void loadSettings();
 
@@ -84,6 +89,12 @@ private:
     void run_enabled_algorithms(GeneticEvaluatorPtr &geneticEvaluatorPtr,DatasetObjectPtr &obj, DataPoint &dp, rawDataMapAlgObjVecT &rawDataMapAlgObjVec);
 private:
     EvaluatorInterfacePtr get_evaluator_interface(QString name);
+
+    std::vector<double> get_param_test_values();
+
+    void setSpinBoxWidgetValue(QWidget* widget, double val);
+
+    double getSpinBoxWidgetValue(QWidget* widget);
 private slots:
 
     void chose_dataset_folders();
@@ -96,11 +107,17 @@ private slots:
 
     void update_ocs_and_gts(const QString &s);
 
+    void update_range_params(const QString &s);
+
+    void update_range_param_limits(const QString &s);
+
     void run_enabled_algorithms();
 
     void save_data();
 
     void bar_plot();
+
+    void param_test_plot();
 
     void timeoutSlot();
 
