@@ -12,7 +12,7 @@ GA::GA(int n_genes, int population_size, int generation_max, double mutation_rat
         mutation_rate(mutation_rate),
         elite_pct(elite_pct),
         parent_pool_pct(parent_pool_pct),
-        generate_initial_population(nullptr),
+        generate_initial_population(population_initialization_default),
         crossover(crossover_default),
         mutation(mutation_default) {
 }
@@ -46,17 +46,6 @@ void GA::solve_init() {
     if (generate_initial_population != nullptr) {
         generate_initial_population(this);
     }
-
-    // Generate random initial population
-    population.resize(population_size);
-    for (chromosomeT &c: population) {
-        c.clear();
-        for (int i = 0; i < n_genes; i++) {
-            bool gv = bernoulli_dist(rng);
-            c.push_back(gv);
-        }
-    }
-
     // Prepare for solve loop
     calculate_population_cost(population_costs);
     last_population = population;
