@@ -381,6 +381,7 @@ void ManualRegistration::removeGT() {
 }
 
 void ManualRegistration::undoGTRemoval() {
+    vis_dst_->remove_pcv_group("gts");
     setGTs(orig_gts_,ground_truth_path);
     gts_to_be_removed.clear();
 }
