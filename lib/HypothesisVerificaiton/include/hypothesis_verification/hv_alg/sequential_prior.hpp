@@ -10,10 +10,11 @@ struct SPResult {
 
 class SequentialPrior {
 public:
-    SequentialPrior(GeneticEvaluatorPtr geneticEvaluatorPtr);
+    SequentialPrior(GeneticEvaluatorPtr geneticEvaluatorPtr = nullptr);
     SPResult solve();
 
     GeneticEvaluatorPtr geneticEvaluatorPtr;
+    double score_threshold = 0;
 private:
     template<typename T>
     std::vector<size_t> sorted_idxs(std::vector<T> &vec);

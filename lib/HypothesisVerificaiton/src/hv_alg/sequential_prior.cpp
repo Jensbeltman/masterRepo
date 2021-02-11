@@ -16,14 +16,15 @@ SPResult SequentialPrior::solve() {
     result.cost = std::numeric_limits<double>::max();
     double cost;
     for (auto &i:sorted_score_idx) {
-        result.chromosome[i] = true;
-        cost = geneticEvaluatorPtr->evaluate_chromosome(result.chromosome);
-        if (cost < result.cost) {
-            result.cost = cost;
-        } else {
-            result.chromosome[i] = false;
+        if(object_candidates_scores[i]>score_threshold) {
+            result.chromosome[i] = true;
+            cost = geneticEvaluatorPtr->evaluate_chromosome(result.chromosome);
+            if (cost < result.cost) {
+                result.cost = cost;
+            } else {
+                result.chromosome[i] = false;
+            }
         }
-
         result.cost_history.emplace_back(result.cost);
     }
     return result;
