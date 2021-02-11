@@ -1,15 +1,17 @@
 #include "hv_interfaces.hpp"
+#include "hypothesis_verification/hv_alg/ga_functions.hpp"
 
 //BA
 SPInterface::SPInterface(): HVInterface()  {
     name="SP";
+    variables_d.emplace_back(var_d{&sequentialPrior.score_threshold,new QDoubleSpinBox,"Score Threshold",std::to_string(sequentialPrior.score_threshold)});
 }
 
 rawDataT SPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     chronometer.tic();
     SPResult baResult;
-    SequentialPrior baseline(geneticEvaluatorPtr);
-    baResult = baseline.solve();
+    sequentialPrior.geneticEvaluatorPtr = geneticEvaluatorPtr;
+    baResult = sequentialPrior.solve();
     return rawDataT{geneticEvaluatorPtr->dp,baResult.chromosome,chronometer.toc()};
 }
 
@@ -38,11 +40,24 @@ rawDataT GAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     return rawDataT{geneticEvaluatorPtr->dp, gaResult.chromosome, chronometer.toc()};
 }
 
+GAWInterface::GAWInterface() {
+    name="GAW";
+    ga.generate_initial_population = initialize_population_score_sampling;
+}
+
+
 BaselineInterface::BaselineInterface(): HVInterface()  {
     name="BL";
+    variables_d.emplace_back(var_d{&score_threshold,new QDoubleSpinBox,"Score Threshold",std::to_string(score_threshold)});
 }
 
 rawDataT BaselineInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     chronometer.tic();
-    return rawDataT{geneticEvaluatorPtr->dp,chromosomeT(geneticEvaluatorPtr->dp.ocs.size(),true),chronometer.toc()};
+    chromosomeT chromosome(geneticEvaluatorPtr->dp.ocs.size());
+    for(int i = 0;i<chromosome.size();i++)
+        chromosome[i]=geneticEvaluatorPtr->dp.oc_scores[i]>score_threshold;
+
+
+    return rawDataT{geneticEvaluatorPtr->dp,chromosome,chronometer.toc()};
 }
+
