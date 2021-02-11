@@ -61,7 +61,12 @@ public:
 
     void add_variable_to_formlayout(QFormLayout *qFormLayout);
     void add_variable_to_tabwidget(QTabWidget *qTabWidget);
+
     bool operator <(const AlgorithmInterface& rhs) const;
+    bool operator ==(const AlgorithmInterface& rhs) const;
+    bool operator <(const std::string& rhs_string) const;
+    bool operator ==(const std::string& rhs_string) const;
+
 
 protected:
     QVariant get_setting_variant(QSettings &qsettings, std::string key, std::string default_val);

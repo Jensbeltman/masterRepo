@@ -78,6 +78,18 @@ bool AlgorithmInterface::operator<(const AlgorithmInterface &rhs) const {
     return name < rhs.name;
 }
 
+bool AlgorithmInterface::operator==(const AlgorithmInterface &rhs) const {
+    return name == rhs.name;
+}
+
+bool AlgorithmInterface::operator<(const std::string &rhs_string) const {
+    return name < rhs_string;
+}
+
+bool AlgorithmInterface::operator==(const std::string &rhs_string) const {
+    return name == rhs_string;
+}
+
 // HV
 HVInterface::HVInterface() {
     variables_b.emplace_back(var_b{&enable,new QCheckBox,"enable","false"});
