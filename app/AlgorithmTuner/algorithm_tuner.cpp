@@ -70,6 +70,7 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     // Create algorithms and evaluator interfaces and add variables to GUI
     hv_algorithms.push_back(std::make_shared<GAInterface>());
     hv_algorithms.push_back(std::make_shared<GAWInterface>());
+    hv_algorithms.push_back(std::make_shared<GASPInterface>());
     hv_algorithms.push_back(std::make_shared<SPInterface>());
     hv_algorithms.push_back(std::make_shared<BaselineInterface>());
     algorithms.insert(algorithms.end(),hv_algorithms.begin(),hv_algorithms.end());

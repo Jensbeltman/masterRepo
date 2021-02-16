@@ -57,7 +57,37 @@ rawDataT BaselineInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     for(int i = 0;i<chromosome.size();i++)
         chromosome[i]=geneticEvaluatorPtr->dp.oc_scores[i]>score_threshold;
 
-
     return rawDataT{geneticEvaluatorPtr->dp,chromosome,chronometer.toc()};
 }
 
+GASPInterface::GASPInterface() {
+    name="GASP";
+    variables_d.emplace_back(var_d{&sequentialPrior.score_threshold,new QDoubleSpinBox,"SP Score Threshold",std::to_string(sequentialPrior.score_threshold)});
+
+}
+
+rawDataT GASPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
+    chronometer.tic();
+    // Get SP solution
+    SPResult spResult;
+    sequentialPrior.geneticEvaluatorPtr = geneticEvaluatorPtr;
+    spResult = sequentialPrior.solve();
+
+    GAResult gaResult;
+    ga.n_genes = geneticEvaluatorPtr->dp.ocs.size();
+    ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorPtr);
+
+    // Initialize GA based on SP
+    ga.generate_initial_population= nullptr;
+    ga.population.resize(ga.population_size);
+    ga.population[0] = spResult.chromosome;
+    for(int i =1;i<ga.population_size;i++){
+        ga.mutation(&ga,spResult.chromosome);
+        ga.population[i]=spResult.chromosome;
+    }
+
+    // solve with GA
+    gaResult =  ga.solve();
+
+    return  rawDataT{geneticEvaluatorPtr->dp,gaResult.chromosome,chronometer.toc()};
+}

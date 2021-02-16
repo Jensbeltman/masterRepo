@@ -27,6 +27,16 @@ public:
 };
 typedef std::shared_ptr<GAWInterface> GAWInterfacePtr;
 
+class GASPInterface : public GAInterface{
+public:
+    GASPInterface();
+    SequentialPrior sequentialPrior;
+    double score_threshold = 0;
+    GA ga;
+    rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr) override;
+};
+typedef std::shared_ptr<GASPInterface> GASPInterfacePtr;
+
 class BaselineInterface : public HVInterface {
 public:
     BaselineInterface();
