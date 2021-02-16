@@ -15,6 +15,7 @@ struct Collisions{
     std::vector<double> distances;
 };
 
+CollisionModelPtr get_coll_model(MeshPtr meshptr);
 Collisions get_collisions(std::vector<T4> &object_candidates, MeshPtr &meshPtr);
 std::ostream &operator<<(std::ostream &os, const std::vector<std::pair<int,int>>& collisions);
 
