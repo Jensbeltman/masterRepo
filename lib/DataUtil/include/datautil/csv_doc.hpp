@@ -35,6 +35,9 @@ namespace rapidcsv {
             mColumnNames.clear();
             mRowNames.clear();
         }
+        void clear_data(){
+            mData.clear();
+        }
     };
 
     typedef std::shared_ptr<CSVDoc> CSVDocPtr;
@@ -80,6 +83,19 @@ namespace rapidcsv {
         }
     };
     typedef std::shared_ptr<CSVWriteDoc> CSVWriteDocPtr;
+
+
+    template<>
+    inline void Converter<bool>::ToVal(const std::string& pStr, bool& pVal) const
+    {
+        pVal = (pStr=="true" || pStr=="True" || pStr=="1");
+    }
+
+    template<>
+    inline void Converter<bool>::ToStr(const bool& pVal, std::string& pStr) const
+    {
+        pStr = pVal ? "true":"false";
+    }
 
 }
 #endif //MASTER_CSV_DOC_HPP
