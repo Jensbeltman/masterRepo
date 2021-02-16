@@ -62,8 +62,8 @@ private:
 
     ScapeDatasetPtr scapeDatasetPtr = nullptr;
 
+    rapidcsv::CSVDocPtr data_info_doc;
     std::vector<AlgorithmDataProc> algorithmDataProcs;
-
     std::vector<rawDataMapAlgObjVecT> rawData;
 
     vtkSmartPointer<vtkRenderWindow> render_window;
@@ -95,6 +95,10 @@ private:
     void setSpinBoxWidgetValue(QWidget* widget, double val);
 
     double getSpinBoxWidgetValue(QWidget* widget);
+
+    void set_data_info_doc_alg_var_names();
+
+    void set_data_info_doc_alg_variables(int row_i);
 private slots:
 
     void chose_dataset_folders();

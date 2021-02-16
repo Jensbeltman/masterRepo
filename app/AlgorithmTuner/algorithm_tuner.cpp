@@ -76,6 +76,8 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     evaluators.push_back(std::make_shared<GeneticEvaluatorOCInterface>());
     algorithms.insert(algorithms.end(),evaluators.begin(),evaluators.end());
 
+    data_info_doc = std::make_shared<rapidcsv::CSVDoc>("",rapidcsv::LabelParams(0, -1));
+
     for(auto &alg:algorithms)
         algComboBox->addItem(QString::fromStdString(alg->name));
 
@@ -283,6 +285,8 @@ void AlgorithmTuner::run_enabled_algorithms() {
         }
 
 
+
+
         EvaluatorInterfacePtr evaluatorInterfacePtr = get_evaluator_interface(evaluator_types_combo_box->currentText());
         evaluatorInterfacePtr->update_variables();
         GeneticEvaluatorPtr &geneticEvaluatorPtr = evaluatorInterfacePtr->geneticEvaluatorPtr;
@@ -295,8 +299,10 @@ void AlgorithmTuner::run_enabled_algorithms() {
         progressBar->show();
 
 
+        set_data_info_doc_alg_var_names();
         rawData.clear();
         if(paramComboBox->count()>0) {
+            bool first_run = true;
             rawData.resize(param_test_values.size());
             for (auto &obj_dp_pair:object_and_datapoint_pairs) {
                 for (auto &dp:obj_dp_pair.second) {
@@ -307,7 +313,11 @@ void AlgorithmTuner::run_enabled_algorithms() {
                         run_enabled_algorithms(geneticEvaluatorPtr, obj_dp_pair.first, dp, rawData[i]);
                         progressBar->setValue(++n_dp/param_test_values.size());
                         QCoreApplication::processEvents();
+                        if(first_run)
+                            set_data_info_doc_alg_variables(i);
                     }
+                    if(first_run)
+                        first_run = false;
                 }
             }
             setSpinBoxWidgetValue(parameter_test_widget, initial_param_test_value);
@@ -320,6 +330,7 @@ void AlgorithmTuner::run_enabled_algorithms() {
                     run_enabled_algorithms(geneticEvaluatorPtr, obj_dp_pair.first, dp, rawData.back());
                     progressBar->setValue(++n_dp);
                     QCoreApplication::processEvents();
+                    set_data_info_doc_alg_variables(0);
                 }
             }
         }
@@ -500,14 +511,23 @@ AlgorithmTuner::~AlgorithmTuner() {
 
 void AlgorithmTuner::save_data() {
     auto last_save_folder = std::filesystem::path(settings.data_save_file.toStdString()).parent_path();
-    QString proposed_file_name = QString::fromStdString((last_save_folder / (getTimeString("%Y-%d-%m-%H-%M-%S") + "-AlgorithmTunerData.csv")).string());
+
+    std::string time_string  = getTimeString("%Y-%d-%m-%H-%M-%S");
+    QString proposed_file_name = QString::fromStdString((last_save_folder / (time_string + "-AlgorithmTunerData.csv")).string());
     settings.data_save_file = QFileDialog::getSaveFileName(this, "Save Dynamic Data", proposed_file_name);
 
-    for(int i = 0;i<algorithmDataProcs.size();i++) {
-        std::string proposed_dynamic_file_name = std::filesystem::path(proposed_file_name.toStdString()).replace_extension("-Dynamic_"+std::to_string(i)+".csv");
-        std::string proposed_static_file_name = std::filesystem::path(proposed_file_name.toStdString()).replace_extension("-Static_"+std::to_string(i)+".csv");
-        algorithmDataProcs[i].save_data(proposed_dynamic_file_name, proposed_static_file_name);
+    auto path = std::filesystem::path(settings.data_save_file.toStdString());
+    auto filename = std::filesystem::path(settings.data_save_file.toStdString()).filename().replace_extension();
+    auto parent_folder = std::filesystem::path(settings.data_save_file.toStdString()).parent_path();
+
+    for(int i = 0;i<algorithmDataProcs.size();i++){
+        std::string fn = path.replace_filename(filename.string()+"_"+std::to_string(i)+".csv");
+        algorithmDataProcs[i].derivedCSVDocPtr->Save(fn);
+        data_info_doc->SetCell(0,i,fn);
     }
+
+    data_info_doc->Save(path.replace_filename(time_string+"-data_info.csv"));
+    //rapidcsv::CSVWriteDoc data_info( path.replace_filename(time_string+"-data_info"),rapidcsv::LabelParams(0, -1));
 }
 
 void AlgorithmTuner::bar_plot() {
@@ -661,5 +681,68 @@ double AlgorithmTuner::getSpinBoxWidgetValue(QWidget *widget) {
         return sb->value();
 
     return -1;
+}
+
+void AlgorithmTuner::set_data_info_doc_alg_var_names() {
+    data_info_doc->clear();
+    data_info_doc->SetColumnName(0,"data_path");
+    data_info_doc->SetColumnName(1,"t_thresh");
+    data_info_doc->SetColumnName(2,"r_thresh");
+    int col_name_idx = 3;
+
+    std::string current_eval_str = evaluator_types_combo_box->currentText().toStdString();
+    auto eval_it = std::find_if(evaluators.begin(),evaluators.end(),[current_eval_str](EvaluatorInterfacePtr &evaluatorInterfacePtr){return evaluatorInterfacePtr->name == current_eval_str;});
+    if(eval_it!=evaluators.end()){
+        auto& eval = *eval_it;
+        eval->update_variables();
+        for (auto vi:eval->variables_i)
+            data_info_doc->SetColumnName(col_name_idx++, eval->name + "/" + vi.name);
+        for (auto vd:eval->variables_d)
+            data_info_doc->SetColumnName(col_name_idx++, eval->name + "/" + vd.name);
+        for (auto vb:eval->variables_b)
+            data_info_doc->SetColumnName(col_name_idx++, eval->name + "/" + vb.name);
+    }
+    for(auto alg:hv_algorithms) {
+        alg->update_variables();
+        if(alg->enable) {
+            for (auto vi:alg->variables_i)
+                data_info_doc->SetColumnName(col_name_idx++, alg->name + "/" + vi.name);
+            for (auto vd:alg->variables_d)
+                data_info_doc->SetColumnName(col_name_idx++, alg->name + "/" + vd.name);
+            for (auto vb:alg->variables_b)
+                data_info_doc->SetColumnName(col_name_idx++, alg->name + "/" + vb.name);
+        }
+    }
+}
+
+void AlgorithmTuner::set_data_info_doc_alg_variables(int row_i) {
+
+
+    data_info_doc->SetCell(1,row_i,general_settings.ground_truth_t_thresh->value());
+    data_info_doc->SetCell(2,row_i,general_settings.ground_truth_r_thresh->value());
+
+    std::string current_eval_str = evaluator_types_combo_box->currentText().toStdString();
+    auto eval_it = std::find_if(evaluators.begin(),evaluators.end(),[current_eval_str](EvaluatorInterfacePtr &evaluatorInterfacePtr){return evaluatorInterfacePtr->name == current_eval_str;});
+    if(eval_it!=evaluators.end()){
+        auto& eval = *eval_it;
+        eval->update_variables();
+        for (auto vi:eval->variables_i)
+            data_info_doc->SetCell(data_info_doc->GetColumnIdx( eval->name + "/" + vi.name),row_i,*vi.val);
+        for (auto vd:eval->variables_d)
+            data_info_doc->SetCell(data_info_doc->GetColumnIdx( eval->name + "/" + vd.name),row_i,*vd.val);
+        for (auto vb:eval->variables_b)
+            data_info_doc->SetCell(data_info_doc->GetColumnIdx( eval->name + "/" + vb.name),row_i,*vb.val);
+    }
+    for(auto alg:hv_algorithms) {
+        alg->update_variables();
+        if(alg->enable) {
+            for (auto vi:alg->variables_i)
+                data_info_doc->SetCell(data_info_doc->GetColumnIdx( alg->name + "/" + vi.name),row_i,*vi.val);
+            for (auto vd:alg->variables_d)
+                data_info_doc->SetCell(data_info_doc->GetColumnIdx( alg->name + "/" + vd.name),row_i,*vd.val);
+            for (auto vb:alg->variables_b)
+                data_info_doc->SetCell(data_info_doc->GetColumnIdx( alg->name + "/" + vb.name),row_i,*vb.val);
+        }
+    }
 }
 
