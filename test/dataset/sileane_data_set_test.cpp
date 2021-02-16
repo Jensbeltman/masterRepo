@@ -5,7 +5,7 @@
 
 int main() {
     Chronometer chronometer;
-    SileaneData sileaneData("/home/jens/masterData/Siléane-Dataset");
+    SileaneDataset sileaneData("/home/jens/masterData/Siléane-Dataset");
 
     std::cout << "Following objects where loaded for the silean dataset" << "\n";
     for (auto &ob:sileaneData.objects) {

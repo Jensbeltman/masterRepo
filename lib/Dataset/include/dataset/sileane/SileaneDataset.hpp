@@ -10,10 +10,11 @@
 
 typedef std::shared_ptr<SileaneDatasetObject> SileaneDatasetObjectPtr;
 
-class SileaneData : public Dataset {
+class SileaneDataset : public Dataset {
 public:
-    explicit SileaneData(std::string path);
+    explicit SileaneDataset(std::string path);
 };
+typedef std::shared_ptr<SileaneDataset> SileaneDatasetPtr;
 
 
 #endif //OPENGACUSTOM_SILEANEDATASET_HPP

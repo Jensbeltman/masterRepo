@@ -1,6 +1,6 @@
 #include "dataset/sileane/SileaneDataset.hpp"
 
-SileaneData::SileaneData(std::string path) : Dataset(path) {
+SileaneDataset::SileaneDataset(std::string path) : Dataset(path) {
     name = "Sileane";
         for (auto &p : std::filesystem::directory_iterator(path))
         if (std::filesystem::is_directory(p.path())) {
