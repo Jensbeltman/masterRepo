@@ -15,7 +15,6 @@
 class AlgorithmDataProc {
 public:
     AlgorithmDataProc();
-    AlgorithmDataProc(std::string derived_data_path,std::string static_data_path);
     AlgorithmDataProc(rawDataMapAlgObjVecT rawDataMapAlgObjVec,double t_thresh, double r_thresh);
 
     void update_data();
@@ -28,7 +27,7 @@ public:
     std::vector<int> dpIndex;
     std::vector<chromosomeT> chromosome;
     std::vector<int> tp,tn,fp,fn;
-    std::vector<double> accuracy, precision ,recall, time;
+    std::vector<double> accuracy,f1, precision ,recall, time;
 
     // Static Data
     rapidcsv::CSVDocPtr staticCSVDocPtr = nullptr;

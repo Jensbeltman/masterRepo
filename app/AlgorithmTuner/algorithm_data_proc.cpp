@@ -68,6 +68,7 @@ AlgorithmDataProc::AlgorithmDataProc(rawDataMapAlgObjVecT newrawDataMapAlgObjVec
                 int &fnVal = fn.back();
 
                 accuracy.emplace_back(static_cast<double>( tpVal + tnVal) / static_cast<double>(tpVal + tnVal + fpVal + fnVal));
+                f1.emplace_back(static_cast<double>( 2*tpVal) / static_cast<double>(2*tpVal + fpVal + fnVal));
                 recall.emplace_back(static_cast<double>(tpVal) / gtVec.back().size());
                 precision.emplace_back(static_cast<double>( tpVal) / static_cast<double>(tpVal + fpVal));
                 if(std::isnan(accuracy.back())) accuracy.back() = 0;
@@ -85,33 +86,6 @@ AlgorithmDataProc::AlgorithmDataProc(rawDataMapAlgObjVecT newrawDataMapAlgObjVec
 
     update_data();
 }
-AlgorithmDataProc::AlgorithmDataProc(std::string derived_data_path, std::string static_data_path) {
-    derivedCSVDocPtr = std::make_shared<rapidcsv::CSVRReadDoc>(derived_data_path,rapidcsv::LabelParams(0, -1));
-    staticCSVDocPtr = std::make_shared<rapidcsv::CSVRReadDoc>(static_data_path,rapidcsv::LabelParams(-1, 0));
-
-    // Derived Data
-    algName=derivedCSVDocPtr->GetColumn<std::string>("algName");
-    objName=derivedCSVDocPtr->GetColumn<std::string>("objName");
-    dpIndex = derivedCSVDocPtr->GetColumn<int>("dpIndex");
-    chromosome =  derivedCSVDocPtr->GetColumn<chromosomeT>("chromosome");
-    tp = derivedCSVDocPtr->GetColumn<int>("tp");
-    tn = derivedCSVDocPtr->GetColumn<int>("tn");
-    fp = derivedCSVDocPtr->GetColumn<int>("fp");
-    fn = derivedCSVDocPtr->GetColumn<int>("fn");
-    accuracy = derivedCSVDocPtr->GetColumn<double>("accuracy");
-    precision = derivedCSVDocPtr->GetColumn<double>("precision");
-    recall = derivedCSVDocPtr->GetColumn<double>("recall");
-    time = derivedCSVDocPtr->GetColumn<double>("time");
-
-    // Static Data
-    DatasetType =  staticCSVDocPtr->GetCell<std::string>(0,"DatasetType");
-    DatasetPath =  staticCSVDocPtr->GetCell<std::string>(0,"DatasetPath");
-    uniqAlgNames =  staticCSVDocPtr->GetRow<std::string>("uniqAlgNames");
-    uniqObjNames =  staticCSVDocPtr->GetRow<std::string>("uniqObjNames");
-    t_thresh =  staticCSVDocPtr->GetCell<double>(0,"t_thresh");
-    r_thresh =  staticCSVDocPtr->GetCell<double>(0,"r_thresh");
-}
-
 
 void AlgorithmDataProc::update_data() {
     derivedCSVDocPtr->clear();
@@ -123,10 +97,11 @@ void AlgorithmDataProc::update_data() {
     derivedCSVDocPtr->SetColumnName(5,"tn");
     derivedCSVDocPtr->SetColumnName(6,"fp");
     derivedCSVDocPtr->SetColumnName(7,"fn");
-    derivedCSVDocPtr->SetColumnName(8,"accuracy");
-    derivedCSVDocPtr->SetColumnName(9,"precision");
-    derivedCSVDocPtr->SetColumnName(10,"recall");
-    derivedCSVDocPtr->SetColumnName(11,"time");
+    derivedCSVDocPtr->SetColumnName(8,"precision");
+    derivedCSVDocPtr->SetColumnName(9,"recall");
+    derivedCSVDocPtr->SetColumnName(10,"accuracy");
+    derivedCSVDocPtr->SetColumnName(11,"f1");
+    derivedCSVDocPtr->SetColumnName(12,"time");
 
     derivedCSVDocPtr->SetColumn(0, algName);
     derivedCSVDocPtr->SetColumn(1, objName);
@@ -136,25 +111,11 @@ void AlgorithmDataProc::update_data() {
     derivedCSVDocPtr->SetColumn(5, tn);
     derivedCSVDocPtr->SetColumn(6, fp);
     derivedCSVDocPtr->SetColumn(7, fn);
-    derivedCSVDocPtr->SetColumn(8, accuracy);
-    derivedCSVDocPtr->SetColumn(9, precision);
-    derivedCSVDocPtr->SetColumn(10, recall);
-    derivedCSVDocPtr->SetColumn(11, time);
-
-    staticCSVDocPtr->clear();
-    staticCSVDocPtr->SetRowName(0,"DatasetType");
-    staticCSVDocPtr->SetRowName(1,"DatasetPath");
-    staticCSVDocPtr->SetRowName(2,"uniqAlgNames");
-    staticCSVDocPtr->SetRowName(3,"uniqObjNames");
-    staticCSVDocPtr->SetRowName(4,"t_thresh");
-    staticCSVDocPtr->SetRowName(5,"r_thresh");
-
-    staticCSVDocPtr->SetRow(0,std::vector{DatasetType});
-    staticCSVDocPtr->SetRow(1,std::vector{DatasetPath});
-    staticCSVDocPtr->SetRow(2,uniqAlgNames);
-    staticCSVDocPtr->SetRow(3,uniqObjNames);
-    staticCSVDocPtr->SetRow(4,std::vector{t_thresh});
-    staticCSVDocPtr->SetRow(5,std::vector{r_thresh});
+    derivedCSVDocPtr->SetColumn(8, precision);
+    derivedCSVDocPtr->SetColumn(9, recall);
+    derivedCSVDocPtr->SetColumn(10, accuracy);
+    derivedCSVDocPtr->SetColumn(11, f1);
+    derivedCSVDocPtr->SetColumn(12, time);
 }
 
 
