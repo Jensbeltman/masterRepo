@@ -8,3 +8,6 @@ target_link_libraries(sileane_test PUBLIC Chronometer Dataset)
 
 add_executable(scape_test scape_data_set_test.cpp)
 target_link_libraries(scape_test PUBLIC Chronometer Dataset)
+
+add_executable(gt_collision_test gt_collision_test.cpp)
+target_link_libraries(gt_collision_test PUBLIC Chronometer Dataset DataUtil HV)
