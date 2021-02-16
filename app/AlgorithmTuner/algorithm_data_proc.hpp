@@ -45,7 +45,7 @@ public:
 
     TransformUtility tu;
 
-    void save_data(std::string derived_data_filename, std::string static_data_filename);
+    void save_data(std::string derived_data_filename);
 
     void getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,chromosomeT chromosome, chromosomeT correct_ocs);
 

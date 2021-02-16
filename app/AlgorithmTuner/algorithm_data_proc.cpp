@@ -158,9 +158,8 @@ void AlgorithmDataProc::update_data() {
 }
 
 
-void AlgorithmDataProc::save_data(std::string derived_data_filename, std::string static_data_filename) {
+void AlgorithmDataProc::save_data(std::string derived_data_filename) {
     derivedCSVDocPtr->Save(derived_data_filename);
-    staticCSVDocPtr->Save(static_data_filename);
 }
 
 void AlgorithmDataProc::getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,
