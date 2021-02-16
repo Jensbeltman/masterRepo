@@ -105,6 +105,9 @@ Collisions get_collisions(std::vector<T4> &object_candidates, MeshPtr &meshPtr){
 
     std::sort(collisions.pairs.begin(), collisions.pairs.end());
 
+    delete manager;
+    for(auto& p:collisionObjects)
+        delete p;
     return collisions;
 }
 
