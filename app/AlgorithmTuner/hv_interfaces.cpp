@@ -7,12 +7,13 @@ SPInterface::SPInterface(): HVInterface()  {
     variables_d.emplace_back(var_d{&sequentialPrior.score_threshold,new QDoubleSpinBox,"Score Threshold",std::to_string(sequentialPrior.score_threshold)});
 }
 
-rawDataT SPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
+void SPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) {
+    rawData.dp = geneticEvaluatorPtr->dp;
     chronometer.tic();
-    SPResult baResult;
+    HVResult hvResult;
     sequentialPrior.geneticEvaluatorPtr = geneticEvaluatorPtr;
-    baResult = sequentialPrior.solve();
-    return rawDataT{geneticEvaluatorPtr->dp,baResult.chromosome,chronometer.toc()};
+    rawData.hvResult = sequentialPrior.solve();
+    rawData.time = chronometer.toc();
 }
 
 // GA
@@ -31,13 +32,14 @@ GAInterface::GAInterface(): HVInterface() {
         var.spinBox->setMaximum(10000);
 }
 
-rawDataT GAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
+void GAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) {
     chronometer.tic();
     GAResult gaResult;
     ga.n_genes = geneticEvaluatorPtr->dp.ocs.size();
     ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorPtr);
-    gaResult =  ga.solve();
-    return rawDataT{geneticEvaluatorPtr->dp, gaResult.chromosome, chronometer.toc()};
+    rawData.dp = geneticEvaluatorPtr->dp;
+    rawData.hvResult =  ga.solve();
+    rawData.time = chronometer.toc();
 }
 
 GAWInterface::GAWInterface() {
@@ -51,13 +53,18 @@ BaselineInterface::BaselineInterface(): HVInterface()  {
     variables_d.emplace_back(var_d{&score_threshold,new QDoubleSpinBox,"Score Threshold",std::to_string(score_threshold)});
 }
 
-rawDataT BaselineInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
+void BaselineInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) {
     chronometer.tic();
     chromosomeT chromosome(geneticEvaluatorPtr->dp.ocs.size());
     for(int i = 0;i<chromosome.size();i++)
         chromosome[i]=geneticEvaluatorPtr->dp.oc_scores[i]>score_threshold;
 
-    return rawDataT{geneticEvaluatorPtr->dp,chromosome,chronometer.toc()};
+
+    rawData.dp = geneticEvaluatorPtr->dp;
+    rawData.hvResult.cost = geneticEvaluatorPtr->evaluate_chromosome(chromosome);
+    rawData.hvResult.cost_history.emplace_back(rawData.hvResult.cost);
+    rawData.hvResult.chromosome = chromosome;
+    rawData.time = chronometer.toc();
 }
 
 GASPInterface::GASPInterface() {
@@ -66,10 +73,10 @@ GASPInterface::GASPInterface() {
 
 }
 
-rawDataT GASPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
+void GASPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) {
     chronometer.tic();
     // Get SP solution
-    SPResult spResult;
+    HVResult spResult;
     sequentialPrior.geneticEvaluatorPtr = geneticEvaluatorPtr;
     spResult = sequentialPrior.solve();
 
@@ -87,7 +94,7 @@ rawDataT GASPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
     }
 
     // solve with GA
-    gaResult =  ga.solve();
-
-    return  rawDataT{geneticEvaluatorPtr->dp,gaResult.chromosome,chronometer.toc()};
+    rawData.dp = geneticEvaluatorPtr->dp;
+    rawData.hvResult =  ga.solve();
+    rawData.time = chronometer.toc();
 }

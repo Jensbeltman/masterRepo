@@ -305,6 +305,7 @@ void ManualRegistration::clearPressed() {
         PCVGroupPtr new_gts_g = find_pcv_group_id(vis_dst_->pcv_root,"new_gts");
         vis_dst_->remove_pcv_node(new_gts_g->nodes.back()->id);
         vis_dst_->update_text();
+        new_gts_.pop_back();
     }
     new_gt_verified=true;
 }

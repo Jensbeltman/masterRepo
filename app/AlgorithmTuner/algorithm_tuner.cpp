@@ -233,7 +233,7 @@ void AlgorithmTuner::run_enabled_algorithms(GeneticEvaluatorPtr &geneticEvaluato
     for (auto &alg:hv_algorithms) {
         alg->update_variables();
         if (alg->enable) {
-            rawDataMapAlgObjVec[alg->name][obj].emplace_back(alg->run(geneticEvaluatorPtr));
+            alg->run(geneticEvaluatorPtr,rawDataMapAlgObjVec[alg->name][obj]);
         }
     }
 }
@@ -381,12 +381,7 @@ void AlgorithmTuner::run_enabled_algorithms() {
             if (alg->enable) {
                 size_t bi, ei;
                 algorithmDataProcs[0].get_begin_end_index(bi, ei, alg->name, obj->name);
-
-                std::vector<int> tp, tn, fp, fn;
-                algorithmDataProcs[0].getFPTN(tp, tn, fp, fn, *(algorithmDataProcs[0].chromosome.begin() + ei - 1),
-                                           *(algorithmDataProcs[0].trueOCVec.begin() + ei - 1));
-                add_results_to_visualizer(geneticEvaluatorPtr, *(algorithmDataProcs[0].algName.begin() + ei - 1),
-                                          *(algorithmDataProcs[0].algName.begin() + ei - 1), tp, tn, fp, fn);
+                add_results_to_visualizer(geneticEvaluatorPtr, *(algorithmDataProcs[0].algName.begin() + ei - 1),*(algorithmDataProcs[0].algName.begin() + ei - 1), *(algorithmDataProcs[0].tpIVec.begin() + ei - 1), *(algorithmDataProcs[0].tnIVec.begin() + ei - 1), *(algorithmDataProcs[0].fpIVec.begin() + ei - 1), *(algorithmDataProcs[0].fnIVec.begin() + ei - 1));
             }
         }
         group_vis->resetCamera();
@@ -430,8 +425,8 @@ void AlgorithmTuner::run_enabled_algorithms() {
 
 
 void AlgorithmTuner::add_results_to_visualizer(GeneticEvaluatorPtr &geneticEvaluatorPtr, std::string group,
-                                               std::string node_prefix, std::vector<int> &tp, std::vector<int> &tn,
-                                               std::vector<int> &fp, std::vector<int> &fn) {
+                                               std::string node_prefix, std::vector<int> tp, std::vector<int> tn,
+                                               std::vector<int> fp, std::vector<int> fn) {
 
     if(geneticEvaluatorPtr->type == "GeneticEvaluatorOC") {
         auto geneticEvaluatorOCPtr = std::dynamic_pointer_cast<GeneticEvaluatorOC>(geneticEvaluatorPtr);
@@ -572,8 +567,6 @@ void AlgorithmTuner::update_range_param_limits(const QString &s) {
             paramMinDoubleSpinBox->setDecimals(0);
             paramMaxDoubleSpinBox->setDecimals(0);
             paramStepDoubleSpinBox->setDecimals(0);
-            paramMinDoubleSpinBox->setMinimum(it_i->spinBox->minimum());
-            paramMaxDoubleSpinBox->setMaximum(it_i->spinBox->maximum());
             parameter_test_widget = it_i->spinBox;
             parameter_test_name = it_i->name;
         }
@@ -581,8 +574,6 @@ void AlgorithmTuner::update_range_param_limits(const QString &s) {
             paramMinDoubleSpinBox->setDecimals(3);
             paramMaxDoubleSpinBox->setDecimals(3);
             paramStepDoubleSpinBox->setDecimals(3);
-            paramMinDoubleSpinBox->setMinimum(it_d->spinBox->minimum());
-            paramMaxDoubleSpinBox->setMaximum(it_d->spinBox->maximum());
             parameter_test_widget = it_d->spinBox;
             parameter_test_name = it_d->name;
         }

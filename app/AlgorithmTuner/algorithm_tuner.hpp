@@ -84,7 +84,7 @@ private:
 
     void load_dataset();
 
-    void add_results_to_visualizer(GeneticEvaluatorPtr &geneticEvaluatorPtr,std::string group,std::string node_prefix, std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn);
+    void add_results_to_visualizer(GeneticEvaluatorPtr &geneticEvaluatorPtr,std::string group,std::string node_prefix, std::vector<int> tp, std::vector<int> fp, std::vector<int> tn, std::vector<int> fn);
 
     void run_enabled_algorithms(GeneticEvaluatorPtr &geneticEvaluatorPtr,DatasetObjectPtr &obj, DataPoint &dp, rawDataMapAlgObjVecT &rawDataMapAlgObjVec);
 private:

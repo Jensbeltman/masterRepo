@@ -1,17 +1,12 @@
 #ifndef MASTER_SEQUENTIAL_PRIOR_HPP
 #define MASTER_SEQUENTIAL_PRIOR_HPP
 #include "../evaluator/GeneticEvaluator.hpp"
-
-struct SPResult {
-    chromosomeT chromosome;
-    double cost = std::numeric_limits<double>::max();
-    std::vector<double> cost_history;
-};
+#include "hypothesis_verification/hv_alg/hv_result.hpp"
 
 class SequentialPrior {
 public:
     SequentialPrior(GeneticEvaluatorPtr geneticEvaluatorPtr = nullptr);
-    SPResult solve();
+    HVResult solve();
 
     GeneticEvaluatorPtr geneticEvaluatorPtr;
     double score_threshold = 0;

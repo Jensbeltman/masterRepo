@@ -1,7 +1,3 @@
-//
-// Created by jens on 1/22/21.
-//
-
 #include "algorithm_data_proc.hpp"
 
 
@@ -38,13 +34,20 @@ AlgorithmDataProc::AlgorithmDataProc(rawDataMapAlgObjVecT newrawDataMapAlgObjVec
     for (auto &alg_pair:rawDataMapAlgObjVec) {
         for (auto &obj_pair:alg_pair.second) {
             for (auto &rawData:obj_pair.second) {
-                std::vector<bool> true_ocs = tu.get_true_ocs(rawData.dp.ocs, rawData.dp.gts, t_thresh, r_thresh,obj_pair.first->symmetry_transforms);
-                trueOCVec.emplace_back(true_ocs);
+                std::vector<int> correct_oc_i;
+                std::vector<double> t_dists,r_dists;
+                tu::find_correct_ocs(rawData.dp.ocs, rawData.dp.gts, t_thresh, r_thresh,correct_oc_i,t_dists,r_dists,obj_pair.first->symmetry_transforms);
+                t_dist_avr.emplace_back(std::accumulate(t_dists.begin(),t_dists.end(),0.0)/t_dists.size());
+                r_dist_avr.emplace_back(std::accumulate(r_dists.begin(),r_dists.end(),0.0)/r_dists.size());
+                t_dist_std.emplace_back(std::sqrt(std::accumulate( t_dists.begin(),t_dists.end(),0.0,[this](const double &a,const double &b){return a+std::pow(t_dist_avr.back()-b,2);} ) / t_dists.size()));
+                r_dist_std.emplace_back(std::sqrt(std::accumulate( r_dists.begin(),r_dists.end(),0.0,[this](const double &a,const double &b){return a+std::pow(r_dist_avr.back()-b,2);} ) / r_dists.size()));
+
                 algName.emplace_back(alg_pair.first);
                 objName.emplace_back(obj_pair.first->name);
 
                 nOCVec.emplace_back(rawData.dp.ocs.size());
-                chromosome.emplace_back(rawData.chromsome);
+                chromosome.emplace_back(rawData.hvResult.chromosome);
+                cost.emplace_back(rawData.hvResult.cost);
                 ocVec.emplace_back(rawData.dp.ocs);
                 gtVec.emplace_back(rawData.dp.gts);
                 time.emplace_back(rawData.time);
@@ -57,7 +60,7 @@ AlgorithmDataProc::AlgorithmDataProc(rawDataMapAlgObjVecT newrawDataMapAlgObjVec
                 std::vector<int> &tnI = tnIVec.back();
                 std::vector<int> &fpI = fpIVec.back();
                 std::vector<int> &fnI = fnIVec.back();
-                getFPTN(tpI, tnI, fpI, fnI, rawData.chromsome, true_ocs);
+                getFPTN(tpI, tnI, fpI, fnI, rawData.hvResult.chromosome, correct_oc_i);
                 tp.emplace_back(tpI.size());
                 tn.emplace_back(tnI.size());
                 fp.emplace_back(fpI.size());
@@ -102,6 +105,12 @@ void AlgorithmDataProc::update_data() {
     derivedCSVDocPtr->SetColumnName(10,"accuracy");
     derivedCSVDocPtr->SetColumnName(11,"f1");
     derivedCSVDocPtr->SetColumnName(12,"time");
+    derivedCSVDocPtr->SetColumnName(13,"cost");
+    derivedCSVDocPtr->SetColumnName(14,"t_dist_avr");
+    derivedCSVDocPtr->SetColumnName(15,"r_dist_avr");
+    derivedCSVDocPtr->SetColumnName(16,"t_dist_std");
+    derivedCSVDocPtr->SetColumnName(17,"r_dist_std");
+
 
     derivedCSVDocPtr->SetColumn(0, algName);
     derivedCSVDocPtr->SetColumn(1, objName);
@@ -116,6 +125,11 @@ void AlgorithmDataProc::update_data() {
     derivedCSVDocPtr->SetColumn(10, accuracy);
     derivedCSVDocPtr->SetColumn(11, f1);
     derivedCSVDocPtr->SetColumn(12, time);
+    derivedCSVDocPtr->SetColumn(13, cost);
+    derivedCSVDocPtr->SetColumn(14,t_dist_avr);
+    derivedCSVDocPtr->SetColumn(15,r_dist_avr);
+    derivedCSVDocPtr->SetColumn(16,t_dist_std);
+    derivedCSVDocPtr->SetColumn(17,r_dist_std);
 }
 
 
@@ -123,8 +137,12 @@ void AlgorithmDataProc::save_data(std::string derived_data_filename) {
     derivedCSVDocPtr->Save(derived_data_filename);
 }
 
-void AlgorithmDataProc::getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,
-                                chromosomeT chromosome, chromosomeT correct_ocs) {
+void AlgorithmDataProc::getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,chromosomeT chromosome,std::vector<int> correct_oc_indices) {
+
+    chromosomeT correct_ocs(chromosome.size(),false);
+    for(auto &i:correct_oc_indices)
+        correct_ocs[i]=true;
+
     for (int i = 0; i < correct_ocs.size(); i++) {
         if (correct_ocs[i]) {
             if (chromosome[i]) {
@@ -142,8 +160,12 @@ void AlgorithmDataProc::getFPTN(std::vector<int> &tp, std::vector<int> &tn, std:
     }
 }
 
-void AlgorithmDataProc::getFPTN(int &tp, int &tn, int &fp, int &fn, chromosomeT chromosome, chromosomeT correct_ocs) {
+void AlgorithmDataProc::getFPTN(int &tp, int &tn, int &fp, int &fn, chromosomeT chromosome,std::vector<int> correct_oc_indices) {
     {
+        chromosomeT correct_ocs(chromosome.size(),false);
+        for(auto &i:correct_oc_indices)
+            correct_ocs[i]=true;
+
         for (int i = 0; i < correct_ocs.size(); i++) {
             if (correct_ocs[i]) {
                 if (chromosome[i]) {

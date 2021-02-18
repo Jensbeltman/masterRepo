@@ -4,9 +4,9 @@ SequentialPrior::SequentialPrior(GeneticEvaluatorPtr geneticEvaluatorPtr): genet
 
 }
 
-SPResult SequentialPrior::solve() {
+HVResult SequentialPrior::solve() {
     // BASELINE
-    SPResult result;
+    HVResult result;
     std::vector<T4> &object_candidates = geneticEvaluatorPtr->dp.ocs;
     std::vector<T4> &gts = geneticEvaluatorPtr->dp.gts;
     std::vector<double> &object_candidates_scores = geneticEvaluatorPtr->dp.oc_scores;

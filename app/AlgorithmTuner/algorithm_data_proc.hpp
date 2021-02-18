@@ -27,7 +27,7 @@ public:
     std::vector<int> dpIndex;
     std::vector<chromosomeT> chromosome;
     std::vector<int> tp,tn,fp,fn;
-    std::vector<double> accuracy,f1, precision ,recall, time;
+    std::vector<double> cost,accuracy,f1, precision ,recall, time;
 
     // Static Data
     rapidcsv::CSVDocPtr staticCSVDocPtr = nullptr;
@@ -36,19 +36,16 @@ public:
     double t_thresh, r_thresh;
 
     // Utility data
-    std::vector<std::vector<bool>> trueOCVec;
+    std::vector<double> t_dist_avr,t_dist_std,r_dist_avr,r_dist_std;
     std::vector<std::vector<int>> tpIVec,tnIVec,fpIVec,fnIVec;
     std::vector<std::vector<T4>> ocVec, gtVec;
     std::vector<int> nOCVec;
 
-
-    TransformUtility tu;
-
     void save_data(std::string derived_data_filename);
 
-    void getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,chromosomeT chromosome, chromosomeT correct_ocs);
+    void getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,chromosomeT chromosome, std::vector<int> correct_ocs);
 
-    void getFPTN(int &tp, int &fp, int &tn, int &fn, chromosomeT chromosome, chromosomeT correct_ocs);
+    void getFPTN(int &tp, int &fp, int &tn, int &fn, chromosomeT chromosome, std::vector<int> correct_ocs);
 
 
 

@@ -14,6 +14,7 @@
 #include <QWidget>
 #include <QTabWidget>
 #include "hypothesis_verification/evaluator/GeneticEvaluatorObjectCandidates.hpp"
+#include "hypothesis_verification/hv_alg/hv_result.hpp"
 #include "algorithm_interface.hpp"
 #include "chronometer.h"
 
@@ -38,7 +39,7 @@ struct var_d{
 
 struct rawDataT{
     DataPoint dp;
-    chromosomeT chromsome;
+    HVResult hvResult;
     double time;
 };
 typedef std::vector<rawDataT> rawDataVecT;
@@ -78,7 +79,9 @@ public:
 
     bool enable = false;
 
-    virtual rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr);
+    virtual void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,rawDataT &rawData) = 0;
+    virtual void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,rawDataVecT &rawDataVec);
+
 
 protected:
     void getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn, chromosomeT chromosome,

@@ -92,12 +92,12 @@ void SileaneDatasetObject::load_object_candidates_and_gt(std::string pcd_filenam
         dp.gts.push_back(T);
     }
 
-    TransformUtility transformUtility(mu_noise, sigma_noise);
+    tu::NoiseGen noiseGen(mu_noise, sigma_noise);
     if (n_noisy_poses == -1)
     for(auto &gt:dp.gts)
-        dp.ocs.emplace_back(transformUtility.get_noisy_transform(gt));
+        dp.ocs.emplace_back(noiseGen.get_noisy_transform(gt));
     else{
-        transformUtility.append_noisy_transforms(dp.gts, dp.ocs, n_noisy_poses);
+        noiseGen.append_noisy_transforms(dp.gts, dp.ocs, n_noisy_poses);
     }
 
 }

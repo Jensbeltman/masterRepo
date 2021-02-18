@@ -88,8 +88,6 @@ public:
 
     void setup();
 
-
-
 protected:
     vtkSmartPointer<vtkRenderWindow> render_window_src_;
     vtkSmartPointer<vtkRenderWindow> render_window_dst_;

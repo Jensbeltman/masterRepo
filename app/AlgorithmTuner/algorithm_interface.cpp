@@ -94,9 +94,6 @@ bool AlgorithmInterface::operator==(const std::string &rhs_string) const {
 HVInterface::HVInterface() {
     variables_b.emplace_back(var_b{&enable,new QCheckBox,"enable","false"});
 }
-rawDataT HVInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr) {
-    return rawDataT{DataPoint(), chromosomeT(), std::numeric_limits<double>::max()};
-}
 
 void HVInterface::getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vector<int> &tn, std::vector<int> &fn,
                           chromosomeT chromosome, chromosomeT correct_ocs) {
@@ -115,6 +112,11 @@ void HVInterface::getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vecto
             }
         }
     }
+}
+
+void HVInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataVecT &rawDataVec) {
+    rawDataVec.emplace_back();
+    run(geneticEvaluatorPtr,rawDataVec.back());
 }
 
 // Evaulator

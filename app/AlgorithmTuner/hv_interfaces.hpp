@@ -8,7 +8,7 @@ class SPInterface: public HVInterface {
 public:
     SPInterface();
     SequentialPrior sequentialPrior;
-    rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr) override;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) override;
 };
 typedef std::shared_ptr<SPInterface> SPInterfacePtr;
 
@@ -17,7 +17,7 @@ class GAInterface : public HVInterface {
 public:
     GAInterface();
     GA ga;
-    rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr) override;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) override;
 };
 typedef std::shared_ptr<GAInterface> GAInterfacePtr;
 
@@ -33,7 +33,7 @@ public:
     SequentialPrior sequentialPrior;
     double score_threshold = 0;
     GA ga;
-    rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr) override;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) override;
 };
 typedef std::shared_ptr<GASPInterface> GASPInterfacePtr;
 
@@ -41,7 +41,7 @@ class BaselineInterface : public HVInterface {
 public:
     BaselineInterface();
     double score_threshold = 0;
-    rawDataT run(GeneticEvaluatorPtr &geneticEvaluatorPtr) override;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) override;
 };
 typedef std::shared_ptr<BaselineInterface> BaselineInterfacePtr;
 

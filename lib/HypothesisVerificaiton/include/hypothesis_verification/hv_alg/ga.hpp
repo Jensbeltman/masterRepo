@@ -15,13 +15,11 @@
 #include "hypothesis_verification/evaluator/GeneticEvaluatorObjectCandidates.hpp"
 #include <nlohmann/json.hpp>
 #include "../typedefinitions.hpp"
+#include "hypothesis_verification/hv_alg/hv_result.hpp"
 
 
-struct GAResult {
-    chromosomeT chromosome;
+struct GAResult:HVResult {
     int chromosome_index = 0;
-    double cost = std::numeric_limits<double>::max();
-    std::vector<double> cost_history;
 };
 
 std::ostream &operator<<(std::ostream &os, const GAResult &result);

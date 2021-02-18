@@ -84,13 +84,13 @@ int main(int argc, char **argv) {
                 std::cout << "Sample number: " << sample_n << " pc file "
                           << ob->scape_data_points[sample_n].pcd_filename << std::endl;
 
-                SPResult baResult = baseline.solve();
+                HVResult baResult = baseline.solve();
 
                 //GA
                 ga.n_genes = dp.ocs.size(); // Update chromosome size
                 GAResult gaResult = ga.solve();
 
-                std::vector<bool> correct_ocs = tu.get_true_ocs(dp.ocs, dp.gts, 4, 5);
+                std::vector<bool> correct_ocs = tu.find_correct_ocs(dp.ocs, dp.gts, 4, 5);
 
                 int ga_tp = 0;
                 int ga_fp = 0;
