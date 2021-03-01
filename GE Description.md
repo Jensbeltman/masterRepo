@@ -2,11 +2,9 @@
 
 - **VisiblePoints **: Number of point visible from all the selected OCs when rendered from a top view.
 
-- **VisibleInliers** : Number of VOP point that has and inlier in the point cloud.
+- **VisibleInliers** : Number of **VisiblePoints point that has and inlier in the point cloud.
 
 - **UniqueVisibleInliers**: Number Visible Inliers that does not share indexes in the Point Cloud. Only  if more than two OCs are colliding  is .
-
-- **InliersThreshold**: Theshold to determine what the ration between VOP and VOI needs to be for cost to increase. Used differently in GEIC  than in  GEICS and GEUICS.
 
 - **PointCloudPoints**: Number of points in the pointcloud(the one captured by scape).
 
@@ -14,20 +12,25 @@
 
 - **OCScore**: Score for a given OC, in the scape dataset this is given.
 
-- $\mathbf{\sigma(x)}$: function used for discounting inliers based on collision
-  $$
-  \sigma(x) =\frac{1}{1+e^{-g*(x-c)}}
-  $$
-  
-
-  - **g**: sigmoid growth rate
-  - **c**: sigmoid center
-
 - **PenalizedVisibleInliers**: 
   $$
   \text{PenalizedVisibleInliers}=\sum_{SelectedOC(SOC)} \text{VisiblePoints}_{\text{SOC}}\cdot \sigma(\text{CollisionDepth}_{\text{SOC}})
   $$
+
+  $$
+  \sigma(x) =\frac{1}{1+e^{-g*(x-c)}}
+  $$
+
   
+
+
+  - ***g***: sigmoid growth rate, usually from 5-10, ***c***: sigmoid center, usually around 2-5 mm
+
+- ***InliersThreshold***(0-1): Theshold to determine what the ration between **VisiblePoints** and **PenalizedVisibleInliers** needs to be for cost to increase. Used differently in GEIC  than in  GEICS and GEUICS.
+
+  
+
+- 
 
 ## Genetic Evaluators(GEs)
 
