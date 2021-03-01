@@ -1,14 +1,14 @@
 ## Terms and functions
 
-- **VisiblePoints **: Number of point visible from all the selected OCs when rendered from a top view.
+- **VisiblePoints **: Number of points visible from all the selected OCs when rendered from a top view. The same voxel grid is used on these points and on the ones in the captured point cloud.
 
-- **VisibleInliers** : Number of VisiblePoints point that has an inlier in the point cloud(the one captured by scape).
+- **VisibleInliers** : Number of VisiblePoints points that has an inlier in the captured point cloud.
 
-- **UniqueVisibleInliers**: Number Visible Inliers that does not share indexes in the Point Cloud. If an OC is in collision with with multiple other the one with with most shared inliers are used.
+- **UniqueVisibleInliers**: If an OC is in collision the intersecting inliers between the OCs in collision i subtracted from **VisibleInliers**. If an OC is in collision with more than one other OC the collision with most shared inliers is used for subtracting.
 
-- **PointCloudPoints**: Number of points in the point cloud.
+- **PointCloudPoints**: Number of points in the captured point cloud.
 
-- **CollisionDepth:** The maximum penetration depth for a OC in a given hypothesis.
+- **CollisionDepth:** The maximum penetration depth for an OC in a given hypothesis.
 
 - **OCScore**: The ones given by scape.
 
@@ -24,7 +24,7 @@
   
 
 
-  - ***g***: sigmoid growth rate, usually from 5-10, ***c***: sigmoid center, usually around 2-5 mm.
+  - ***g***: sigmoid growth rate, usually from 5-10(mm), ***c***: sigmoid center, usually around 2-5 (mm).
 
 - ***InliersThreshold***(0-1): Theshold to determine what the ration between VisiblePoints and PenalizedVisibleInliers needs to be for cost to increase. Used differently in GEIC  than in  GEICS and GEUICS.
 
