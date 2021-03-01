@@ -2,7 +2,7 @@
 
 - **VisiblePoints **: Number of point visible from all the selected OCs when rendered from a top view.
 
-- **VisibleInliers** : Number of **VisiblePoints point that has and inlier in the point cloud.
+- **VisibleInliers** : Number of VisiblePoints point that has and inlier in the point cloud.
 
 - **UniqueVisibleInliers**: Number Visible Inliers that does not share indexes in the Point Cloud. Only  if more than two OCs are colliding  is .
 
@@ -26,7 +26,7 @@
 
   - ***g***: sigmoid growth rate, usually from 5-10, ***c***: sigmoid center, usually around 2-5 mm
 
-- ***InliersThreshold***(0-1): Theshold to determine what the ration between **VisiblePoints** and **PenalizedVisibleInliers** needs to be for cost to increase. Used differently in GEIC  than in  GEICS and GEUICS.
+- ***InliersThreshold***(0-1): Theshold to determine what the ration between VisiblePoints and PenalizedVisibleInliers needs to be for cost to increase. Used differently in GEIC  than in  GEICS and GEUICS.
 
   
 
