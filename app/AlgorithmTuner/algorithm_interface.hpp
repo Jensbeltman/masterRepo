@@ -13,24 +13,24 @@
 #include <QLabel>
 #include <QWidget>
 #include <QTabWidget>
-#include "hypothesis_verification/evaluator/GeneticEvaluatorObjectCandidates.hpp"
+#include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollision.hpp"
 #include "hypothesis_verification/hv_alg/hv_result.hpp"
 #include "algorithm_interface.hpp"
 #include "chronometer.h"
 
-struct var_b{
+struct param_b{
    bool* val;
    QCheckBox* checkBox;
    std::string name;
    std::string default_val_string = "false";
 };
-struct var_i{
+struct param_i{
    int* val;
    QSpinBox* spinBox;
    std::string name;
    std::string default_val_string = "0";
 };
-struct var_d{
+struct param_d{
    double* val;
    QDoubleSpinBox* spinBox;
    std::string name;
@@ -38,7 +38,9 @@ struct var_d{
 };
 
 struct rawDataT{
-    DataPoint dp;
+    std::string alg_name;
+    DatasetObjectPtr objPtr;
+    int dpI;
     HVResult hvResult;
     double time;
 };
@@ -51,17 +53,17 @@ public:
     AlgorithmInterface()=default;
     std::string name;
 
-    std::vector<var_b> variables_b;
-    std::vector<var_i> variables_i;
-    std::vector<var_d> variables_d;
+    std::vector<param_b> parameters_b;
+    std::vector<param_i> parameters_i;
+    std::vector<param_d> parameters_d;
 
     Chronometer chronometer;
-    void update_variables();
+    void update_parameters();
     void load_settings(QSettings& qsettings);
     void save_settings(QSettings& qsettings);
 
-    void add_variable_to_formlayout(QFormLayout *qFormLayout);
-    void add_variable_to_tabwidget(QTabWidget *qTabWidget);
+    void add_parameters_to_formlayout(QFormLayout *qFormLayout);
+    void add_parameters_to_tabwidget(QTabWidget *qTabWidget);
 
     bool operator <(const AlgorithmInterface& rhs) const;
     bool operator ==(const AlgorithmInterface& rhs) const;
@@ -77,10 +79,9 @@ class HVInterface: public AlgorithmInterface {
 public:
     HVInterface();
 
-    bool enable = false;
+    bool enabled = false;
 
-    virtual void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,rawDataT &rawData) = 0;
-    virtual void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,rawDataVecT &rawDataVec);
+    virtual void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) = 0;
 
 
 protected:

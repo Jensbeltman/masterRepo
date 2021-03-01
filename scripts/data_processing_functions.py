@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as mpl
+import seaborn as sns
 
 def object_mean_barplot(df,key,ax=None):
     data = df.groupby(["objName","algName"]).mean()
@@ -59,3 +60,34 @@ def series_obj_mean_line_plot(data_info,key,variable_key,ax,groupby = ["objName"
     ax.set_xlabel(variable_key)
 
     return ax
+
+def df_from_csv(csv_path, req_cols):
+    return pd.read_csv(csv_path,usecols=req_cols)
+
+def parameter_tuning_read_and_mean(csv_path,tested_parameter,tuning_measure,validation_measures):
+    req_cols = ["algName","objName",tested_parameter,tuning_measure]+validation_measures
+    df =  pd.read_csv(csv_path,usecols=req_cols,dtype={"algName":"category","obj":"category"})
+    return df.groupby(["algName","objName",tested_parameter]).mean().reset_index()
+
+def print_tuned_parameters(df,tuning_measure,tested_parameter):
+    max_idx = df.groupby(["algName","objName"])[tuning_measure].idxmax().to_numpy()
+    for index, row in df.iloc[max_idx,:].iterrows():
+        print("{},{},{},{}".format(row["objName"],row["algName"],tested_parameter,row[tuning_measure]))
+
+def parameter_tuning_validation_barplot(df,tuning_measure,validation_measures,figsize=(20,5)):
+    max_idx = df.groupby(["algName","objName"])[tuning_measure].idxmax().to_numpy()
+
+    fig, axes = plt.subplots(1,len(validation_measures),figsize=(20,5),tight_layout=True)
+
+    for key,ax in zip(validation_measures,axes):
+        sns.barplot(x="objName", y=key, hue="algName", data=df.loc[max_idx,:],ax=ax)
+    return fig,axes
+
+def get_best_cost_corr_parameters(corr_df,corrwith,tuning_measure):
+    best_idx = corr_df.groupby(["geName","objName"])[corrwith].idxmin().to_numpy()
+    best_params = corr_df.loc[best_idx,["objName","geName",tuning_measure,corrwith]]
+    return best_params, best_idx
+
+def print_best_cost_corr_parameters(best_params,tuning_measure):
+    for index,row in best_params.iterrows():
+        print(row["objName"],row["geName"],tuning_measure,row[tuning_measure],sep=",")

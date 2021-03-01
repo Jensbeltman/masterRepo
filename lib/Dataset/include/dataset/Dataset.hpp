@@ -16,6 +16,7 @@ public:
 
     virtual DatasetObjectPtr get_object_by_name(std::string name);
 
+    bool operator <(const DatasetObject& rhs) const;
 };
 
 typedef std::shared_ptr<Dataset> DatasetPtr;

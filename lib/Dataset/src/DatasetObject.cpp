@@ -47,6 +47,10 @@ bool DatasetObject::operator<(const DatasetObject &rhs) const {
     return name < rhs.name;
 }
 
+bool DatasetObject::operator==(const DatasetObject &rhs) const {
+    return name == rhs.name;
+}
+
 //int DatasetObject::datapoint_index(DataPoint &dp) {
 //    auto found_it = std::find(data_points.begin(),data_points.end(),dp);
 //    if(found_it!=data_points.end())

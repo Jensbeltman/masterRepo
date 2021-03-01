@@ -12,7 +12,7 @@
 #include <mutex>
 #include <atomic>
 #include <vector>
-#include "hypothesis_verification/evaluator/GeneticEvaluatorObjectCandidates.hpp"
+#include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollision.hpp"
 #include <nlohmann/json.hpp>
 #include "../typedefinitions.hpp"
 #include "hypothesis_verification/hv_alg/hv_result.hpp"

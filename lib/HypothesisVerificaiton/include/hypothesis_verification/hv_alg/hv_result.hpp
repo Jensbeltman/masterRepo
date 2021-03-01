@@ -6,6 +6,7 @@ struct HVResult {
     chromosomeT chromosome;
     double cost = std::numeric_limits<double>::max();
     std::vector<double> cost_history;
+    double time;
 };
 
 

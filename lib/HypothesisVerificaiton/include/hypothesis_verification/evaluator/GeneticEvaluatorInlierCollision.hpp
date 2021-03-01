@@ -16,20 +16,22 @@
 
 typedef std::shared_ptr<cv::viz::Mesh> MeshPtr;
 
-class GeneticEvaluatorOC : public GeneticEvaluator {
+class GeneticEvaluatorInlierCollision : public GeneticEvaluator {
 public:
-    explicit GeneticEvaluatorOC(double inlier_threshold = 1.0, double sigmoid_falloff_center = 4.0,
-                                double sigmoid_falloff_scale = 2.0, double oc_inlier_multiplier = 0.5);
+    explicit GeneticEvaluatorInlierCollision(double inlier_threshold = 1.0, double sigmoid_falloff_center = 4.0,
+                                             double sigmoid_falloff_scale = 2.0, double oc_inlier_multiplier = 0.5);
 
-    GeneticEvaluatorOC(DatasetObjectPtr datasetObjectPtr, int datapoint_n, double inlier_threshold = 1.0,
-                       double sigmoid_falloff_center = 4.0, double sigmoid_falloff_scale = 2.0,
-                       double oc_inlier_multiplier = 0.5);
+    GeneticEvaluatorInlierCollision(DatasetObjectPtr datasetObjectPtr, int datapoint_n, double inlier_threshold = 1.0,
+                                    double sigmoid_falloff_center = 4.0, double sigmoid_falloff_scale = 2.0,
+                                    double oc_inlier_multiplier = 0.5);
 
     void initialise_object(DatasetObjectPtr &datasetObjectPtr, int datapoint_n = 0) override;
-    void initialise_object(DatasetObjectPtr &datasetObjectPtr, DataPoint &datapoint_n) override;
+    void initialise_object(DatasetObjectPtr &datasetObjectPtr, DataPoint &datapoint) override;
 
     void initialise_datapoint(int datapoint_n) override;
     void initialise_datapoint(DataPoint &datapoint_n) override;
+
+    void get_collision(chromosomeT &chromosome, std::vector<bool> &in_collision,std::vector<double> &penetration);
 
 
 
@@ -48,8 +50,8 @@ public:
     // Hyper params maps
     pcl::VoxelGrid<PointT>::Ptr voxelGridPtr;
     double nn_inlier_threshold;
-    double sigmoid_falloff_center;
-    double sigmoid_falloff_scale;
+    double sigmoid_center;
+    double sigmoid_growth_rate;
     double oc_inlier_threshold;
     double vg_leaf_size;
 
@@ -58,7 +60,7 @@ public:
     double sigmoid_fall_off(double x);
 
 
-private:
+protected:
     void init_visible_inliers();
 
     void init_collisions();
@@ -66,6 +68,6 @@ private:
     Chronometer chronometer;
 };
 
-typedef std::shared_ptr<GeneticEvaluatorOC> GeneticEvaluatorOCPtr;
+typedef std::shared_ptr<GeneticEvaluatorInlierCollision> GeneticEvaluatorInlierCollisionPtr;
 
 #endif //MASTER_GENETICEVALUATOROBJECTCANDIDATES_PPH

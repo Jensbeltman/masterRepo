@@ -58,6 +58,7 @@ public:
     virtual std::vector<T4> get_object_candidates(unsigned int n);
 
     bool operator <(const DatasetObject& rhs) const;
+    bool operator ==(const DatasetObject& rhs) const;
 
 
 protected:

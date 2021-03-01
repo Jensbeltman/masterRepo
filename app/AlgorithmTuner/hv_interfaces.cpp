@@ -4,42 +4,39 @@
 //BA
 SPInterface::SPInterface(): HVInterface()  {
     name="SP";
-    variables_d.emplace_back(var_d{&sequentialPrior.score_threshold,new QDoubleSpinBox,"Score Threshold",std::to_string(sequentialPrior.score_threshold)});
+    parameters_d.emplace_back(param_d{&sequentialPrior.score_threshold, new QDoubleSpinBox, "Score Threshold", std::to_string(sequentialPrior.score_threshold)});
 }
 
-void SPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) {
-    rawData.dp = geneticEvaluatorPtr->dp;
+void SPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) {
     chronometer.tic();
-    HVResult hvResult;
     sequentialPrior.geneticEvaluatorPtr = geneticEvaluatorPtr;
-    rawData.hvResult = sequentialPrior.solve();
-    rawData.time = chronometer.toc();
+    hvResult = sequentialPrior.solve();
+    hvResult.time = chronometer.toc();
 }
 
 // GA
 GAInterface::GAInterface(): HVInterface() {
     name="GA";
     // Creating Variables
-    variables_i.emplace_back(var_i{&ga.population_size,new QSpinBox,"population_size",std::to_string(ga.population_size)});
-    variables_i.emplace_back(var_i{&ga.generation_max,new QSpinBox,"generation_max",std::to_string(ga.generation_max)});
+    parameters_i.emplace_back(param_i{&ga.population_size, new QSpinBox, "population_size", std::to_string(ga.population_size)});
+    parameters_i.emplace_back(param_i{&ga.generation_max, new QSpinBox, "generation_max", std::to_string(ga.generation_max)});
 
-    variables_d.emplace_back(var_d{&ga.mutation_rate,new QDoubleSpinBox,"mutation_rate",std::to_string(ga.mutation_rate)});
-    variables_d.emplace_back(var_d{&ga.elite_pct,new QDoubleSpinBox,"elite_pct",std::to_string(ga.elite_pct)});
-    variables_d.emplace_back(var_d{&ga.parent_pool_pct,new QDoubleSpinBox,"parent_pool_pct",std::to_string(ga.parent_pool_pct)});
+    parameters_d.emplace_back(param_d{&ga.mutation_rate, new QDoubleSpinBox, "mutation_rate", std::to_string(ga.mutation_rate)});
+    parameters_d.emplace_back(param_d{&ga.elite_pct, new QDoubleSpinBox, "elite_pct", std::to_string(ga.elite_pct)});
+    parameters_d.emplace_back(param_d{&ga.parent_pool_pct, new QDoubleSpinBox, "parent_pool_pct", std::to_string(ga.parent_pool_pct)});
 
     // Setting QT properties
-    for(auto & var:variables_i)
+    for(auto & var:parameters_i)
         var.spinBox->setMaximum(10000);
 }
 
-void GAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) {
+void GAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) {
     chronometer.tic();
     GAResult gaResult;
     ga.n_genes = geneticEvaluatorPtr->dp.ocs.size();
     ga.geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorPtr);
-    rawData.dp = geneticEvaluatorPtr->dp;
-    rawData.hvResult =  ga.solve();
-    rawData.time = chronometer.toc();
+    hvResult =  ga.solve();
+    hvResult.time = chronometer.toc();
 }
 
 GAWInterface::GAWInterface() {
@@ -50,30 +47,28 @@ GAWInterface::GAWInterface() {
 
 BaselineInterface::BaselineInterface(): HVInterface()  {
     name="BL";
-    variables_d.emplace_back(var_d{&score_threshold,new QDoubleSpinBox,"Score Threshold",std::to_string(score_threshold)});
+    parameters_d.emplace_back(param_d{&score_threshold, new QDoubleSpinBox, "Score Threshold", std::to_string(score_threshold)});
 }
 
-void BaselineInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) {
+void BaselineInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) {
     chronometer.tic();
     chromosomeT chromosome(geneticEvaluatorPtr->dp.ocs.size());
     for(int i = 0;i<chromosome.size();i++)
         chromosome[i]=geneticEvaluatorPtr->dp.oc_scores[i]>score_threshold;
 
-
-    rawData.dp = geneticEvaluatorPtr->dp;
-    rawData.hvResult.cost = geneticEvaluatorPtr->evaluate_chromosome(chromosome);
-    rawData.hvResult.cost_history.emplace_back(rawData.hvResult.cost);
-    rawData.hvResult.chromosome = chromosome;
-    rawData.time = chronometer.toc();
+    hvResult.cost = geneticEvaluatorPtr->evaluate_chromosome(chromosome);
+    hvResult.cost_history.emplace_back(hvResult.cost);
+    hvResult.chromosome = chromosome;
+    hvResult.time = chronometer.toc();
 }
 
 GASPInterface::GASPInterface() {
     name="GASP";
-    variables_d.emplace_back(var_d{&sequentialPrior.score_threshold,new QDoubleSpinBox,"SP Score Threshold",std::to_string(sequentialPrior.score_threshold)});
+    parameters_d.emplace_back(param_d{&sequentialPrior.score_threshold, new QDoubleSpinBox, "SP Score Threshold", std::to_string(sequentialPrior.score_threshold)});
 
 }
 
-void GASPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) {
+void GASPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) {
     chronometer.tic();
     // Get SP solution
     HVResult spResult;
@@ -94,7 +89,24 @@ void GASPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawD
     }
 
     // solve with GA
-    rawData.dp = geneticEvaluatorPtr->dp;
-    rawData.hvResult =  ga.solve();
-    rawData.time = chronometer.toc();
+    hvResult =  ga.solve();
+    hvResult.time = chronometer.toc();
+}
+
+RandomInterface::RandomInterface() {
+    name="RAND";
+
+    uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
+    rng.seed(ss);
+}
+
+void RandomInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hvResult) {
+    int n_ocs = geneticEvaluatorPtr->dp.oc_scores.size();
+    hvResult.chromosome.resize(n_ocs);
+    for(int i = 0;i<n_ocs;i++)
+        hvResult.chromosome[i] = bernoulli_dist(rng);
+    hvResult.cost = geneticEvaluatorPtr->evaluate_chromosome(hvResult.chromosome);
+    hvResult.cost_history.emplace_back(hvResult.cost);
+    hvResult.time=0;
 }

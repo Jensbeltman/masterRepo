@@ -1,5 +1,5 @@
 #include "hypothesis_verification/visualization/point_cloud_group_visualizer.hpp"
-#include "hypothesis_verification/evaluator/GeneticEvaluatorObjectCandidates.hpp"
+#include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollision.hpp"
 #include "hypothesis_verification/typedefinitions.hpp"
 
 #include <pcl/filters/extract_indices.h>

@@ -1,5 +1,5 @@
 #include "iostream"
-#include "hypothesis_verification/evaluator/GeneticEvaluatorObjectCandidates.hpp"
+#include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollision.hpp"
 #include "hypothesis_verification/evaluator/simple_visibility_function.hpp"
 #include "hypothesis_verification/evaluator/collision_checking.hpp"
 #include <pcl/common/common.h>
@@ -12,36 +12,36 @@
 using namespace std;
 
 
-GeneticEvaluatorOC::GeneticEvaluatorOC(double inlier_threshold, double sigmoid_falloff_center,
-                                       double sigmoid_falloff_scale, double oc_inlier_threshold)
+GeneticEvaluatorInlierCollision::GeneticEvaluatorInlierCollision(double inlier_threshold, double sigmoid_falloff_center,
+                                                                 double sigmoid_falloff_scale, double oc_inlier_threshold)
         : nn_inlier_threshold(inlier_threshold),
-          sigmoid_falloff_center(sigmoid_falloff_center),
-          sigmoid_falloff_scale(sigmoid_falloff_scale),
+          sigmoid_center(sigmoid_falloff_center),
+          sigmoid_growth_rate(sigmoid_falloff_scale),
           oc_inlier_threshold(oc_inlier_threshold),
           voxelGridPtr(new pcl::VoxelGrid<PointT>){
 
     type = "GeneticEvaluatorOC";
 }
 
-GeneticEvaluatorOC::GeneticEvaluatorOC(DatasetObjectPtr datasetObjectPtr, int datapoint_n, double inlier_threshold,
-                                       double sigmoid_falloff_center, double sigmoid_falloff_scale,
-                                       double oc_inlier_threshold)
+GeneticEvaluatorInlierCollision::GeneticEvaluatorInlierCollision(DatasetObjectPtr datasetObjectPtr, int datapoint_n, double inlier_threshold,
+                                                                 double sigmoid_falloff_center, double sigmoid_falloff_scale,
+                                                                 double oc_inlier_threshold)
         : nn_inlier_threshold(inlier_threshold),
-          sigmoid_falloff_center(sigmoid_falloff_center),
-          sigmoid_falloff_scale(sigmoid_falloff_scale),
+          sigmoid_center(sigmoid_falloff_center),
+          sigmoid_growth_rate(sigmoid_falloff_scale),
           oc_inlier_threshold(oc_inlier_threshold),
           voxelGridPtr(new pcl::VoxelGrid<PointT>){
 
-    type = "GeneticEvaluatorOC";
+    type = "GEIC";
     initialise_object(datasetObjectPtr, datapoint_n);
 
 }
 
-void GeneticEvaluatorOC::initialise_object(DatasetObjectPtr &newDatasetObjectPtr, int datapoint_n) {
+void GeneticEvaluatorInlierCollision::initialise_object(DatasetObjectPtr &newDatasetObjectPtr, int datapoint_n) {
     initialise_object(newDatasetObjectPtr,newDatasetObjectPtr->data_points[datapoint_n]);
 }
 
-void GeneticEvaluatorOC::initialise_object(DatasetObjectPtr &newDatasetObjectPtr, DataPoint &datapoint) {
+void GeneticEvaluatorInlierCollision::initialise_object(DatasetObjectPtr &newDatasetObjectPtr, DataPoint &datapoint) {
     datasetObjectPtr = newDatasetObjectPtr;
     pcm = datasetObjectPtr->get_mesh_point_cloud();
 
@@ -51,11 +51,11 @@ void GeneticEvaluatorOC::initialise_object(DatasetObjectPtr &newDatasetObjectPtr
 
     initialise_datapoint(datapoint);
 }
-void GeneticEvaluatorOC::initialise_datapoint(int datapoint_n) {
+void GeneticEvaluatorInlierCollision::initialise_datapoint(int datapoint_n) {
     initialise_datapoint(datasetObjectPtr->data_points[datapoint_n]);
 }
 
-void GeneticEvaluatorOC::initialise_datapoint(DataPoint &datapoint) {
+void GeneticEvaluatorInlierCollision::initialise_datapoint(DataPoint &datapoint) {
     dp = datapoint;
     pc = datasetObjectPtr->get_pcd(dp);
     // KdTree of cloud data
@@ -66,14 +66,15 @@ void GeneticEvaluatorOC::initialise_datapoint(DataPoint &datapoint) {
 }
 
 
-void GeneticEvaluatorOC::init_visible_inliers() {
+void GeneticEvaluatorInlierCollision::init_visible_inliers() {
+    int n_ocs = dp.ocs.size();
     oc_visible_inlier_pt_idxs.clear();
     chronometer.tic();
     PointCloudRenderer pc_render;
     pc_render.addActorsPLY(datasetObjectPtr->mesh_path, dp.ocs);
     pc_render.fitCameraAndResolution();
     visible_oc_pcs.clear();
-    visible_oc_pcs.reserve(dp.ocs.size());
+    visible_oc_pcs.reserve(n_ocs);
     pc_render.renderPointClouds(visible_oc_pcs);
 
     double render_time = chronometer.toc();
@@ -90,9 +91,13 @@ void GeneticEvaluatorOC::init_visible_inliers() {
     // Vectors for knn
     std::vector<int> k_indices;
     std::vector<float> k_sqr_distances;
+    oc_visible_inlier_pt_idxs.resize(n_ocs);
+    for (int i = 0;i<n_ocs;i++) {
+        auto &pc = visible_oc_pcs[i];
 
-    for (auto &pc:visible_oc_pcs) {
-        pcl::IndicesPtr inlier_pts(new pcl::Indices);
+        pcl::IndicesPtr & inlier_pts = oc_visible_inlier_pt_idxs[i];
+        inlier_pts = pcl::make_shared<pcl::Indices>();
+
         for (auto &p: pc->points) {
             kdtree->radiusSearch(p, nn_inlier_threshold, k_indices, k_sqr_distances,
                                  1);
@@ -100,13 +105,12 @@ void GeneticEvaluatorOC::init_visible_inliers() {
                 inlier_pts->push_back(k_indices[0]);
             }
         }
-        oc_visible_inlier_pt_idxs.push_back(inlier_pts);
     }
     std::cout << "Inliers time: " << chronometer.toc() << "s," << "Render Time: "
               << render_time << "s\n";
 }
 
-void GeneticEvaluatorOC::init_collisions() {
+void GeneticEvaluatorInlierCollision::init_collisions() {
     collisions.pairs.clear();
     // Detect collisions
     chronometer.tic();
@@ -114,7 +118,7 @@ void GeneticEvaluatorOC::init_collisions() {
     std::cout << "Collision init elapsed time: " << chronometer.toc() << "s\n";
 }
 
-double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
+double GeneticEvaluatorInlierCollision::evaluate_chromosome(chromosomeT &chromosome) {
 
     if (dp.ocs.size() != chromosome.size()) {
         std::cout << "Chromosome and ground truth poses are not same dimension returning 0.0 cost" << endl;
@@ -127,20 +131,9 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
     auto coll_pair_itt = collisions.pairs.begin();
 
     // Check if ocs are in collision
-    std::vector<bool> in_collision(chromosome.size(), false);
-    std::vector<double> max_pen_dist(chromosome.size(), 0);
-    for (int i = 0; i < collisions.pairs.size(); i++) {
-        auto &cp = collisions.pairs[i];
-        double &pen_dist = collisions.distances[i];
-        if (chromosome[cp.first] && chromosome[cp.second]) {
-            in_collision[cp.first] = true;
-            in_collision[cp.second] = true;
-
-            max_pen_dist[cp.first] = std::max(max_pen_dist[cp.first], pen_dist);
-            max_pen_dist[cp.second] = std::max(max_pen_dist[cp.second], pen_dist);
-        }
-    }
-
+    std::vector<bool> in_collision;
+    std::vector<double> penetration;
+    get_collision(chromosome, in_collision, penetration);
 
     for (int i = 0; i < chromosome.size(); i++) {
         if (chromosome[i]) {
@@ -150,7 +143,7 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
             if (!in_collision[i]) {
                 vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
             } else {
-                vis_inlier_pt_cnt_tot += sigmoid_fall_off(max_pen_dist[i]) * vis_inlier_pt_cnt;
+                vis_inlier_pt_cnt_tot += sigmoid_fall_off(penetration[i]) * vis_inlier_pt_cnt;
             }
             n_active_genes++;
         }
@@ -158,15 +151,28 @@ double GeneticEvaluatorOC::evaluate_chromosome(chromosomeT &chromosome) {
   // oc_inlier_threshold determins the fraction of vis_pt_cnt_tot/oc_inlier_threshold that creats zero extra cost. If this fraction is higher than oc_inlier_threshold cost decreases
     cost += (vis_pt_cnt_tot - (1.0 / oc_inlier_threshold) * vis_inlier_pt_cnt_tot);
 
-    if (isnan(cost))
-        cost = std::numeric_limits<double>::max();
-
     return cost;
 }
 
 
-double GeneticEvaluatorOC::sigmoid_fall_off(double x) {
-    return 1 /
-           (1 + std::exp(-sigmoid_falloff_scale * (x - sigmoid_falloff_center)));
+double GeneticEvaluatorInlierCollision::sigmoid_fall_off(double x) {
+    return 1 / (1 + std::exp(-sigmoid_growth_rate * (x - sigmoid_center)));
+}
+
+void GeneticEvaluatorInlierCollision::get_collision(chromosomeT &chromosome, vector<bool> &in_collision, vector<double> &penetration) {
+    // This version calculated the maximum collision depth for a given oc
+    in_collision.resize(chromosome.size(),false);
+    penetration.resize(chromosome.size(),0);
+    for (int i = 0; i < collisions.pairs.size(); i++){
+        auto &cp = collisions.pairs[i];
+        double &pen_dist = collisions.distances[i];
+        if (chromosome[cp.first] && chromosome[cp.second]) {
+            in_collision[cp.first] = true;
+            in_collision[cp.second] = true;
+
+            penetration[cp.first] = std::max(penetration[cp.first], pen_dist);
+            penetration[cp.second] = std::max(penetration[cp.second], pen_dist);
+        }
+    }
 }
 

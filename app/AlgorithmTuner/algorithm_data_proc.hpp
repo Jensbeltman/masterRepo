@@ -15,42 +15,16 @@
 class AlgorithmDataProc {
 public:
     AlgorithmDataProc();
-    AlgorithmDataProc(rawDataMapAlgObjVecT rawDataMapAlgObjVec,double t_thresh, double r_thresh);
-
-    void update_data();
-
-    rawDataMapAlgObjVecT rawDataMapAlgObjVec;
-
-    // Derived Data
-    rapidcsv::CSVDocPtr derivedCSVDocPtr = nullptr;
-    std::vector<std::string> algName,objName;
-    std::vector<int> dpIndex;
-    std::vector<chromosomeT> chromosome;
-    std::vector<int> tp,tn,fp,fn;
-    std::vector<double> cost,accuracy,f1, precision ,recall, time;
-
-    // Static Data
-    rapidcsv::CSVDocPtr staticCSVDocPtr = nullptr;
-    std::string DatasetType,DatasetPath;
-    std::vector<std::string> uniqAlgNames,uniqObjNames;
+    AlgorithmDataProc(double t_thresh, double r_thresh);
     double t_thresh, r_thresh;
 
-    // Utility data
-    std::vector<double> t_dist_avr,t_dist_std,r_dist_avr,r_dist_std;
-    std::vector<std::vector<int>> tpIVec,tnIVec,fpIVec,fnIVec;
-    std::vector<std::vector<T4>> ocVec, gtVec;
-    std::vector<int> nOCVec;
+    std::vector<std::string> column_names = {"algName","objName","dpI","chromosome","tp","tn","fp","fn","precision","recall","accuracy","f1","time","cost","t_dist_avr","r_dist_avr","t_dist_std","r_dist_std"};
+    std::map<std::string,int> column_name_indices;
+    void set_column_names(rapidcsv::CSVDocPtr &csvDoc);
+    void append_processed_data_to_doc(rapidcsv::CSVDocPtr &csvDoc,int row_i,std::string &alg_name,DatasetObjectPtr &objPtr,int dpI, HVResult &hvResult);
 
-    void save_data(std::string derived_data_filename);
-
-    void getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,chromosomeT chromosome, std::vector<int> correct_ocs);
-
-    void getFPTN(int &tp, int &fp, int &tn, int &fn, chromosomeT chromosome, std::vector<int> correct_ocs);
-
-
-
-    matplot::figure_handle  bar_plot(std::string value_name);
-
+//    matplot::figure_handle  bar_plot(std::string value_name);
+/*
     size_t begin_index(std::string key,std::vector<std::string> &keys);
     size_t end_index(std::string key,std::vector<std::string> &keys);
 
@@ -67,7 +41,7 @@ public:
 
     int get_sum(std::vector<int> &vals, std::string alg_key, std::string obj_key = "");
 
-    double get_avr(std::vector<int> &vals, std::string alg_key, std::string obj_key = "");
+    double get_avr(std::vector<int> &vals, std::string alg_key, std::string obj_key = "");*/
 };
 
 

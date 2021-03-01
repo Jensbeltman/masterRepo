@@ -2,14 +2,14 @@
 #include <algorithm>    // std::find
 #include <cmath>
 #include <math.h>
-
+#include <iomanip>
 namespace tu {
 
-        NoiseGen::NoiseGen(double std_t, double std_r) : normal_dist_t(
+    NoiseGen::NoiseGen(double std_t, double std_r) : normal_dist_t(
             std::normal_distribution<double>(0, std_t)),
-                                                                     normal_dist_r(
-                                                                             std::normal_distribution<double>(0,
-                                                                                                              std_r)) {
+                                                     normal_dist_r(
+                                                             std::normal_distribution<double>(0,
+                                                                                              std_r)) {
         // initialize the random number generator with time-dependent seed
         uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
@@ -49,28 +49,39 @@ namespace tu {
         return Tn;
     }
 
-    void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh, std::vector<int> &correct_oc_indices,std::vector<double> &t_dists,std::vector<double> &r_dists, std::vector<T4> symmetry_transforms) {
+    void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh,
+                          std::vector<int> &correct_oc_indices, std::vector<double> &t_dists,
+                          std::vector<double> &r_dists, std::vector<T4> symmetry_transforms) {
         for (auto gt:gts) {
             int best_i = -1;
             double best_t_diff = std::numeric_limits<double>::max();
             double best_r_diff = std::numeric_limits<double>::max();
 
             std::vector<T4> gt_with_symmetry = {gt};
-            for (auto &st:symmetry_transforms)
+            for (auto &st:symmetry_transforms) {
                 gt_with_symmetry.emplace_back(gt * st);
+            }
+            for (auto &gtws:gt_with_symmetry) {
+                gtws.matrix().block<3, 3>(0, 0).transposeInPlace();
+                gtws.matrix().block<3, 1>(0, 3) = -gtws.matrix().block<3, 3>(0, 0) * gtws.matrix().block<3, 1>(0, 3);
+            }
 
             for (int i = 0; i < ocs.size(); i++) {
                 {
                     for (auto &gtws:gt_with_symmetry) {
-                        T4 diff = gtws.inverse() * ocs[i];
+                        //note that gtws have already been inverted
+                        T4 diff = gtws* ocs[i];
                         Eigen::Vector3d t_diff_vec = diff.matrix().block<3, 1>(0, 3);
                         Eigen::Matrix3d r_diff_mat = diff.matrix().block<3, 3>(0, 0);
 
                         double t_diff = t_diff_vec.lpNorm<2>();
-                        double r_diff = std::acos((r_diff_mat.trace() - 1) / 2) * (180.0 / M_PI);
+                        double r_diff = SafeAcos((r_diff_mat.trace() - 1) / 2) * (180.0 / M_PI);
+                        if (std::isnan(t_diff) || std::isnan(r_diff))
+                            std::cout << "Nan in find correct ocs" << std::endl;
                         if ((t_diff <= t_thresh) && (r_diff <= r_thresh)) {
                             if (t_diff < best_t_diff && r_diff < best_r_diff) {
-                                if (std::find(correct_oc_indices.begin(), correct_oc_indices.end(), i) == correct_oc_indices.end()) {
+                                if (std::find(correct_oc_indices.begin(), correct_oc_indices.end(), i) ==
+                                    correct_oc_indices.end()) {
                                     best_i = i;
                                     best_t_diff = t_diff;
                                     best_r_diff = r_diff;
@@ -87,5 +98,61 @@ namespace tu {
             }
         }
     }
+
+    void getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,
+                 std::vector<bool> chromosome, std::vector<int> correct_oc_indices) {
+
+        std::vector<bool> correct_ocs(chromosome.size(), false);
+        for (auto &i:correct_oc_indices)
+            correct_ocs[i] = true;
+
+        for (int i = 0; i < correct_ocs.size(); i++) {
+            if (correct_ocs[i]) {
+                if (chromosome[i]) {
+                    tp.emplace_back(i);
+                } else {
+                    fn.emplace_back(i);
+                }
+            } else {
+                if (chromosome[i]) {
+                    fp.emplace_back(i);
+                } else {
+                    tn.emplace_back(i);
+                }
+            }
+        }
+    }
+
+    void
+    getFPTN(int &tp, int &tn, int &fp, int &fn, std::vector<bool> chromosome, std::vector<int> correct_oc_indices) {
+        {
+            std::vector<bool> correct_ocs(chromosome.size(), false);
+            for (auto &i:correct_oc_indices)
+                correct_ocs[i] = true;
+
+            for (int i = 0; i < correct_ocs.size(); i++) {
+                if (correct_ocs[i]) {
+                    if (chromosome[i]) {
+                        tp++;
+                    } else {
+                        fn++;
+                    }
+                } else {
+                    if (chromosome[i]) {
+                        fp++;
+                    } else {
+                        tn++;
+                    }
+                }
+            }
+        }
+    }
+
+    double SafeAcos(double x) {
+        if (x < -1.0) x = -1.0;
+        else if (x > 1.0) x = 1.0;
+        return acos(x);
+    }
+
 
 }

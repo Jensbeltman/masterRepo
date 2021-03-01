@@ -8,7 +8,7 @@ class SPInterface: public HVInterface {
 public:
     SPInterface();
     SequentialPrior sequentialPrior;
-    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) override;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
 };
 typedef std::shared_ptr<SPInterface> SPInterfacePtr;
 
@@ -17,7 +17,7 @@ class GAInterface : public HVInterface {
 public:
     GAInterface();
     GA ga;
-    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) override;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
 };
 typedef std::shared_ptr<GAInterface> GAInterfacePtr;
 
@@ -33,7 +33,7 @@ public:
     SequentialPrior sequentialPrior;
     double score_threshold = 0;
     GA ga;
-    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) override;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
 };
 typedef std::shared_ptr<GASPInterface> GASPInterfacePtr;
 
@@ -41,10 +41,20 @@ class BaselineInterface : public HVInterface {
 public:
     BaselineInterface();
     double score_threshold = 0;
-    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr, rawDataT &rawData) override;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
 };
 typedef std::shared_ptr<BaselineInterface> BaselineInterfacePtr;
 
+class RandomInterface : public HVInterface {
+public:
+    RandomInterface();
+    // random generators and distributions
+    std::mt19937_64 rng; // random generator
+    std::bernoulli_distribution bernoulli_dist;
+
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
+};
+typedef std::shared_ptr<RandomInterface> RandomInterfacePtr;
 
 
 #endif //MASTER_HV_INTERFACES_HPP

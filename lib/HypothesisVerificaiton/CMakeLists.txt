@@ -13,7 +13,8 @@ target_sources(HV
         src/hv_alg/ga_functions.cpp
         src/visualization/point_cloud_group_visualizer.cpp
         src/evaluator/GeneticEvaluator.cpp
-        src/evaluator/GeneticEvaluatorObjectCandidates.cpp
+        src/evaluator/GeneticEvaluatorInlierCollision.cpp
+        src/evaluator/GeneticEvaluatorInlierCollisionVariants.cpp
         src/evaluator/collision_checking.cpp
         src/evaluator/simple_visibility_function.cpp
         src/evaluator/point_cloud_renderer.cpp
