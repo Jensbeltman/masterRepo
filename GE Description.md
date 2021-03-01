@@ -1,10 +1,10 @@
-### Terms
+## Terms and functions
 
-- **VisiblePoints **: Number of point visible from all the selected OC's when rendered from a top view.
+- **VisiblePoints **: Number of point visible from all the selected OCs when rendered from a top view.
 
 - **VisibleInliers** : Number of VOP point that has and inlier in the point cloud.
 
-- **UniqueVisibleInliers**: Number Visible Inliers that does not share indexes in the Point Cloud. Only  if more than two OC's are colliding  is .
+- **UniqueVisibleInliers**: Number Visible Inliers that does not share indexes in the Point Cloud. Only  if more than two OCs are colliding  is .
 
 - **InliersThreshold**: Theshold to determine what the ration between VOP and VOI needs to be for cost to increase. Used differently in GEIC  than in  GEICS and GEUICS.
 
@@ -29,7 +29,9 @@
   $$
   
 
-### GEIC: Genetic Evaluator Inlier Collision
+## Genetic Evaluators(GEs)
+
+### Genetic Evaluator Inlier Collision(GEIC)
 
 
 $$
@@ -38,19 +40,19 @@ $$
 
 
 
-### GEICS: Genetic Evaluator Inlier Collision Scaled
+### Genetic Evaluator Inlier Collision Scaled(GEICS)
 
 $$
 \text{cost} = 1- \frac{\text{VisibleInliers}}{\text{PointCloudPoints}+\max(\text{InlierThreshold} * \text{VisiblePoints}-\text{PenalizedVisibleInliers},0)}
 $$
 
-### GEUICS: Genetic Evaluator Unique Inlier Collision Scaled 
+### Genetic Evaluator Unique Inlier Collision Scaled(GEUICS) 
 
 $$
 \text{cost} = 1- \frac{\text{UniqueVisibleInliers}}{\text{PointCloudPoints}+\max(\text{InlierThreshold} * \text{VisiblePoints}-\text{PenalizedVisibleInliers},0)}
 $$
 
-### GESC: Genetic Evaluator Score Collision
+### Genetic Evaluator Score Collision(GESC)
 
 $$
 cost = -\sum_{SelectedOC(SOC)} \text{OCScore}_\text{SOC}*(1-2*\sigma(\text{CollisionDepth}_\text{SOC}))
