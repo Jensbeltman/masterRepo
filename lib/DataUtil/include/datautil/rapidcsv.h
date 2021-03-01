@@ -1501,7 +1501,7 @@ namespace rapidcsv
       }
     }
 
-  protected:
+  public:
     std::string mPath;
     LabelParams mLabelParams;
     SeparatorParams mSeparatorParams;

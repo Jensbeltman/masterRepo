@@ -1,189 +1,77 @@
 #include "algorithm_data_proc.hpp"
 
 
-AlgorithmDataProc::AlgorithmDataProc(): rawDataMapAlgObjVec(rawDataMapAlgObjVecT()) {
+AlgorithmDataProc::AlgorithmDataProc():t_thresh(1), r_thresh(1){
 }
 
-AlgorithmDataProc::AlgorithmDataProc(rawDataMapAlgObjVecT newrawDataMapAlgObjVec, double t_thresh, double r_thresh)
-        : rawDataMapAlgObjVec(newrawDataMapAlgObjVec) {
+AlgorithmDataProc::AlgorithmDataProc(double t_thresh, double r_thresh):t_thresh(t_thresh), r_thresh(r_thresh){
+}
 
-    derivedCSVDocPtr = std::make_shared<rapidcsv::CSVDoc>("",rapidcsv::LabelParams(0, -1));
-    staticCSVDocPtr = std::make_shared<rapidcsv::CSVDoc>("",rapidcsv::LabelParams(-1, 0));
-
-    size_t ndps = 0;
-    for (auto &alg_pair:rawDataMapAlgObjVec) {
-        for (auto &obj_pair:alg_pair.second) {
-            ndps+=obj_pair.second.size();
-        }
+void AlgorithmDataProc::set_column_names(rapidcsv::CSVDocPtr &csvDoc) {
+    column_name_indices.clear();
+    int col_i = csvDoc->GetColumnCount();
+    for(auto &name:column_names){
+        csvDoc->SetColumnName(col_i, name);
+        column_name_indices[name]=col_i++;
     }
-    algName.reserve(ndps);
-    objName.reserve(ndps);
-    nOCVec.reserve(ndps);
-    chromosome.reserve(ndps);
-    time.reserve(ndps);
-    tp.reserve(ndps);
-    tn.reserve(ndps);
-    fp.reserve(ndps);
-    fn.reserve(ndps);
-    accuracy.reserve(ndps);
-    precision.reserve(ndps);
-    recall.reserve(ndps);
-    uniqAlgNames.reserve(ndps);
-    uniqObjNames.reserve(ndps);
+}
+void AlgorithmDataProc::append_processed_data_to_doc(rapidcsv::CSVDocPtr &csvDoc,int row_i, std::string &algName,DatasetObjectPtr &objPtr,int dpI, HVResult &hvResult) {
+    DataPoint &dp = objPtr->data_points[dpI];
+    std::vector<int> correct_oc_i;
+    std::vector<double> t_dists,r_dists;
+    tu::find_correct_ocs(dp.ocs, dp.gts, t_thresh, r_thresh,correct_oc_i,t_dists,r_dists,objPtr->symmetry_transforms);
+    double t_dist_avr = std::accumulate(t_dists.begin(),t_dists.end(),0.0)/t_dists.size();
+    double r_dist_avr = std::accumulate(r_dists.begin(),r_dists.end(),0.0)/r_dists.size();
+    double t_dist_std = std::sqrt(std::accumulate( t_dists.begin(),t_dists.end(),0.0,[t_dist_avr](const double &a,const double &b){return a+std::pow(t_dist_avr-b,2);} ) / t_dists.size());
+    double r_dist_std = std::sqrt(std::accumulate( r_dists.begin(),r_dists.end(),0.0,[r_dist_avr](const double &a,const double &b){return a+std::pow(r_dist_avr-b,2);} ) / r_dists.size());
 
-    for (auto &alg_pair:rawDataMapAlgObjVec) {
-        for (auto &obj_pair:alg_pair.second) {
-            for (auto &rawData:obj_pair.second) {
-                std::vector<int> correct_oc_i;
-                std::vector<double> t_dists,r_dists;
-                tu::find_correct_ocs(rawData.dp.ocs, rawData.dp.gts, t_thresh, r_thresh,correct_oc_i,t_dists,r_dists,obj_pair.first->symmetry_transforms);
-                t_dist_avr.emplace_back(std::accumulate(t_dists.begin(),t_dists.end(),0.0)/t_dists.size());
-                r_dist_avr.emplace_back(std::accumulate(r_dists.begin(),r_dists.end(),0.0)/r_dists.size());
-                t_dist_std.emplace_back(std::sqrt(std::accumulate( t_dists.begin(),t_dists.end(),0.0,[this](const double &a,const double &b){return a+std::pow(t_dist_avr.back()-b,2);} ) / t_dists.size()));
-                r_dist_std.emplace_back(std::sqrt(std::accumulate( r_dists.begin(),r_dists.end(),0.0,[this](const double &a,const double &b){return a+std::pow(r_dist_avr.back()-b,2);} ) / r_dists.size()));
+    int tp=0,tn=0,fp=0,fn=0;
+    tu::getFPTN(tp, tn, fp, fn, hvResult.chromosome, correct_oc_i);
 
-                algName.emplace_back(alg_pair.first);
-                objName.emplace_back(obj_pair.first->name);
+    double accuracy  = static_cast<double>( tp + tn) / static_cast<double>(tp + tn + fp + fn);
+    double f1  = static_cast<double>( 2*tp) / static_cast<double>(2*tp + fp + fn);
+    double recall  = static_cast<double>(tp) / dp.gts.size();
+    double precision  = static_cast<double>( tp) / static_cast<double>(tp + fp);
+    if(std::isnan(accuracy)) accuracy = 0;
+    if(std::isnan(recall)) recall = 0;
+    if(std::isnan(precision)) precision = 0;
+    if(std::isnan(f1)) f1 = 0;
 
-                nOCVec.emplace_back(rawData.dp.ocs.size());
-                chromosome.emplace_back(rawData.hvResult.chromosome);
-                cost.emplace_back(rawData.hvResult.cost);
-                ocVec.emplace_back(rawData.dp.ocs);
-                gtVec.emplace_back(rawData.dp.gts);
-                time.emplace_back(rawData.time);
+    //Write values to doc
+    //{"algName","objName","dpI","chromosome","tp","tn","fp","fn","precision","recall","accuracy","f1","time","cost","t_dist_avr","r_dist_avr","t_dist_std","r_dist_std"};
 
-                tpIVec.emplace_back();
-                tnIVec.emplace_back();
-                fpIVec.emplace_back();
-                fnIVec.emplace_back();
-                std::vector<int> &tpI = tpIVec.back();
-                std::vector<int> &tnI = tnIVec.back();
-                std::vector<int> &fpI = fpIVec.back();
-                std::vector<int> &fnI = fnIVec.back();
-                getFPTN(tpI, tnI, fpI, fnI, rawData.hvResult.chromosome, correct_oc_i);
-                tp.emplace_back(tpI.size());
-                tn.emplace_back(tnI.size());
-                fp.emplace_back(fpI.size());
-                fn.emplace_back(fnI.size());
-                int &tpVal = tp.back();
-                int &tnVal = tn.back();
-                int &fpVal = fp.back();
-                int &fnVal = fn.back();
+    csvDoc->SetCell(column_name_indices["algName"],row_i,algName);
+    csvDoc->SetCell(column_name_indices["objName"],row_i,objPtr->name);
+    csvDoc->SetCell(column_name_indices["dpI"],row_i,dpI);
+    csvDoc->SetCell(column_name_indices["chromosome"],row_i,hvResult.chromosome);
+    csvDoc->SetCell(column_name_indices["tp"],row_i,tp);
+    csvDoc->SetCell(column_name_indices["tn"],row_i,tn);
+    csvDoc->SetCell(column_name_indices["fp"],row_i,fp);
+    csvDoc->SetCell(column_name_indices["fn"],row_i,fn);
+    csvDoc->SetCell(column_name_indices["precision"],row_i,precision);
+    csvDoc->SetCell(column_name_indices["recall"],row_i,recall);
+    csvDoc->SetCell(column_name_indices["accuracy"],row_i,accuracy);
+    csvDoc->SetCell(column_name_indices["f1"],row_i,f1);
+    csvDoc->SetCell(column_name_indices["time"],row_i,hvResult.time);
+    csvDoc->SetCell(column_name_indices["cost"],row_i,hvResult.cost);
+    csvDoc->SetCell(column_name_indices["t_dist_avr"],row_i,t_dist_avr);
+    csvDoc->SetCell(column_name_indices["r_dist_avr"],row_i,r_dist_avr);
+    csvDoc->SetCell(column_name_indices["t_dist_std"],row_i,t_dist_std);
+    csvDoc->SetCell(column_name_indices["r_dist_std"],row_i,r_dist_std);
 
-                accuracy.emplace_back(static_cast<double>( tpVal + tnVal) / static_cast<double>(tpVal + tnVal + fpVal + fnVal));
-                f1.emplace_back(static_cast<double>( 2*tpVal) / static_cast<double>(2*tpVal + fpVal + fnVal));
-                recall.emplace_back(static_cast<double>(tpVal) / gtVec.back().size());
-                precision.emplace_back(static_cast<double>( tpVal) / static_cast<double>(tpVal + fpVal));
-                if(std::isnan(accuracy.back())) accuracy.back() = 0;
-                if(std::isnan(recall.back())) recall.back() = 0;
-                if(std::isnan(precision.back())) precision.back() = 0;
-            }
-        }
-    }
-    uniqAlgNames = algName;
+
+/*    uniqAlgNames = algName;
     uniqObjNames = objName;
     sort(uniqAlgNames.begin(), uniqAlgNames.end() );
     uniqAlgNames.erase(unique(uniqAlgNames.begin(), uniqAlgNames.end() ), uniqAlgNames.end() );
     sort(uniqObjNames.begin(), uniqObjNames.end() );
-    uniqObjNames.erase(unique(uniqObjNames.begin(), uniqObjNames.end() ), uniqObjNames.end() );
-
-    update_data();
-}
-
-void AlgorithmDataProc::update_data() {
-    derivedCSVDocPtr->clear();
-    derivedCSVDocPtr->SetColumnName(0,"algName");
-    derivedCSVDocPtr->SetColumnName(1,"objName");
-    derivedCSVDocPtr->SetColumnName(2,"dpIndex");
-    derivedCSVDocPtr->SetColumnName(3,"chromosome");
-    derivedCSVDocPtr->SetColumnName(4,"tp");
-    derivedCSVDocPtr->SetColumnName(5,"tn");
-    derivedCSVDocPtr->SetColumnName(6,"fp");
-    derivedCSVDocPtr->SetColumnName(7,"fn");
-    derivedCSVDocPtr->SetColumnName(8,"precision");
-    derivedCSVDocPtr->SetColumnName(9,"recall");
-    derivedCSVDocPtr->SetColumnName(10,"accuracy");
-    derivedCSVDocPtr->SetColumnName(11,"f1");
-    derivedCSVDocPtr->SetColumnName(12,"time");
-    derivedCSVDocPtr->SetColumnName(13,"cost");
-    derivedCSVDocPtr->SetColumnName(14,"t_dist_avr");
-    derivedCSVDocPtr->SetColumnName(15,"r_dist_avr");
-    derivedCSVDocPtr->SetColumnName(16,"t_dist_std");
-    derivedCSVDocPtr->SetColumnName(17,"r_dist_std");
-
-
-    derivedCSVDocPtr->SetColumn(0, algName);
-    derivedCSVDocPtr->SetColumn(1, objName);
-    derivedCSVDocPtr->SetColumn(2, dpIndex);
-    derivedCSVDocPtr->SetColumn(3, chromosome);
-    derivedCSVDocPtr->SetColumn(4, tp);
-    derivedCSVDocPtr->SetColumn(5, tn);
-    derivedCSVDocPtr->SetColumn(6, fp);
-    derivedCSVDocPtr->SetColumn(7, fn);
-    derivedCSVDocPtr->SetColumn(8, precision);
-    derivedCSVDocPtr->SetColumn(9, recall);
-    derivedCSVDocPtr->SetColumn(10, accuracy);
-    derivedCSVDocPtr->SetColumn(11, f1);
-    derivedCSVDocPtr->SetColumn(12, time);
-    derivedCSVDocPtr->SetColumn(13, cost);
-    derivedCSVDocPtr->SetColumn(14,t_dist_avr);
-    derivedCSVDocPtr->SetColumn(15,r_dist_avr);
-    derivedCSVDocPtr->SetColumn(16,t_dist_std);
-    derivedCSVDocPtr->SetColumn(17,r_dist_std);
+    uniqObjNames.erase(unique(uniqObjNames.begin(), uniqObjNames.end() ), uniqObjNames.end() );*/
 }
 
 
-void AlgorithmDataProc::save_data(std::string derived_data_filename) {
-    derivedCSVDocPtr->Save(derived_data_filename);
-}
 
-void AlgorithmDataProc::getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,chromosomeT chromosome,std::vector<int> correct_oc_indices) {
 
-    chromosomeT correct_ocs(chromosome.size(),false);
-    for(auto &i:correct_oc_indices)
-        correct_ocs[i]=true;
-
-    for (int i = 0; i < correct_ocs.size(); i++) {
-        if (correct_ocs[i]) {
-            if (chromosome[i]) {
-                tp.emplace_back(i);
-            } else {
-                fn.emplace_back(i);
-            }
-        } else {
-            if (chromosome[i]) {
-                fp.emplace_back(i);
-            } else {
-                tn.emplace_back(i);
-            }
-        }
-    }
-}
-
-void AlgorithmDataProc::getFPTN(int &tp, int &tn, int &fp, int &fn, chromosomeT chromosome,std::vector<int> correct_oc_indices) {
-    {
-        chromosomeT correct_ocs(chromosome.size(),false);
-        for(auto &i:correct_oc_indices)
-            correct_ocs[i]=true;
-
-        for (int i = 0; i < correct_ocs.size(); i++) {
-            if (correct_ocs[i]) {
-                if (chromosome[i]) {
-                    tp++;
-                } else {
-                    fn++;
-                }
-            } else {
-                if (chromosome[i]) {
-                    fp++;
-                } else {
-                    tn++;
-                }
-            }
-        }
-    }
-}
-
+/*
 size_t AlgorithmDataProc::begin_index(std::string key, std::vector<std::string> &keys) {
     return std::distance(keys.begin(),std::find(keys.begin(),keys.end(),key));
 }
@@ -193,8 +81,9 @@ size_t AlgorithmDataProc::end_index(std::string key, std::vector<std::string> &k
 }
 
 
+
 matplot::figure_handle  AlgorithmDataProc::bar_plot(std::string value_name) {
-    using namespace matplot;
+   using namespace matplot;
     auto f = figure(true);
     auto ax = f->current_axes();
 
@@ -225,6 +114,7 @@ matplot::figure_handle  AlgorithmDataProc::bar_plot(std::string value_name) {
     return f;
 
 }
+
 
 bool AlgorithmDataProc::get_begin_end_index(size_t &bi, size_t &ei, std::string alg_key, std::string obj_key) {
     {
@@ -270,6 +160,7 @@ double AlgorithmDataProc::get_avr(std::vector<int> &vals, std::string alg_key, s
     else
         return -1;
 }
+*/
 
 
 
