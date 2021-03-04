@@ -1,4 +1,5 @@
 #include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollisionVariants.hpp"
+#include "dataset/transform_utility.hpp"
 
 GeneticEvaluatorInlierCollisionScaled::GeneticEvaluatorInlierCollisionScaled() {
     type="GEICS";
@@ -80,8 +81,7 @@ GeneticEvaluatorUniqueInlierCollisionScaled::GeneticEvaluatorUniqueInlierCollisi
 void GeneticEvaluatorUniqueInlierCollisionScaled::initialise_datapoint(DataPoint &datapoint) {
     GeneticEvaluatorInlierCollision::initialise_datapoint(datapoint);
 
-    n_point_intersections.clear();
-    n_point_intersections.resize(dp.ocs.size(),0);
+    collision_point_intersections.clear();
 
     std::vector<int> already_in_collision;
     std::vector<int> v_intersection;
@@ -90,19 +90,20 @@ void GeneticEvaluatorUniqueInlierCollisionScaled::initialise_datapoint(DataPoint
         auto &cp = collisions.pairs[i];
 
         // Sort indicies if the first time they are in a collision pair
-        if(std::find(already_in_collision.begin(),already_in_collision.end(),cp.first)!=already_in_collision.end())
+        if (std::find(already_in_collision.begin(), already_in_collision.end(), cp.first) != already_in_collision.end())
             std::sort(oc_visible_inlier_pt_idxs[cp.first]->begin(), oc_visible_inlier_pt_idxs[cp.first]->end());
-        if(std::find(already_in_collision.begin(),already_in_collision.end(),cp.second)!=already_in_collision.end())
+        if (std::find(already_in_collision.begin(), already_in_collision.end(), cp.second) !=
+            already_in_collision.end())
             std::sort(oc_visible_inlier_pt_idxs[cp.second]->begin(), oc_visible_inlier_pt_idxs[cp.second]->end());
 
         // Find intersections and save the max count
         v_intersection.clear();
         std::set_intersection(oc_visible_inlier_pt_idxs[cp.first]->begin(), oc_visible_inlier_pt_idxs[cp.first]->end(),
-                              oc_visible_inlier_pt_idxs[cp.second]->begin(), oc_visible_inlier_pt_idxs[cp.second]->end(),
+                              oc_visible_inlier_pt_idxs[cp.second]->begin(),
+                              oc_visible_inlier_pt_idxs[cp.second]->end(),
                               std::back_inserter(v_intersection));
-        n_intersections=static_cast<int>(v_intersection.size());
-        n_point_intersections[cp.first] = std::max(n_intersections,n_point_intersections[cp.first]);
-        n_point_intersections[cp.second] = std::max(n_intersections,n_point_intersections[cp.second]);
+
+        collision_point_intersections.emplace_back(static_cast<int>(v_intersection.size()));
     }
 }
 
@@ -121,6 +122,12 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
     std::vector<bool> in_collision(chromosome.size(), false);
     std::vector<double> penetration(chromosome.size(), 0);
     get_collision(chromosome, in_collision, penetration);
+    for (int i = 0; i < collisions.pairs.size(); i++) {
+        auto &cp = collisions.pairs[i];
+        if(chromosome[cp.first] && chromosome[cp.first]) {
+            n_point_intersections_tot += collision_point_intersections[i];
+        }
+    }
 
     for (int i = 0; i < chromosome.size(); i++) {
         if (chromosome[i]) {
@@ -131,7 +138,6 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
                 vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
             } else {
                 vis_inlier_pt_cnt_tot += sigmoid_fall_off(penetration[i]) * vis_inlier_pt_cnt;
-                n_point_intersections_tot += n_point_intersections[i];
             }
             n_active_genes++;
         }
@@ -140,4 +146,45 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
     double cost = 1 - ((vis_inlier_pt_cnt_tot-n_point_intersections_tot) / (n_pc_points + std::max(oc_inlier_threshold*vis_pt_cnt_tot - vis_inlier_pt_cnt_tot,0.0)));
 
     return cost;
+}
+
+GeneticEvaluatorF1::GeneticEvaluatorF1() {
+    type = "GEF1";
+}
+
+void GeneticEvaluatorF1::initialise_datapoint(DataPoint &datapoint) {
+    dp = datapoint;
+    pc = datasetObjectPtr->get_pcd(dp);
+}
+
+double GeneticEvaluatorF1::evaluate_chromosome(chromosomeT &chromosome) {
+    std::vector<int> correct_oc_indices;
+    tu::find_correct_ocs(dp.ocs, dp.gts, t_thresh, r_thresh, correct_oc_indices, datasetObjectPtr->symmetry_transforms);
+    tp = 0;
+    tn = 0;
+    fp = 0;
+    fn = 0;
+    tu::getFPTN(tp,tn,fp,fn,chromosome,correct_oc_indices);
+    if(tp)
+        return 1.0 - (static_cast<double>(2*tp) / static_cast<double>(2*tp + fp + fn));
+    else
+        return 1;
+}
+
+GeneticEvaluatorPrecision::GeneticEvaluatorPrecision() {
+    type = "GEPrecision";
+}
+
+double GeneticEvaluatorPrecision::evaluate_chromosome(chromosomeT &chromosome) {
+    std::vector<int> correct_oc_indices;
+    tu::find_correct_ocs(dp.ocs, dp.gts, t_thresh, r_thresh, correct_oc_indices, datasetObjectPtr->symmetry_transforms);
+    tp = 0;
+    tn = 0;
+    fp = 0;
+    fn = 0;
+    tu::getFPTN(tp,tn,fp,fn,chromosome,correct_oc_indices);
+    if(tp)
+        return 1.0 - (static_cast<double>( tp) / static_cast<double>(tp + fp));
+    else
+        return 1;
 }

@@ -30,4 +30,17 @@ public:
     GeneticEvaluatorUniqueInlierCollisionScaledPtr geneticEvaluatorUniqueInlierCollisionScaledPtr;
 };
 
+class GeneticEvaluatorF1Interface: public EvaluatorInterface {
+public:
+    GeneticEvaluatorF1Interface();
+    GeneticEvaluatorF1Ptr geneticEvaluatorF1Ptr;
+};
+class GeneticEvaluatorPrecisionInterface: public EvaluatorInterface {
+public:
+    GeneticEvaluatorPrecisionInterface();
+    GeneticEvaluatorPrecisionPtr geneticEvaluatorPrecisionPtr;
+};
+
+
+
 #endif //MASTER_GENETIC_EVALUATOR_OC_INTERFACE_HPP

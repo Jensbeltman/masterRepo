@@ -51,3 +51,21 @@ GeneticEvaluatorUniqueInlierCollisionScaledInterface::GeneticEvaluatorUniqueInli
     parameters_d.emplace_back(param_d{&geneticEvaluatorUniqueInlierCollisionScaledPtr->oc_inlier_threshold, new QDoubleSpinBox, "Inlier threshold pct", std::to_string(geneticEvaluatorUniqueInlierCollisionScaledPtr->oc_inlier_threshold)});
     parameters_d.emplace_back(param_d{&geneticEvaluatorUniqueInlierCollisionScaledPtr->vg_leaf_size, new QDoubleSpinBox, "VoxelGrid leaf size", std::to_string(geneticEvaluatorUniqueInlierCollisionScaledPtr->vg_leaf_size)});
 }
+
+GeneticEvaluatorF1Interface::GeneticEvaluatorF1Interface() {
+    geneticEvaluatorF1Ptr = std::make_shared<GeneticEvaluatorF1>();
+    geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorF1Ptr);
+
+    name=geneticEvaluatorF1Ptr->type;
+    parameters_d.emplace_back(param_d{&geneticEvaluatorF1Ptr->t_thresh, new QDoubleSpinBox, "t_thresh", std::to_string(5)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorF1Ptr->r_thresh, new QDoubleSpinBox, "r_thresh", std::to_string(5)});
+}
+
+GeneticEvaluatorPrecisionInterface::GeneticEvaluatorPrecisionInterface() {
+    geneticEvaluatorPrecisionPtr = std::make_shared<GeneticEvaluatorPrecision>();
+    geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorPrecisionPtr);
+
+    name=geneticEvaluatorPrecisionPtr->type;
+    parameters_d.emplace_back(param_d{&geneticEvaluatorPrecisionPtr->t_thresh, new QDoubleSpinBox, "t_thresh", std::to_string(5)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorPrecisionPtr->r_thresh, new QDoubleSpinBox, "r_thresh", std::to_string(5)});
+}
