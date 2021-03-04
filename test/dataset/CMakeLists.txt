@@ -11,3 +11,6 @@ target_link_libraries(scape_test PUBLIC Chronometer Dataset)
 
 add_executable(gt_collision_test gt_collision_test.cpp)
 target_link_libraries(gt_collision_test PUBLIC Chronometer Dataset DataUtil HV)
+
+add_executable(analysis_of_tp_and_fp analysis_of_tp_and_fp.cpp)
+target_link_libraries(analysis_of_tp_and_fp PUBLIC Chronometer Dataset DataUtil HV)
