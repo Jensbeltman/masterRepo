@@ -25,7 +25,9 @@ namespace tu{
         Eigen::Vector3d spherical_uniform_unitvector();
     };
 
+    void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh, std::vector<int> &correct_oc_indices, std::vector<T4> symmetry_transforms = std::vector<T4>{});
     void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh, std::vector<int> &correct_oc_indices,std::vector<double> &t_dists,std::vector<double> &r_dists, std::vector<T4> symmetry_transforms = std::vector<T4>{});
+
     void getFPTN(std::vector<int> &tp, std::vector<int> &tn, std::vector<int> &fp, std::vector<int> &fn,std::vector<bool> chromosome,std::vector<int> correct_oc_indices);
     void getFPTN(int &tp, int &tn, int &fp, int &fn,std::vector<bool> chromosome,std::vector<int> correct_oc_indices);
     double SafeAcos (double x);

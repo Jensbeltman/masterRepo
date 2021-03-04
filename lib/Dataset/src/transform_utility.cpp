@@ -49,6 +49,12 @@ namespace tu {
         return Tn;
     }
 
+    void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh, std::vector<int> &correct_oc_indices, std::vector<T4> symmetry_transforms) {
+        std::vector<double> t_dists;
+        std::vector<double> r_dists;
+        find_correct_ocs(ocs,gts, t_thresh,r_thresh,correct_oc_indices,t_dists,r_dists, symmetry_transforms);
+    }
+
     void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh,
                           std::vector<int> &correct_oc_indices, std::vector<double> &t_dists,
                           std::vector<double> &r_dists, std::vector<T4> symmetry_transforms) {
@@ -153,6 +159,4 @@ namespace tu {
         else if (x > 1.0) x = 1.0;
         return acos(x);
     }
-
-
 }
