@@ -79,6 +79,8 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     evaluators.push_back(std::make_shared<GeneticEvaluatorInlierCollisionScaledInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorScoreCollisionInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorUniqueInlierCollisionScaledInterface>());
+    evaluators.push_back(std::make_shared<GeneticEvaluatorF1Interface>());
+    evaluators.push_back(std::make_shared<GeneticEvaluatorPrecisionInterface>());
     algorithms.insert(algorithms.end(), evaluators.begin(), evaluators.end());
 
     data_info_doc = std::make_shared<rapidcsv::CSVDoc>("", rapidcsv::LabelParams(0, -1));
@@ -407,11 +409,14 @@ void AlgorithmTuner::run_enabled_algorithms() {
                 if (alg->enabled) {
                     std::vector<int> correct_oc_i;
                     std::vector<double> t_dists, r_dists;
-                    tu::find_correct_ocs(dp.ocs, dp.gts, algorithmDataProc.t_thresh, algorithmDataProc.r_thresh,
-                                         correct_oc_i, t_dists, r_dists, obj->symmetry_transforms);
-
-                    chromosomeT chromosome = data_doc->GetCell<chromosomeT>(
-                            algorithmDataProc.column_name_indices["chromosome"], data_doc->GetRowCount() - 1);
+                    tu::find_correct_ocs(dp.ocs, dp.gts, algorithmDataProc.t_thresh, algorithmDataProc.r_thresh,correct_oc_i, t_dists, r_dists, obj->symmetry_transforms);
+                    chromosomeT chromosome;
+                    for(int i = data_doc->GetRowCount()-1;i>=0;i--) {
+                        if(alg->name==data_doc->GetCell<std::string>(algorithmDataProc.column_name_indices["algName"],  i)) {
+                            chromosome = data_doc->GetCell<chromosomeT>(algorithmDataProc.column_name_indices["chromosome"], i);
+                            break;
+                        }
+                    }
                     std::vector<int> tp, tn, fp, fn;
                     tu::getFPTN(tp, tn, fp, fn, chromosome, correct_oc_i);
                     add_results_to_visualizer(geneticEvaluatorPtr, alg->name, alg->name, tp, tn, fp, fn);
