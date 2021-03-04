@@ -13,13 +13,14 @@ HVResult SequentialPrior::solve() {
     std::vector<size_t> sorted_score_idx = sorted_idxs(object_candidates_scores);
 
     result.chromosome = chromosomeT(object_candidates.size(), false);
-    result.cost = std::numeric_limits<double>::max();
-    double cost;
+    double start_cost = geneticEvaluatorPtr->evaluate_chromosome(result.chromosome);
+    double cost = start_cost;
+    result.cost = cost;
     for (auto &i:sorted_score_idx) {
         if(object_candidates_scores[i]>score_threshold) {
             result.chromosome[i] = true;
             cost = geneticEvaluatorPtr->evaluate_chromosome(result.chromosome);
-            if (cost < result.cost) {
+            if (cost < start_cost && cost<=result.cost) {
                 result.cost = cost;
             } else {
                 result.chromosome[i] = false;
