@@ -3,7 +3,7 @@ project(Dataset
         VERSION 1.0
         LANGUAGES CXX)
 
-add_library(Dataset)
+add_library(Dataset SHARED)
 target_sources(Dataset
             PRIVATE src/scape/ScapeDataset.cpp
                     src/scape/ScapeDatasetObject.cpp
