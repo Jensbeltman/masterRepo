@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 
         for (int sample_n = 0; sample_n < ob->size(); sample_n++) {
             if (ob->has_gt(sample_n)) {
-                geneticEvaluatorOCPtr->initialise_datapoint(sample_n);
+                geneticEvaluatorOCPtr->init_datapoint(sample_n);
 
                 auto &dp = geneticEvaluatorOCPtr->dp;
 

@@ -218,12 +218,12 @@ void clearLayout(QLayout *layout) {
 void AlgorithmTuner::run_enabled_algorithms(GeneticEvaluatorPtr &geneticEvaluatorPtr, DatasetObjectPtr &obj, int &dpI) {
     DataPoint &dp = obj->data_points[dpI];
     if (geneticEvaluatorPtr->datasetObjectPtr == nullptr) {
-        geneticEvaluatorPtr->initialise_object(obj, dp);
+        geneticEvaluatorPtr->init(obj, dp);
     } else if (geneticEvaluatorPtr->datasetObjectPtr->name != obj->name) {
-        geneticEvaluatorPtr->initialise_object(obj, dp);
+        geneticEvaluatorPtr->init(obj, dp);
     } else if ((geneticEvaluatorPtr->dp.oc_scores != dp.oc_scores) ||
                (geneticEvaluatorPtr->dp.ground_truth_path != dp.ground_truth_path)) {
-        geneticEvaluatorPtr->initialise_datapoint(dp);
+        geneticEvaluatorPtr->init_datapoint(dp);
     }
 
     HVResult hvResult;
@@ -384,15 +384,13 @@ void AlgorithmTuner::run_enabled_algorithms() {
                                         evaluatorInterfacePtr->parameters_d.end(),
                                         [](param_d &var) { return var.name == "VoxelGrid leaf size"; });//
             if (var_itt != evaluatorInterfacePtr->parameters_d.end()) {
-                GeneticEvaluatorInlierCollisionPtr geneticEvaluatorOcPtr = std::dynamic_pointer_cast<GeneticEvaluatorInlierCollision>(
-                        geneticEvaluatorPtr);
                 for (int g = 0; g < dp.gts.size(); g++) {
                     PointCloudT::Ptr gtpc_vis = pcl::make_shared<PointCloudT>();
                     std::string id = "gt_" + std::to_string(g);
                     pcl::transformPointCloud(*meshpc, *gtpc_vis, dp.gts[g]);
-                    geneticEvaluatorOcPtr->voxelGridPtr->setInputCloud(gtpc_vis);
-                    geneticEvaluatorOcPtr->voxelGridPtr->setLeafSize(*(var_itt->val), *(var_itt->val), *(var_itt->val));
-                    geneticEvaluatorOcPtr->voxelGridPtr->filter(*gtpc_vis);
+                    geneticEvaluatorPtr->voxelGridPtr->setInputCloud(gtpc_vis);
+                    geneticEvaluatorPtr->voxelGridPtr->setLeafSize(*(var_itt->val), *(var_itt->val), *(var_itt->val));
+                    geneticEvaluatorPtr->voxelGridPtr->filter(*gtpc_vis);
                     group_vis->addIdPointCloud(gtpc_vis, id, "Ground Truth", 0, 255, 255);
                 }
             } else {
