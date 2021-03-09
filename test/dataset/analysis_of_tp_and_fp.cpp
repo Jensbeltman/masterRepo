@@ -18,13 +18,15 @@ int main() {
     csvDoc.SetColumnName(3, "g");
     csvDoc.SetColumnName(4, "score");
     csvDoc.SetColumnName(5, "visiblePoints");
-    csvDoc.SetColumnName(6, "visibleInlierPoints");
+    csvDoc.SetColumnName(6, "visibleInliers");
     csvDoc.SetColumnName(7, "inCollisionInternal");
     csvDoc.SetColumnName(8, "inCollisionExternal");
     csvDoc.SetColumnName(9, "penetrationInternal");
     csvDoc.SetColumnName(10, "penetrationExternal");
-    csvDoc.SetColumnName(11, "intersectingPointsInternal");
-    csvDoc.SetColumnName(12, "intersectingPointsExternal");
+    csvDoc.SetColumnName(11, "intersectingInliersInternal");
+    csvDoc.SetColumnName(12, "intersectingInliersExternal");
+    csvDoc.SetColumnName(13, "objectPoints");
+
 
     int ndps = 0;
     for (auto &obj:scapeDataset->objects)
@@ -38,16 +40,20 @@ int main() {
     GeneticEvaluatorUniqueInlierCollisionScaled ge;
     ge.vg_leaf_size = 3;
     ge.nn_inlier_threshold = 2.5;
+    double t_thresh = 5;
+    double r_thresh = 5;
 
     for (auto &obj:scapeDataset->objects) {
-        ge.initialise_object(obj);
+        ge.init(obj);
         auto &dps = obj->data_points;
         for (int dpi = 0; dpi < dps.size(); dpi++) {
             auto &dp = dps[dpi];
+            tu::non_maximum_supression(dp,t_thresh, r_thresh,obj->symmetry_transforms);
             if(dp.gts.size()>1){
-                ge.initialise_datapoint(dp);
+
+                ge.init_datapoint(dp);
                 std::vector<int> correct_oc_indices;
-                tu::find_correct_ocs(dp.ocs, dp.gts, 5, 5, correct_oc_indices, obj->symmetry_transforms);
+                tu::find_correct_ocs(dp.ocs, dp.gts, t_thresh, r_thresh, correct_oc_indices, obj->symmetry_transforms);
                 std::vector<bool> ideal_chromosome(dp.ocs.size(), false);
                 for (auto &i:correct_oc_indices)
                     ideal_chromosome[i] = true;
@@ -87,15 +93,16 @@ int main() {
                     csvDoc.SetCell(csvDoc.GetColumnIdx("score"), rowIdx,dp.oc_scores[i]);
                     csvDoc.SetCell(csvDoc.GetColumnIdx("visiblePoints"), rowIdx,
                                    static_cast<int>(ge.visible_oc_pcs[i]->size()));
-                    csvDoc.SetCell(csvDoc.GetColumnIdx("visibleInlierPoints"), rowIdx,
+                    csvDoc.SetCell(csvDoc.GetColumnIdx("visibleInliers"), rowIdx,
                                    static_cast<int>(ge.oc_visible_inlier_pt_idxs[i]->size()));
 
                     csvDoc.SetCell(csvDoc.GetColumnIdx("inCollisionInternal"), rowIdx,static_cast<int>(in_collision_internal[i]));
                     csvDoc.SetCell(csvDoc.GetColumnIdx("inCollisionExternal"), rowIdx,static_cast<int>(in_collision_external[i]));
                     csvDoc.SetCell(csvDoc.GetColumnIdx("penetrationInternal"), rowIdx,penetration_external[i]);
                     csvDoc.SetCell(csvDoc.GetColumnIdx("penetrationExternal"), rowIdx,penetration_internal[i]);
-                    csvDoc.SetCell(csvDoc.GetColumnIdx("intersectingPointsInternal"), rowIdx,max_point_intersections_internal[i]);
-                    csvDoc.SetCell(csvDoc.GetColumnIdx("intersectingPointsExternal"), rowIdx,max_point_intersections_external[i]);
+                    csvDoc.SetCell(csvDoc.GetColumnIdx("intersectingInliersInternal"), rowIdx,max_point_intersections_internal[i]);
+                    csvDoc.SetCell(csvDoc.GetColumnIdx("intersectingInliersExternal"), rowIdx,max_point_intersections_external[i]);
+                    csvDoc.SetCell(csvDoc.GetColumnIdx("objectPoints"), rowIdx,ge.pcm->size());
 
                     std::cout << "\r" << current_dp++ << "/" << ndps << " - " << rowIdx << std::flush;
                 }
