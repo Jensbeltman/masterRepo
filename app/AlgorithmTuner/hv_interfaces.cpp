@@ -1,5 +1,6 @@
 #include "hv_interfaces.hpp"
 #include "hypothesis_verification/hv_alg/ga_functions.hpp"
+#include <cmath>
 
 //BA
 SPInterface::SPInterface(): HVInterface()  {
@@ -110,3 +111,4 @@ void RandomInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hv
     hvResult.cost_history.emplace_back(hvResult.cost);
     hvResult.time=0;
 }
+

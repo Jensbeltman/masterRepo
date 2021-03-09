@@ -3,7 +3,11 @@
 
 #include "../typedefinitions.hpp"
 #include "dataset/Dataset.hpp"
+#include <pcl/search/kdtree.h>
+#include <pcl/filters/voxel_grid.h>
+#include <chronometer.h>
 
+typedef std::shared_ptr<cv::viz::Mesh> MeshPtr;
 class GeneticEvaluator {
 public:
     GeneticEvaluator();
@@ -15,13 +19,22 @@ public:
 
     PointCloudT::Ptr pc;//point cloud data
     PointCloudT::Ptr pcm;//mesh point cloud
+    std::shared_ptr<cv::viz::Mesh> meshPtr;
+
+    pcl::KdTreeFLANN<PointT>::Ptr kdtree;
+    pcl::VoxelGrid<PointT>::Ptr voxelGridPtr;
+    double vg_leaf_size;
+
+    void init(DatasetObjectPtr &datasetObjectPtr, int datapoint_n = 0);
+    void init(DatasetObjectPtr &datasetObjectPtr, DataPoint &datapoint);
+    void init_datapoint(int datapoint_n);
 
     virtual double evaluate_chromosome(chromosomeT &chromosome) = 0;
-    virtual void initialise_object(DatasetObjectPtr &datasetObjectPtr, int datapoint_n = 0)=0;
-    virtual void initialise_object(DatasetObjectPtr &datasetObjectPtr, DataPoint &datapoint_n)=0;
+    virtual void init_object(DatasetObjectPtr &datasetObjectPtr);
+    virtual void init_datapoint(DataPoint &datapoint);
 
-    virtual void initialise_datapoint(int datapoint_n)=0;
-    virtual void initialise_datapoint(DataPoint &datapoint_n)=0;
+protected:
+    Chronometer chronometer;
 };
 typedef std::shared_ptr<GeneticEvaluator> GeneticEvaluatorPtr;
 

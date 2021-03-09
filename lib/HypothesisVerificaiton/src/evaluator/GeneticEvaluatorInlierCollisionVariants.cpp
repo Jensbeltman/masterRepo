@@ -18,7 +18,7 @@ double GeneticEvaluatorInlierCollisionScaled::evaluate_chromosome(chromosomeT &c
     // Check if ocs are in collision
     std::vector<bool> in_collision(chromosome.size(), false);
     std::vector<double> penetration(chromosome.size(), 0);
-    get_collision(chromosome, in_collision, penetration);
+    get_max_collisions_in_chromosome(chromosome, in_collision, penetration);
 
     for (int i = 0; i < chromosome.size(); i++) {
         if (chromosome[i]) {
@@ -42,7 +42,7 @@ double GeneticEvaluatorInlierCollisionScaled::evaluate_chromosome(chromosomeT &c
 GeneticEvaluatorScoreCollision::GeneticEvaluatorScoreCollision() {
     type = "GESC";
 }
-void GeneticEvaluatorScoreCollision::initialise_datapoint(DataPoint &datapoint) {
+void GeneticEvaluatorScoreCollision::init_datapoint(DataPoint &datapoint) {
     dp = datapoint;
     pc = datasetObjectPtr->get_pcd(dp);
     // KdTree of cloud data
@@ -55,7 +55,7 @@ double GeneticEvaluatorScoreCollision::evaluate_chromosome(chromosomeT &chromoso
     // Check if ocs are in collision
     std::vector<bool> in_collision(chromosome.size(), false);
     std::vector<double> penetration(chromosome.size(), 0);
-    get_collision(chromosome, in_collision, penetration);
+    get_max_collisions_in_chromosome(chromosome, in_collision, penetration);
 
     double total_score = 0;
     for (int i = 0; i < chromosome.size(); i++) {
@@ -78,33 +78,9 @@ GeneticEvaluatorUniqueInlierCollisionScaled::GeneticEvaluatorUniqueInlierCollisi
     type = "GEUICS";
 }
 
-void GeneticEvaluatorUniqueInlierCollisionScaled::initialise_datapoint(DataPoint &datapoint) {
-    GeneticEvaluatorInlierCollision::initialise_datapoint(datapoint);
-
-    collision_point_intersections.clear();
-
-    std::vector<int> already_in_collision;
-    std::vector<int> v_intersection;
-    int n_intersections=0;
-    for (int i = 0; i < collisions.pairs.size(); i++) {
-        auto &cp = collisions.pairs[i];
-
-        // Sort indicies if the first time they are in a collision pair
-        if (std::find(already_in_collision.begin(), already_in_collision.end(), cp.first) != already_in_collision.end())
-            std::sort(oc_visible_inlier_pt_idxs[cp.first]->begin(), oc_visible_inlier_pt_idxs[cp.first]->end());
-        if (std::find(already_in_collision.begin(), already_in_collision.end(), cp.second) !=
-            already_in_collision.end())
-            std::sort(oc_visible_inlier_pt_idxs[cp.second]->begin(), oc_visible_inlier_pt_idxs[cp.second]->end());
-
-        // Find intersections and save the max count
-        v_intersection.clear();
-        std::set_intersection(oc_visible_inlier_pt_idxs[cp.first]->begin(), oc_visible_inlier_pt_idxs[cp.first]->end(),
-                              oc_visible_inlier_pt_idxs[cp.second]->begin(),
-                              oc_visible_inlier_pt_idxs[cp.second]->end(),
-                              std::back_inserter(v_intersection));
-
-        collision_point_intersections.emplace_back(static_cast<int>(v_intersection.size()));
-    }
+void GeneticEvaluatorUniqueInlierCollisionScaled::init_datapoint(DataPoint &datapoint) {
+    GeneticEvaluator::init_datapoint(datapoint);
+    init_intersecting_points();
 }
 
 double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromosomeT &chromosome) {
@@ -121,24 +97,18 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
     // Check if ocs are in collision
     std::vector<bool> in_collision(chromosome.size(), false);
     std::vector<double> penetration(chromosome.size(), 0);
-    get_collision(chromosome, in_collision, penetration);
+    get_max_collisions_in_chromosome(chromosome, in_collision, penetration);
     for (int i = 0; i < collisions.pairs.size(); i++) {
         auto &cp = collisions.pairs[i];
-        if(chromosome[cp.first] && chromosome[cp.first]) {
-            n_point_intersections_tot += collision_point_intersections[i];
+        if(chromosome[cp.first] && chromosome[cp.second]) {
+            n_point_intersections_tot += inlier_overlap_penalty_factor * collision_point_intersections[i];
         }
     }
 
     for (int i = 0; i < chromosome.size(); i++) {
         if (chromosome[i]) {
-            int vis_inlier_pt_cnt = oc_visible_inlier_pt_idxs[i]->size();
             vis_pt_cnt_tot += visible_oc_pcs[i]->points.size();
-
-            if (!in_collision[i]) {
-                vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
-            } else {
-                vis_inlier_pt_cnt_tot += sigmoid_fall_off(penetration[i]) * vis_inlier_pt_cnt;
-            }
+            vis_inlier_pt_cnt_tot +=  oc_visible_inlier_pt_idxs[i]->size();
             n_active_genes++;
         }
     }
@@ -152,7 +122,7 @@ GeneticEvaluatorF1::GeneticEvaluatorF1() {
     type = "GEF1";
 }
 
-void GeneticEvaluatorF1::initialise_datapoint(DataPoint &datapoint) {
+void GeneticEvaluatorF1::init_datapoint(DataPoint &datapoint) {
     dp = datapoint;
     pc = datasetObjectPtr->get_pcd(dp);
 }

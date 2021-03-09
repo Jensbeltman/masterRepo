@@ -56,5 +56,12 @@ public:
 };
 typedef std::shared_ptr<RandomInterface> RandomInterfacePtr;
 
+//class LogisticRegressionInterface : public HVInterface {
+//public:
+//    LogisticRegressionInterface();
+//    static double sigmoid(double x);
+//    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
+//};
+//typedef std::shared_ptr<LogisticRegressionInterface> LogisticRegressionInterfacePtr;
 
 #endif //MASTER_HV_INTERFACES_HPP

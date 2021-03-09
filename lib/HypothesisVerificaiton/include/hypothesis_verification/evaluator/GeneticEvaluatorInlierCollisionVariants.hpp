@@ -1,7 +1,10 @@
-#include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollision.hpp"
 #ifndef MASTER_GENETICEVALUATIONINLIERCOLLISIONVARIANTS_HPP
 #define MASTER_GENETICEVALUATIONINLIERCOLLISIONVARIANTS_HPP
 
+#include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollision.hpp"
+#include "hypothesis_verification/evaluator/functionality/VisibleInlier.hpp"
+#include "hypothesis_verification/evaluator/functionality/Collision.hpp"
+#include "hypothesis_verification/evaluator/functionality/IntersectingPoints.hpp"
 
 class GeneticEvaluatorInlierCollisionScaled: public GeneticEvaluatorInlierCollision{
 public:
@@ -13,17 +16,18 @@ typedef std::shared_ptr<GeneticEvaluatorInlierCollisionScaled> GeneticEvaluatorI
 class GeneticEvaluatorScoreCollision: public GeneticEvaluatorInlierCollision{
 public:
     GeneticEvaluatorScoreCollision();
-    void initialise_datapoint(DataPoint &datapoint_n) override;
+    void init_datapoint(DataPoint &datapoint_n) override;
     virtual double evaluate_chromosome(chromosomeT &chromosome) override;
 };
 typedef std::shared_ptr<GeneticEvaluatorScoreCollision> GeneticEvaluatorScoreCollisionPtr;
 
-class GeneticEvaluatorUniqueInlierCollisionScaled: public GeneticEvaluatorInlierCollision{
+class GeneticEvaluatorUniqueInlierCollisionScaled: public IntersectingPoints{
 public:
     GeneticEvaluatorUniqueInlierCollisionScaled();
-    void initialise_datapoint(DataPoint &datapoint) override;
+    void init_datapoint(DataPoint &datapoint) override;
     virtual double evaluate_chromosome(chromosomeT &chromosome) override;
-    std::vector<int> collision_point_intersections;
+    double oc_inlier_threshold;
+    double inlier_overlap_penalty_factor=2.0;
 };
 typedef std::shared_ptr<GeneticEvaluatorUniqueInlierCollisionScaled> GeneticEvaluatorUniqueInlierCollisionScaledPtr;
 
@@ -32,7 +36,7 @@ public:
     GeneticEvaluatorF1();
     double t_thresh, r_thresh;
     int tp,tn,fp,fn;
-    void initialise_datapoint(DataPoint &datapoint) override;
+    void init_datapoint(DataPoint &datapoint) override;
     virtual double evaluate_chromosome(chromosomeT &chromosome) override;
 };
 typedef std::shared_ptr<GeneticEvaluatorF1> GeneticEvaluatorF1Ptr;

@@ -15,6 +15,9 @@ target_sources(HV
         src/evaluator/GeneticEvaluator.cpp
         src/evaluator/GeneticEvaluatorInlierCollision.cpp
         src/evaluator/GeneticEvaluatorInlierCollisionVariants.cpp
+        src/evaluator/functionality/VisibleInlier.cpp
+        src/evaluator/functionality/Collision.cpp
+        src/evaluator/functionality/IntersectingPoints.cpp
         src/evaluator/collision_checking.cpp
         src/evaluator/simple_visibility_function.cpp
         src/evaluator/point_cloud_renderer.cpp
