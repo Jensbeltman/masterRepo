@@ -7,6 +7,7 @@
 #include <math.h>
 #include <vector>
 #include <dataset/typedefinitions.hpp>
+#include <dataset/DataPoint.hpp>
 
 namespace tu{
 
@@ -25,6 +26,8 @@ namespace tu{
         Eigen::Vector3d spherical_uniform_unitvector();
     };
 
+
+    void non_maximum_supression(DataPoint &dp, double t_thresh, double r_thresh,std::vector<T4> symmetry_transforms = std::vector<T4>{});
     void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh, std::vector<int> &correct_oc_indices, std::vector<T4> symmetry_transforms = std::vector<T4>{});
     void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh, std::vector<int> &correct_oc_indices,std::vector<double> &t_dists,std::vector<double> &r_dists, std::vector<T4> symmetry_transforms = std::vector<T4>{});
 
