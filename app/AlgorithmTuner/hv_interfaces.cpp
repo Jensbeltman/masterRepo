@@ -1,5 +1,6 @@
 #include "hv_interfaces.hpp"
 #include "hypothesis_verification/hv_alg/ga_functions.hpp"
+#include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollisionVariants.hpp"
 #include <cmath>
 
 //BA
@@ -112,3 +113,64 @@ void RandomInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hv
     hvResult.time=0;
 }
 
+LogisticRegressionInterface::LogisticRegressionInterface() {
+    name="LR";
+    parameters_d.emplace_back(param_d{&score_w, new QDoubleSpinBox, "score_w", std::to_string(score_w)});
+    parameters_d.back().spinBox->setMaximum(1000);
+    parameters_d.back().spinBox->setMinimum(-1000);
+    parameters_d.back().spinBox->setDecimals(4);
+    parameters_d.emplace_back(param_d{&visiblePointsFrac_w, new QDoubleSpinBox, "visiblePointsFrac_w", std::to_string(visiblePointsFrac_w)});
+    parameters_d.back().spinBox->setMaximum(1000);
+    parameters_d.back().spinBox->setMinimum(-1000);
+    parameters_d.back().spinBox->setDecimals(4);
+    parameters_d.emplace_back(param_d{&visibleInlierFrac_w, new QDoubleSpinBox, "visibleInlierFrac_w", std::to_string(visibleInlierFrac_w)});
+    parameters_d.back().spinBox->setMaximum(1000);
+    parameters_d.back().spinBox->setMinimum(-1000);
+    parameters_d.back().spinBox->setDecimals(4);
+    parameters_d.emplace_back(param_d{&penetration_w, new QDoubleSpinBox, "penetration_w", std::to_string(penetration_w)});
+    parameters_d.back().spinBox->setMaximum(1000);
+    parameters_d.back().spinBox->setMinimum(-1000);
+    parameters_d.back().spinBox->setDecimals(4);
+    parameters_d.emplace_back(param_d{&intersectingInliersFrac_w, new QDoubleSpinBox, "intersectingInliersFrac_w", std::to_string(intersectingInliersFrac_w)});
+    parameters_d.back().spinBox->setMaximum(1000);
+    parameters_d.back().spinBox->setMinimum(-1000);
+    parameters_d.back().spinBox->setDecimals(4);
+    parameters_d.emplace_back(param_d{&intecept, new QDoubleSpinBox, "intecept", std::to_string(intecept)});
+    parameters_d.back().spinBox->setMaximum(1000);
+    parameters_d.back().spinBox->setMinimum(-1000);
+    parameters_d.back().spinBox->setDecimals(4);
+}
+
+double LogisticRegressionInterface::sigmoid(double x) {
+    return 1.0/(1.0+std::exp(-x));
+}
+
+void LogisticRegressionInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hvResult) {
+    if (geneticEvaluatorPtr->type == "GEUICS") {
+        auto gePtr = std::dynamic_pointer_cast<GeneticEvaluatorUniqueInlierCollisionScaled>(geneticEvaluatorPtr);
+        auto &dp =  gePtr->dp;
+        hvResult.chromosome.resize(dp.ocs.size());
+        std::fill(hvResult.chromosome.begin(), hvResult.chromosome.end(), true);
+        std::vector<bool> inCollision;
+        std::vector<double> penetration;
+        std::vector<int> intersections;
+        gePtr->get_max_collisions_in_chromosome(hvResult.chromosome,inCollision,penetration);
+        gePtr->get_max_intersection_in_chromosome(hvResult.chromosome,intersections);
+
+        auto &scores =  dp.oc_scores;
+        double model_points = gePtr->pcm->size();
+        for (int i = 0; i < hvResult.chromosome.size(); i++) {
+            double visiblePoints = gePtr->visible_oc_pcs[i]->size();
+            double visibleInliers = gePtr->oc_visible_inlier_pt_idxs[i]->size();
+
+            double x = scores[i]*score_w+
+                        (visiblePoints/model_points)*visiblePointsFrac_w+
+                        (visibleInliers/visiblePoints)*visibleInlierFrac_w+
+                        penetration[i]*penetration_w+
+                        (intersections[i]/visibleInliers)*intersectingInliersFrac_w
+                        +intecept;
+            x = sigmoid(x);
+            hvResult.chromosome[i] = (x >= sigmoid_cutoff);
+        }
+    }
+}
