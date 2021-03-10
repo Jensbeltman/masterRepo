@@ -28,3 +28,14 @@ void IntersectingPoints::init_intersecting_points() {
         collision_point_intersections.emplace_back(static_cast<int>(v_intersection.size()));
     }
 }
+
+void IntersectingPoints::get_max_intersection_in_chromosome(chromosomeT &chromosome, std::vector<int> &intersections) {
+    intersections.resize(chromosome.size(),0);
+    for (int i = 0; i < collisions.pairs.size(); i++){
+        auto &cp = collisions.pairs[i];
+        if (chromosome[cp.first] && chromosome[cp.second]) {
+            intersections[cp.first] = std::max(intersections[cp.first], collision_point_intersections[i]);
+            intersections[cp.second] = std::max(intersections[cp.second], collision_point_intersections[i]);
+        }
+    }
+}
