@@ -80,6 +80,7 @@
      <string>Dataset</string>
     </property>
     <addaction name="actionLoadDataset"/>
+    <addaction name="actionNonMaximaSupression"/>
    </widget>
    <widget class="QMenu" name="menuDockableWidget">
     <property name="title">
@@ -647,6 +648,17 @@
   <action name="actionDataProc">
    <property name="text">
     <string>DataProc</string>
+   </property>
+  </action>
+  <action name="actionNonMaximaSupression">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Non-Maxima Suppresion</string>
    </property>
   </action>
  </widget>
