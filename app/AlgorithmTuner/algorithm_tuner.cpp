@@ -68,6 +68,7 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     progressBar->hide();
 
     // Create algorithms and evaluator interfaces and add variables to GUI
+    hv_algorithms.push_back(std::make_shared<LogisticRegressionInterface>());
     hv_algorithms.push_back(std::make_shared<GAInterface>());
     hv_algorithms.push_back(std::make_shared<GAWInterface>());
     hv_algorithms.push_back(std::make_shared<GASPInterface>());
@@ -82,6 +83,7 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     evaluators.push_back(std::make_shared<GeneticEvaluatorF1Interface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorPrecisionInterface>());
     algorithms.insert(algorithms.end(), evaluators.begin(), evaluators.end());
+
 
     data_info_doc = std::make_shared<rapidcsv::CSVDoc>("", rapidcsv::LabelParams(0, -1));
     data_doc = std::make_shared<rapidcsv::CSVDoc>("", rapidcsv::LabelParams(0, -1));
@@ -160,9 +162,32 @@ void AlgorithmTuner::chose_dataset_folders() {
 
 
 void AlgorithmTuner::load_dataset() {
+    Chronometer chronometer;
+    chronometer.tic();
+    std::cout<<"Loading dataset..."<<std::endl;
     scapeDatasetPtr = std::make_shared<ScapeDataset>(settings.data_folder.toStdString(),
                                                      settings.recognition_folder.toStdString(), true);
 
+
+    if(actionNonMaximaSupression->isChecked()) {
+        std::cout<<"Running Non-Maxima Supression on dataset"<<std::endl;
+        double t_thresh = general_settings.ground_truth_t_thresh->value();
+        double r_thresh = general_settings.ground_truth_r_thresh->value();
+        int points_before_nms;
+        int points_after_nms;
+        for (auto &obj:scapeDatasetPtr->objects) {
+            int points_before_nms = 0;
+            int points_after_nms = 0;
+            auto &symmetry_transforms = obj->symmetry_transforms;
+            for (auto &dp:obj->data_points) {
+                points_before_nms+=dp.ocs.size();
+                tu::non_maximum_supression(dp, t_thresh, r_thresh, symmetry_transforms);
+                points_after_nms+=dp.ocs.size();
+            }
+            std::cout<<"Removed "<<points_before_nms-points_after_nms<<" ocs of "<<points_before_nms<<" ocs from object "<<obj->name<<std::endl;
+        }
+    }
+    std::cout<<"Done loading dataset. Time "<<chronometer.toc()<<std::endl;
     objectNameComboBox->clear();
     for (auto &sobj:scapeDatasetPtr->objects)
         objectNameComboBox->addItem(QString::fromStdString(sobj->name));
@@ -529,16 +554,16 @@ void AlgorithmTuner::save_data() {
     std::string time_string = getTimeString("%Y-%d-%m-%H-%M-%S");
     QString proposed_file_name = QString::fromStdString(
             (last_save_folder / (time_string + "-AlgorithmTunerData.csv")).string());
-    settings.data_save_file = QFileDialog::getSaveFileName(this, "Save Dynamic Data", proposed_file_name);
+    settings.data_save_file = QFileDialog::getSaveFileName(this, "Save Data", proposed_file_name);
 
     auto path = std::filesystem::path(settings.data_save_file.toStdString());
     auto filename = std::filesystem::path(settings.data_save_file.toStdString()).filename().replace_extension();
     auto parent_folder = std::filesystem::path(settings.data_save_file.toStdString()).parent_path();
 
 
-    data_doc->Save(path.replace_filename(time_string + "-data.csv"));
+    data_doc->Save(path.replace_filename(filename.string() + "-data.csv"));
     data_info_doc->SetCell(0, 0, data_doc->mPath);
-    data_info_doc->Save(path.replace_filename(time_string + "-data_info.csv"));
+    data_info_doc->Save(path.replace_filename(filename.string() + "-data_info.csv"));
 }
 
 
