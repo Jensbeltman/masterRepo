@@ -82,6 +82,8 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     evaluators.push_back(std::make_shared<GeneticEvaluatorUniqueInlierCollisionScaledInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorF1Interface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorPrecisionInterface>());
+    evaluators.push_back(std::make_shared<GeneticEvaluatorLRInterface>());
+
     algorithms.insert(algorithms.end(), evaluators.begin(), evaluators.end());
 
 
