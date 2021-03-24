@@ -18,6 +18,12 @@ find_package(OpenCV REQUIRED)
 #Matplot++
 find_package(Matplot++ REQUIRED)
 
+include(FindPkgConfig)
+pkg_check_modules(libnlopt REQUIRED)
+pkg_check_modules(bayesopt REQUIRED)
+
+
+
 add_subdirectory(lib)
 add_subdirectory(app)
 add_subdirectory(test)
