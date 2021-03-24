@@ -65,7 +65,7 @@ public:
     double visibleInlierFrac_w;
     double penetration_w;
     double intersectingInliersFrac_w;
-    double intecept;
+    double intercept;
     double sigmoid_cutoff = 0.5;
     void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
 };
