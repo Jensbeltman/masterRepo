@@ -5,3 +5,4 @@ project(app
 
 add_subdirectory(dataset_viewer)
 add_subdirectory(AlgorithmTuner)
+add_subdirectory(bo_tuning)
