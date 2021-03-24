@@ -48,6 +48,10 @@ typedef std::vector<rawDataT> rawDataVecT;
 typedef std::map<DatasetObjectPtr, rawDataVecT> rawDataMapObjVecT;
 typedef std::map<std::string,rawDataMapObjVecT> rawDataMapAlgObjVecT;
 
+QSpinBox* getNewSpinBox(int min = 0, int max=1000);
+QDoubleSpinBox* getNewDoubleSpinBox(double min=0, double max=1000,int decimals = 4);
+
+
 class AlgorithmInterface{
 public:
     AlgorithmInterface()=default;

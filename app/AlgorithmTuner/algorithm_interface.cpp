@@ -117,3 +117,17 @@ void HVInterface::getFPTN(std::vector<int> &tp, std::vector<int> &fp, std::vecto
     }
 }
 
+QSpinBox* getNewSpinBox(int min, int max) {
+    auto spinBox = new QSpinBox;
+    spinBox->setMinimum(min);
+    spinBox->setMaximum(max);
+    return spinBox;
+}
+
+QDoubleSpinBox* getNewDoubleSpinBox(double min, double max, int decimals) {
+    auto spinBox = new QDoubleSpinBox;
+    spinBox->setMinimum(min);
+    spinBox->setMaximum(max);
+    spinBox->setDecimals(decimals);
+    return spinBox;
+}
