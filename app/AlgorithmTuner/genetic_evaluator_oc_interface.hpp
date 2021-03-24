@@ -30,6 +30,12 @@ public:
     GeneticEvaluatorUniqueInlierCollisionScaledPtr geneticEvaluatorUniqueInlierCollisionScaledPtr;
 };
 
+class GeneticEvaluatorLRInterface: public EvaluatorInterface {
+public:
+    GeneticEvaluatorLRInterface();
+    GeneticEvaluatorLRPtr geneticEvaluatorLRPtr;
+};
+
 class GeneticEvaluatorF1Interface: public EvaluatorInterface {
 public:
     GeneticEvaluatorF1Interface();

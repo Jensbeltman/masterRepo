@@ -31,6 +31,20 @@ public:
 };
 typedef std::shared_ptr<GeneticEvaluatorUniqueInlierCollisionScaled> GeneticEvaluatorUniqueInlierCollisionScaledPtr;
 
+class GeneticEvaluatorLR: public IntersectingPoints{
+public:
+    GeneticEvaluatorLR();
+    void init_datapoint(DataPoint &datapoint) override;
+    virtual double evaluate_chromosome(chromosomeT &chromosome) override;
+    double score_w;
+    double visiblePointsFrac_w;
+    double visibleInlierFrac_w;
+    double penetration_w;
+    double intersectingInliersFrac_w;
+    double intercept;
+};
+typedef std::shared_ptr<GeneticEvaluatorLR> GeneticEvaluatorLRPtr;
+
 class GeneticEvaluatorF1: public GeneticEvaluatorInlierCollision{
 public:
     GeneticEvaluatorF1();
