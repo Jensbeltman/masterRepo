@@ -40,7 +40,7 @@ int main() {
     GeneticEvaluatorUniqueInlierCollisionScaled ge;
     ge.vg_leaf_size = 3;
     ge.nn_inlier_threshold = 2.5;
-    double t_thresh = 5;
+    double t_thresh = 10;
     double r_thresh = 5;
 
     for (auto &obj:scapeDataset->objects) {
@@ -111,5 +111,5 @@ int main() {
     }
 
 
-    csvDoc.Save("/home/jens/masterRepo/test/dataset/analysis_of_tp_and_fp.csv");
+    csvDoc.Save("/home/jens/masterRepo/test/dataset/analysis_of_tp_and_fp_"+std::to_string(t_thresh)+"_"+std::to_string(r_thresh)+".csv");
 }
