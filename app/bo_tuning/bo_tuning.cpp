@@ -113,11 +113,17 @@ void get_train_validation_kfold(int k, std::vector<GeneticEvaluatorLRPtr> &train
                                 std::vector<GeneticEvaluatorLRPtr> &val_data,
                                 std::vector<std::pair<std::vector<GeneticEvaluatorLRPtr>::iterator, std::vector<GeneticEvaluatorLRPtr>::iterator>> &folds) {
     int n_folds = folds.size();
-    for (int i = 0; i < n_folds; i++) {
-        if (i == k) {
-            val_data.insert(val_data.begin(), folds[i].first, folds[i].second);
-        } else {
-            train_data.insert(train_data.begin(), folds[i].first, folds[i].second);
+    if(n_folds==1){
+        val_data.insert(val_data.end(), folds[0].first, folds[0].second);
+        train_data.insert(train_data.end(), folds[0].first, folds[0].second);
+    }
+    else{
+        for (int i = 0; i < n_folds; i++) {
+            if (i == k) {
+                val_data.insert(val_data.end(), folds[i].first, folds[i].second);
+            } else {
+                train_data.insert(train_data.end(), folds[i].first, folds[i].second);
+            }
         }
     }
 }
@@ -140,7 +146,7 @@ int main(int argc, char *argv[]) {
                                           {"n_iterations",        150},
                                           {"n_iter_relearn",      5}};
 
-    std::string object_names_str = "AngleTubes:Ears:Gameboys";
+    std::string object_names_str = "AngleTubes:Ears:Conrods:Gameboys";
     std::vector<std::string> object_names;
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
@@ -178,13 +184,13 @@ int main(int argc, char *argv[]) {
     lowerBound[0] = 0;
     lowerBound[1] = 0;
     lowerBound[2] = 0;
-    lowerBound[3] = 0;
-    lowerBound[4] = 0;
-    lowerBound[5] = -25;
+    lowerBound[3] = -10;
+    lowerBound[4] = -30;
+    lowerBound[5] = -20;
     boost::numeric::ublas::vector<double> upperBound(dim);
     upperBound[0] = 1;
-    upperBound[1] = 10;
-    upperBound[2] = 10;
+    upperBound[1] = 20;
+    upperBound[2] = 15;
     upperBound[3] = 0;
     upperBound[4] = 0;
     upperBound[5] = 0;
@@ -237,8 +243,9 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < object_names.size(); i++) {
             auto &name = object_names[i];
             auto &train_optimizations = objOptimizationsTrain[name];
+            std::vector<double> &valueAtMinimumValidation = objOptimizationValidations[name];
             std::vector<double> valueAtMinimumTrain;
-            std::vector<double> valueAtMinimumValidation;
+
 
             int val_i = 0;
             for (int k = 0; k < k_fold; k++) {
@@ -248,24 +255,24 @@ int main(int argc, char *argv[]) {
                           << valueAtMinimumTrain.back()
                           << std::endl;
                 std::cout << name << std::setw(32) << std::left << " Validation Value At minimum "
-                          << valueAtMinimumTrain.back()
+                          << valueAtMinimumValidation[k]
                           << std::endl;
 
             }
-            std::cout << name << std::setw(40) << std::left << " Train Value At minimum, min:"
-                      << std::setprecision(3) << *std::min(valueAtMinimumTrain.begin(), valueAtMinimumTrain.end()) << ", avr:"
-                      << std::setprecision(3) << average(valueAtMinimumTrain)
-                      << std::setprecision(3) << *std::max(valueAtMinimumTrain.begin(), valueAtMinimumTrain.end())
-                      << std::endl;
-            std::cout << name << std::setw(40) << std::left << " Validation Value At minimum, min:"
-                      << std::setprecision(3) << *std::min(valueAtMinimumTrain.begin(), valueAtMinimumTrain.end()) << ", avr:"
+            std::cout << name << std::setw(40) << std::left << " Train Value At minimum"<<", min:"
+                      << std::setprecision(3) << *std::min_element(valueAtMinimumTrain.begin(), valueAtMinimumTrain.end()) << ", avr:"
                       << std::setprecision(3) << average(valueAtMinimumTrain)<<", max:"
-                      << std::setprecision(3) << *std::max(valueAtMinimumTrain.begin(), valueAtMinimumTrain.end())
+                      << std::setprecision(3) << *std::max_element(valueAtMinimumTrain.begin(), valueAtMinimumTrain.end())
+                      << std::endl;
+            std::cout << name << std::setw(40) << std::left << " Validation Value At minimum"<<", min:"
+                      << std::setprecision(3) << *std::min_element(valueAtMinimumValidation.begin(), valueAtMinimumValidation.end()) << ", avr:"
+                      << std::setprecision(3) << average(valueAtMinimumValidation)<<", max:"
+                      << std::setprecision(3) << *std::max_element(valueAtMinimumValidation.begin(), valueAtMinimumValidation.end())
                       << std::endl;
 
 
             int besti = std::distance(valueAtMinimumValidation.begin(),
-                                      std::max(valueAtMinimumValidation.begin(), valueAtMinimumValidation.end()));
+                                      std::min_element(valueAtMinimumValidation.begin(), valueAtMinimumValidation.end()));
             for (int i = 0; i < dim; i++) {
                 std::cout << name << "," << "GELR" << "," << dim_names[i] << ","
                           << train_optimizations[besti]->getFinalResult()[i] << std::endl;
@@ -273,25 +280,56 @@ int main(int argc, char *argv[]) {
         }
     } else {
         std::cout << "Optimizing Objects " << object_names_str << " together" << std::endl;
-        std::vector<GeneticEvaluatorLRPtr> dpGEs;
-        for (auto &name : object_names)
-            dpGEs.insert(dpGEs.end(), dpGEs_map[name].begin(), dpGEs_map[name].end());
+        std::vector<std::shared_ptr<GALROptimization>> objOptimizationsTrain;
+        std::vector<double> objOptimizationValidations;
 
-        GALROptimization optimizer(dpGEs, dim, bopt_params, nmap["t_thresh"], nmap["r_thresh"]);
-        optimizer.setBoundingBox(lowerBound, upperBound);
-        optimizer.optimize(bestPoint);
-        vectord finalResult = optimizer.getFinalResult();
-        std::cout << "Value At minimum " << optimizer.getValueAtMinimum() << std::endl;
-        for (auto &name:object_names) {
-            GALROptimization object_specific_optimizer(dpGEs_map[name], dim, bopt_params, nmap["t_thresh"],
-                                                       nmap["r_thresh"]);
-            std::cout << "Value At minimum for " << name << object_specific_optimizer.evaluateSample(finalResult)
+        for (int k = 0; k < k_fold; k++) {
+            std::vector<GeneticEvaluatorLRPtr> train, val;
+            for (auto &name : object_names) {
+                get_train_validation_kfold(k, train, val, dpGEs_kfold_map[name]);
+            }
+
+            objOptimizationsTrain.emplace_back(std::make_shared<GALROptimization>(train, dim, bopt_params, nmap["t_thresh"], nmap["r_thresh"]));
+            objOptimizationsTrain.back()->setBoundingBox(lowerBound, upperBound);
+            objOptimizationsTrain.back()->optimize(bestPoint);
+            objOptimizationValidations.emplace_back(std::make_shared<GALROptimization>(val, dim, bopt_params, nmap["t_thresh"], nmap["r_thresh"])->evaluateSample(objOptimizationsTrain.back()->getFinalResult()));
+        }
+
+        std::vector<double> &valueAtMinimumValidation = objOptimizationValidations;
+        std::vector<double> valueAtMinimumTrain;
+
+        for (int k = 0; k < k_fold; k++) {
+            auto &optim = objOptimizationsTrain[k];
+            valueAtMinimumTrain.emplace_back(optim->getValueAtMinimum());
+            std::cout << std::setw(32) << std::left << " Train Value At minimum "
+                      << valueAtMinimumTrain.back()
+                      << std::endl;
+            std::cout << std::setw(32) << std::left << " Validation Value At minimum "
+                      << valueAtMinimumValidation[k]
                       << std::endl;
         }
 
+        std::cout << std::setw(40) << std::left << " Train Value At minimum"<<", min:"
+                  << std::setprecision(3) << *std::min_element(valueAtMinimumTrain.begin(), valueAtMinimumTrain.end()) << ", avr:"
+                  << std::setprecision(3) << average(valueAtMinimumTrain)<<", max:"
+                  << std::setprecision(3) << *std::max_element(valueAtMinimumTrain.begin(), valueAtMinimumTrain.end())
+                  << std::endl;
+        std::cout << std::setw(40) << std::left << " Validation Value At minimum"<<", min:"
+                  << std::setprecision(3) << *std::min_element(valueAtMinimumValidation.begin(), valueAtMinimumValidation.end()) << ", avr:"
+                  << std::setprecision(3) << average(valueAtMinimumValidation)<<", max:"
+                  << std::setprecision(3) << *std::max_element(valueAtMinimumValidation.begin(), valueAtMinimumValidation.end())
+                  << std::endl;
+
+
+        int besti = std::distance(valueAtMinimumValidation.begin(),std::min_element(valueAtMinimumValidation.begin(), valueAtMinimumValidation.end()));
+
         for (auto &name:object_names) {
+            GALROptimization objOptim(dpGEs_map[name], dim, bopt_params, nmap["t_thresh"], nmap["r_thresh"]);
+            double obj_value_at_min = objOptim.evaluateSample(objOptimizationsTrain[besti]->getFinalResult());
+            std::cout<< name <<" Value At minimum: "<<obj_value_at_min<<std::endl;
             for (int i = 0; i < dim; i++) {
-                std::cout << name << "," << "GELR" << "," << dim_names[i] << "," << finalResult[i] << std::endl;
+                std::cout << name << "," << "GELR" << "," << dim_names[i] << ","
+                          << objOptimizationsTrain[besti]->getFinalResult()[i] << std::endl;
             }
         }
     }
