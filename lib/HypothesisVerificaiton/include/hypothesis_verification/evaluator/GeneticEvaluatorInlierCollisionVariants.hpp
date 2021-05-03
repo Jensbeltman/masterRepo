@@ -45,6 +45,13 @@ public:
 };
 typedef std::shared_ptr<GeneticEvaluatorLR> GeneticEvaluatorLRPtr;
 
+class GeneticEvaluatorLRS: public GeneticEvaluatorLR{
+public:
+    GeneticEvaluatorLRS();
+    virtual double evaluate_chromosome(chromosomeT &chromosome) override;
+};
+typedef std::shared_ptr<GeneticEvaluatorLRS> GeneticEvaluatorLRSPtr;
+
 class GeneticEvaluatorF1: public GeneticEvaluatorInlierCollision{
 public:
     GeneticEvaluatorF1();

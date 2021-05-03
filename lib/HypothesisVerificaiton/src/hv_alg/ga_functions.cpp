@@ -2,10 +2,15 @@
 chromosomeT crossover_uniform(GA *ga, int p1, int p2) {
     chromosomeT c;
     for (int i = 0; i < ga->n_genes; i++) {
-        if (ga->bernoulli_dist(ga->rng)) {
-            c.push_back(ga->last_population[p1][i]);
-        } else {
-            c.push_back(ga->last_population[p2][i]);
+        if(ga->geneticEvaluatorPtr->mask[i]) {
+            if (ga->bernoulli_dist(ga->rng)) {
+                c.push_back(ga->last_population[p1][i]);
+            } else {
+                c.push_back(ga->last_population[p2][i]);
+            }
+        }
+        else{
+            c.push_back(false);
         }
     }
     return c;
@@ -13,8 +18,10 @@ chromosomeT crossover_uniform(GA *ga, int p1, int p2) {
 
 void mutation_flip(GA *ga, chromosomeT &c) {
     for (int i = 0; i < ga->n_genes; i++) {
-        if (ga->uniform_float_dist(ga->rng) < ga->mutation_rate) {
-            c[i] = !c[i];
+        if(ga->geneticEvaluatorPtr->mask[i]) {
+            if (ga->uniform_float_dist(ga->rng) < ga->mutation_rate) {
+                c[i] = !c[i];
+            }
         }
     }
 }
@@ -24,10 +31,16 @@ void initialize_population_bernoulli(GA* ga){
     for (chromosomeT &c: ga->population) {
         c.clear();
         for (int i = 0; i < ga->n_genes; i++) {
-            bool gv = ga->bernoulli_dist(ga->rng);
-            c.push_back(gv);
+            if(ga->geneticEvaluatorPtr->mask[i]) {
+                bool gv = ga->bernoulli_dist(ga->rng);
+                c.push_back(gv);
+            }else{
+                c.push_back(false);
+            }
         }
     }
+    std::fill(ga->population.front().begin(),ga->population.front().end(),true);
+    std::fill(ga->population.back().begin(),ga->population.back().end(),false);
 }
 
 void initialize_population_score_sampling(GA* ga){

@@ -35,6 +35,25 @@ void GeneticEvaluator::init_datapoint(DataPoint &datapoint) {
     voxelGridPtr->filter(*pc);
     kdtree = pcl::make_shared<pcl::KdTreeFLANN<PointT>>();
     kdtree->setInputCloud(pc);
+
+    n_ocs=dp.ocs.size();
+    mask.resize(n_ocs);
+    std::fill(mask.begin(),mask.end(),true);
+    mask_set =  false;
+}
+
+bool GeneticEvaluator::sanityCheck(chromosomeT &chromosome) {
+    size_t chromosome_size = chromosome.size();
+    if (n_ocs != chromosome_size) {
+        std::cout << "Chromosome and ground truth poses are not same dimension returning 0.0 cost" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void GeneticEvaluator::set_dp_mask(chromosomeT &new_mask){
+    mask_set = true;
+    mask = new_mask;
 }
 
 

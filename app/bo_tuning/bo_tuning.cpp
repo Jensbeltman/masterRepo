@@ -42,6 +42,8 @@ void initializeGEs(DatasetPtr dataPtr, std::string object_name, std::vector<Gene
 
     for (auto &ge : objGEs) {
         for (auto &dp: ge->datasetObjectPtr->data_points) {
+//            for(auto & s:dp.oc_scores)
+//                s/=100.0;
             if (dp.gts.size() > 1) {
                 GeneticEvaluatorLRPtr geneticEvaluatorLRPtr = std::make_shared<GeneticEvaluatorLR>(*ge);
                 geneticEvaluatorLRPtr->init_datapoint(dp);
@@ -184,13 +186,13 @@ int main(int argc, char *argv[]) {
     lowerBound[0] = 0;
     lowerBound[1] = 0;
     lowerBound[2] = 0;
-    lowerBound[3] = -10;
-    lowerBound[4] = -30;
-    lowerBound[5] = -20;
+    lowerBound[3] = -100;
+    lowerBound[4] = -400;
+    lowerBound[5] = -100;
     boost::numeric::ublas::vector<double> upperBound(dim);
-    upperBound[0] = 1;
-    upperBound[1] = 20;
-    upperBound[2] = 15;
+    upperBound[0] = 50;
+    upperBound[1] = 100;
+    upperBound[2] = 100;
     upperBound[3] = 0;
     upperBound[4] = 0;
     upperBound[5] = 0;
@@ -226,7 +228,7 @@ int main(int argc, char *argv[]) {
             for (int k = 0; k < k_fold; k++) {
                 get_train_validation_kfold(k, train, val, dpGEs_kfold_map[name]);
 
-                std::string fn = ("/home/jens/masterRepo/test/tuning/bayesopt_" + name + ".dat");
+                std::string fn = ("/home/jens/masterRepo/test/bayesopt_" + name + ".dat");
                 bopt_params.load_filename = &fn[0];
                 objOptimizationsTrain[name].emplace_back(std::make_shared<GALROptimization>(train, dim, bopt_params,
                                                                                             nmap["t_thresh"],

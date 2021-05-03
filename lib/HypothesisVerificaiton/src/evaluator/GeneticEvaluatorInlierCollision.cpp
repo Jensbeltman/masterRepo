@@ -46,7 +46,7 @@ double GeneticEvaluatorInlierCollision::evaluate_chromosome(chromosomeT &chromos
     get_max_collisions_in_chromosome(chromosome, in_collision, penetration);
 
     for (int i = 0; i < chromosome.size(); i++) {
-        if (chromosome[i]) {
+        if (chromosome[i] && mask[i]) {
             int vis_inlier_pt_cnt = oc_visible_inlier_pt_idxs[i]->size();
             vis_pt_cnt_tot += visible_oc_pcs[i]->points.size();
 
@@ -66,5 +66,5 @@ double GeneticEvaluatorInlierCollision::evaluate_chromosome(chromosomeT &chromos
 
 
 double GeneticEvaluatorInlierCollision::sigmoid_fall_off(double x) {
-    return 1 / (1 + std::exp(-sigmoid_growth_rate * (x - sigmoid_center)));
+    return 1 - ( 1 / ( 1 + std::exp( -sigmoid_growth_rate * ( x - sigmoid_center ) ) ) );
 }

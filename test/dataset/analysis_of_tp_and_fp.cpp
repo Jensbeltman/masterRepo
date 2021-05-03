@@ -40,7 +40,7 @@ int main() {
     GeneticEvaluatorUniqueInlierCollisionScaled ge;
     ge.vg_leaf_size = 3;
     ge.nn_inlier_threshold = 2.5;
-    double t_thresh = 10;
+    double t_thresh = 5;
     double r_thresh = 5;
 
     for (auto &obj:scapeDataset->objects) {

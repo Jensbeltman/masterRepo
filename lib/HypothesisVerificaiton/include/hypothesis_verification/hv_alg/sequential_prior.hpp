@@ -1,4 +1,4 @@
-#ifndef MASTER_SEQUENTIAL_PRIOR_HPP
+ #ifndef MASTER_SEQUENTIAL_PRIOR_HPP
 #define MASTER_SEQUENTIAL_PRIOR_HPP
 #include "../evaluator/GeneticEvaluator.hpp"
 #include "hypothesis_verification/hv_alg/hv_result.hpp"

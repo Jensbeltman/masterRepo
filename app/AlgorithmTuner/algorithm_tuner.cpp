@@ -63,17 +63,18 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
 
     // Hide docks and widgets
     datasetDock->hide();
-    resultDock->hide();
     dataProcDock->hide();
     progressBar->hide();
 
     // Create algorithms and evaluator interfaces and add variables to GUI
     hv_algorithms.push_back(std::make_shared<LogisticRegressionInterface>());
+    hv_algorithms.push_back(std::make_shared<BFInterface>());
     hv_algorithms.push_back(std::make_shared<GAInterface>());
     hv_algorithms.push_back(std::make_shared<GAWInterface>());
     hv_algorithms.push_back(std::make_shared<GASPInterface>());
     hv_algorithms.push_back(std::make_shared<SPInterface>());
     hv_algorithms.push_back(std::make_shared<BaselineInterface>());
+    hv_algorithms.push_back(std::make_shared<BLGAInterface>());
     hv_algorithms.push_back(std::make_shared<RandomInterface>());
     algorithms.insert(algorithms.end(), hv_algorithms.begin(), hv_algorithms.end());
     evaluators.push_back(std::make_shared<GeneticEvaluatorInlierCollisionInterface>());
@@ -83,6 +84,8 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     evaluators.push_back(std::make_shared<GeneticEvaluatorF1Interface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorPrecisionInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorLRInterface>());
+    evaluators.push_back(std::make_shared<GeneticEvaluatorLRSInterface>());
+
 
     algorithms.insert(algorithms.end(), evaluators.begin(), evaluators.end());
 
@@ -451,7 +454,6 @@ void AlgorithmTuner::run_enabled_algorithms() {
             group_vis->update_text();
 
             dataProcDock->show();
-            resultDock->show();
         }
     }
 }
@@ -604,7 +606,7 @@ void AlgorithmTuner::update_range_param_limits(const QString &s) {
         if (it_d != (*it)->parameters_d.end()) {
             paramMinDoubleSpinBox->setDecimals(3);
             paramMaxDoubleSpinBox->setDecimals(3);
-            paramStepDoubleSpinBox->setDecimals(3);
+            paramStepDoubleSpinBox->setDecimals(5);
             parameter_test_widget = it_d->spinBox;
             parameter_test_name = it_d->name;
         }

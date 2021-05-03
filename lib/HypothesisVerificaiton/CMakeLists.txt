@@ -8,6 +8,8 @@ add_library(HV SHARED)
 target_sources(HV
         PRIVATE
         src/typedefinitions.cpp
+        src/hv_alg/bf.cpp
+        src/hv_alg/bf_gen.cpp
         src/hv_alg/ga.cpp
         src/hv_alg/sequential_prior.cpp
         src/hv_alg/ga_functions.cpp

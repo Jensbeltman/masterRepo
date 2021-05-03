@@ -3,6 +3,15 @@
 #include "algorithm_interface.hpp"
 #include "../../lib/HypothesisVerificaiton/include/hypothesis_verification/hv_alg/sequential_prior.hpp"
 #include "hypothesis_verification/hv_alg/ga.hpp"
+#include "hypothesis_verification/hv_alg/bf.hpp"
+
+class BFInterface: public HVInterface {
+public:
+    BFInterface();
+    BF bf;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
+};
+typedef std::shared_ptr<BFInterface> BFInterfacePtr;
 
 class SPInterface: public HVInterface {
 public:
@@ -44,6 +53,14 @@ public:
     void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
 };
 typedef std::shared_ptr<BaselineInterface> BaselineInterfacePtr;
+
+class BLGAInterface : public GAInterface{
+public:
+    BLGAInterface();
+    double score_threshold = 0;;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
+};
+typedef std::shared_ptr<BLGAInterface> BLGAInterfacePtr;
 
 class RandomInterface : public HVInterface {
 public:

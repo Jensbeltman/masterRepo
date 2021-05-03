@@ -6,10 +6,9 @@ GeneticEvaluatorInlierCollisionScaled::GeneticEvaluatorInlierCollisionScaled() {
 }
 
 double GeneticEvaluatorInlierCollisionScaled::evaluate_chromosome(chromosomeT &chromosome) {
-    if (dp.ocs.size() != chromosome.size()) {
-        std::cout << "Chromosome and ground truth poses are not same dimension returning 0.0 cost" << std::endl;
+    if (!sanityCheck(chromosome))
         return 0.0;
-    }
+
     double n_pc_points = pc->size();
     int n_active_genes = 0;
     int vis_inlier_pt_cnt_tot = 0;
@@ -21,7 +20,7 @@ double GeneticEvaluatorInlierCollisionScaled::evaluate_chromosome(chromosomeT &c
     get_max_collisions_in_chromosome(chromosome, in_collision, penetration);
 
     for (int i = 0; i < chromosome.size(); i++) {
-        if (chromosome[i]) {
+        if (chromosome[i] && mask[i]) {
             int vis_inlier_pt_cnt = oc_visible_inlier_pt_idxs[i]->size();
             vis_pt_cnt_tot += visible_oc_pcs[i]->points.size();
 
@@ -59,7 +58,7 @@ double GeneticEvaluatorScoreCollision::evaluate_chromosome(chromosomeT &chromoso
 
     double total_score = 0;
     for (int i = 0; i < chromosome.size(); i++) {
-        if (chromosome[i]) {
+        if (chromosome[i] && mask[i]) {
             if (!in_collision[i]) {
                 total_score += dp.oc_scores[i];
             } else {
@@ -84,10 +83,9 @@ void GeneticEvaluatorUniqueInlierCollisionScaled::init_datapoint(DataPoint &data
 }
 
 double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromosomeT &chromosome) {
-    if (dp.ocs.size() != chromosome.size()) {
-        std::cout << "Chromosome and ground truth poses are not same dimension returning 0.0 cost" << std::endl;
+    if (!sanityCheck(chromosome))
         return 0.0;
-    }
+
     double n_pc_points = pc->size();
     int n_active_genes = 0;
     int vis_inlier_pt_cnt_tot = 0;
@@ -106,7 +104,7 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
     }
 
     for (int i = 0; i < chromosome.size(); i++) {
-        if (chromosome[i]) {
+        if (chromosome[i] && mask[i]) {
             vis_pt_cnt_tot += visible_oc_pcs[i]->points.size();
             vis_inlier_pt_cnt_tot +=  oc_visible_inlier_pt_idxs[i]->size();
             n_active_genes++;
@@ -128,10 +126,9 @@ void GeneticEvaluatorLR::init_datapoint(DataPoint &datapoint) {
 }
 
 double GeneticEvaluatorLR::evaluate_chromosome(chromosomeT &chromosome) {
-    if (dp.ocs.size() != chromosome.size()) {
-        std::cout << "Chromosome and ground truth poses are not same dimension returning 0.0 cost" << std::endl;
+    if (!sanityCheck(chromosome))
         return 0.0;
-    }
+
     std::vector<bool> inCollision;
     std::vector<double> penetration;
     std::vector<int> intersections;
@@ -141,7 +138,7 @@ double GeneticEvaluatorLR::evaluate_chromosome(chromosomeT &chromosome) {
     double model_points =pcm->size();
     double cost=0;
     for (int i = 0; i < chromosome.size(); i++) {
-        if(chromosome[i]) {
+        if(chromosome[i] && mask[i]) {
             double visiblePoints = visible_oc_pcs[i]->size();
             double visibleInliers = oc_visible_inlier_pt_idxs[i]->size();
 
@@ -151,12 +148,45 @@ double GeneticEvaluatorLR::evaluate_chromosome(chromosomeT &chromosome) {
                        penetration[i] * penetration_w +
                        (intersections[i] / visibleInliers) * intersectingInliersFrac_w
                        + intercept;
-            cost -= x;
+            cost -= (1.0/(1.0+std::exp(-x)))-0.5;;
         }
     }
     return cost;
 }
+GeneticEvaluatorLRS::GeneticEvaluatorLRS() {
+    type = "GELRS";
 
+}
+
+double GeneticEvaluatorLRS::evaluate_chromosome(chromosomeT &chromosome) {
+    chromosomeT chromosomeFull(chromosome.size(),true);
+    if (!sanityCheck(chromosome))
+        return 0.0;
+
+    std::vector<bool> inCollision;
+    std::vector<double> penetration;
+    std::vector<int> intersections;
+    get_max_collisions_in_chromosome(chromosomeFull,inCollision,penetration);
+    get_max_intersection_in_chromosome(chromosomeFull,intersections);
+
+    double model_points =pcm->size();
+    double cost=0;
+    for (int i = 0; i < chromosome.size(); i++) {
+        if(chromosome[i] && mask[i]) {
+            double visiblePoints = visible_oc_pcs[i]->size();
+            double visibleInliers = oc_visible_inlier_pt_idxs[i]->size();
+
+            double x = dp.oc_scores[i] * score_w +
+                       (visiblePoints / model_points) * visiblePointsFrac_w +
+                       (visibleInliers / visiblePoints) * visibleInlierFrac_w +
+                       penetration[i] * penetration_w +
+                       (intersections[i] / visibleInliers) * intersectingInliersFrac_w
+                       + intercept;
+            cost -= int((1.0/(1.0+std::exp(-x))) >= 0.5)-0.5;
+        }
+    }
+    return cost;
+}
 
 GeneticEvaluatorF1::GeneticEvaluatorF1() {
     type = "GEF1";
@@ -198,4 +228,5 @@ double GeneticEvaluatorPrecision::evaluate_chromosome(chromosomeT &chromosome) {
     else
         return 1;
 }
+
 

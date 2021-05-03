@@ -16,6 +16,10 @@ public:
 
     DataPoint dp;
     DatasetObjectPtr datasetObjectPtr;
+    int n_ocs=0;
+    bool mask_set = false;
+
+    chromosomeT mask;
 
     PointCloudT::Ptr pc;//point cloud data
     PointCloudT::Ptr pcm;//mesh point cloud
@@ -28,10 +32,13 @@ public:
     void init(DatasetObjectPtr &datasetObjectPtr, int datapoint_n = 0);
     void init(DatasetObjectPtr &datasetObjectPtr, DataPoint &datapoint);
     void init_datapoint(int datapoint_n);
+    void set_dp_mask(chromosomeT &mask);
+    bool sanityCheck(chromosomeT &chromosome);
 
     virtual double evaluate_chromosome(chromosomeT &chromosome) = 0;
     virtual void init_object(DatasetObjectPtr &datasetObjectPtr);
     virtual void init_datapoint(DataPoint &datapoint);
+
 
 protected:
     Chronometer chronometer;

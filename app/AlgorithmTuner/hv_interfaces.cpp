@@ -3,6 +3,20 @@
 #include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollisionVariants.hpp"
 #include <cmath>
 
+//BF
+BFInterface::BFInterface() {
+    name="BF";
+}
+
+void BFInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hvResult) {
+    chronometer.tic();
+    bf.geneticEvaluatorPtr = geneticEvaluatorPtr;
+    hvResult.chromosome = bf.run();
+    hvResult.time = chronometer.toc();
+    hvResult.cost = bf.best_cost;
+}
+
+
 //BA
 SPInterface::SPInterface(): HVInterface()  {
     name="SP";
@@ -60,6 +74,27 @@ void BaselineInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &h
     hvResult.time = chronometer.toc();
 }
 
+BLGAInterface::BLGAInterface(){
+    name="BLGA";
+    parameters_d.emplace_back(param_d{&score_threshold, new QDoubleSpinBox, "Score Threshold", std::to_string(score_threshold)});
+}
+
+void BLGAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hvResult) {
+    chronometer.tic();
+    chromosomeT mask(geneticEvaluatorPtr->n_ocs);
+    for(int i = 0;i<mask.size();i++)
+        mask[i]=geneticEvaluatorPtr->dp.oc_scores[i]>score_threshold;
+
+    geneticEvaluatorPtr->set_dp_mask(mask);
+
+
+    GAInterface::run(geneticEvaluatorPtr,hvResult);
+    for(int i = 0;i<mask.size();i++)
+        if(!mask[i])
+            hvResult.chromosome[i]=false;
+}
+
+
 GASPInterface::GASPInterface() {
     name="GASP";
     parameters_d.emplace_back(param_d{&sequentialPrior.score_threshold, new QDoubleSpinBox, "SP Score Threshold", std::to_string(sequentialPrior.score_threshold)});
@@ -109,7 +144,7 @@ void RandomInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hv
     hvResult.time=0;
 }
 
-LogisticRegressionInterface::LogisticRegressionInterface() {
+LogisticRegressionInterface::LogisticRegressionInterface(){
     name="LR";
     parameters_d.emplace_back(param_d{&score_w, getNewDoubleSpinBox(-1000,1000,4), "score_w", std::to_string(score_w)});
     parameters_d.emplace_back(param_d{&visiblePointsFrac_w, getNewDoubleSpinBox(-1000,1000,4), "visiblePointsFrac_w", std::to_string(visiblePointsFrac_w)});
@@ -124,7 +159,7 @@ double LogisticRegressionInterface::sigmoid(double x) {
 }
 
 void LogisticRegressionInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hvResult) {
-    if (geneticEvaluatorPtr->type == "GEUICS" || geneticEvaluatorPtr->type == "GELR") {
+    if (geneticEvaluatorPtr->type == "GEUICS" || geneticEvaluatorPtr->type == "GELR" || geneticEvaluatorPtr->type == "GELRS") {
         auto gePtr = std::dynamic_pointer_cast<IntersectingPoints>(geneticEvaluatorPtr);
         auto &dp =  gePtr->dp;
         hvResult.chromosome.resize(dp.ocs.size());
@@ -152,3 +187,4 @@ void LogisticRegressionInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, 
         }
     }
 }
+

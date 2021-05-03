@@ -65,6 +65,21 @@ GeneticEvaluatorLRInterface::GeneticEvaluatorLRInterface() {
     parameters_d.emplace_back(param_d{&geneticEvaluatorLRPtr->vg_leaf_size, new QDoubleSpinBox, "VoxelGrid leaf size", std::to_string(geneticEvaluatorLRPtr->vg_leaf_size)});
 }
 
+GeneticEvaluatorLRSInterface::GeneticEvaluatorLRSInterface() {
+    geneticEvaluatorLRSPtr = std::make_shared<GeneticEvaluatorLRS>();
+    geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorLRSPtr);
+    name=geneticEvaluatorLRSPtr->type;
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRSPtr->score_w, getNewDoubleSpinBox(-1000,1000,4), "score_w", std::to_string(geneticEvaluatorLRSPtr->score_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRSPtr->visiblePointsFrac_w, getNewDoubleSpinBox(-1000,1000,4), "visiblePointsFrac_w", std::to_string(geneticEvaluatorLRSPtr->visiblePointsFrac_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRSPtr->visibleInlierFrac_w, getNewDoubleSpinBox(-1000,1000,4), "visibleInlierFrac_w", std::to_string(geneticEvaluatorLRSPtr->visibleInlierFrac_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRSPtr->penetration_w, getNewDoubleSpinBox(-1000,1000,4), "penetration_w", std::to_string(geneticEvaluatorLRSPtr->penetration_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRSPtr->intersectingInliersFrac_w, getNewDoubleSpinBox(-1000,1000,4), "intersectingInliersFrac_w", std::to_string(geneticEvaluatorLRSPtr->intersectingInliersFrac_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRSPtr->intercept, getNewDoubleSpinBox(-1000,1000,4), "intercept", std::to_string(geneticEvaluatorLRSPtr->intercept)});
+
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRSPtr->nn_inlier_threshold, new QDoubleSpinBox, "NN inlier threshold", std::to_string(geneticEvaluatorLRSPtr->nn_inlier_threshold)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRSPtr->vg_leaf_size, new QDoubleSpinBox, "VoxelGrid leaf size", std::to_string(geneticEvaluatorLRSPtr->vg_leaf_size)});
+}
+
 
 GeneticEvaluatorF1Interface::GeneticEvaluatorF1Interface() {
     geneticEvaluatorF1Ptr = std::make_shared<GeneticEvaluatorF1>();
