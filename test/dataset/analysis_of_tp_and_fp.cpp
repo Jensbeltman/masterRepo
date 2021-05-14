@@ -31,7 +31,8 @@ int main() {
     int ndps = 0;
     for (auto &obj:scapeDataset->objects)
         for (auto &dp:obj->data_points)
-            ndps+=dp.ocs.size();
+            if(dp.gts.size()>1)
+                ndps+=dp.ocs.size();
 
     int current_dp = 0;
     int rowIdx = 0;
@@ -68,22 +69,34 @@ int main() {
                 for (int i = 0; i < ge.collisions.pairs.size(); i++) {
                     auto &cp = ge.collisions.pairs[i];
                     if (ideal_chromosome[cp.first] ^ ideal_chromosome[cp.second]) {
-                        max_point_intersections_external[cp.first] = std::max(ge.collision_point_intersections[i],max_point_intersections_external[cp.first]);
-                        max_point_intersections_external[cp.second] = std::max(ge.collision_point_intersections[i],max_point_intersections_external[cp.second]);
                         penetration_external[cp.first] = std::max(ge.collisions.distances[i],penetration_external[cp.first]);
                         penetration_external[cp.second] = std::max(ge.collisions.distances[i],penetration_external[cp.second]);
                         in_collision_external[cp.first] = true;
                         in_collision_external[cp.second] = true;
 
                     }else{
-                        max_point_intersections_internal[cp.first] = std::max(ge.collision_point_intersections[i],max_point_intersections_internal[cp.first]);
-                        max_point_intersections_internal[cp.second] = std::max(ge.collision_point_intersections[i],max_point_intersections_internal[cp.second]);
                         penetration_internal[cp.first] = std::max(ge.collisions.distances[i],penetration_internal[cp.first]);
                         penetration_internal[cp.second] = std::max(ge.collisions.distances[i],penetration_internal[cp.second]);
                         in_collision_internal[cp.first] = true;
                         in_collision_internal[cp.second] = true;
                     }
                 }
+                int pair_idx=0;
+                for(int i = 0; i<(ideal_chromosome.size()-1);i++) {
+                    for (int j = i + 1; j < ideal_chromosome.size(); j++) {
+                        if (ideal_chromosome[i] ^ ideal_chromosome[j]) {
+                            max_point_intersections_external[i] = std::max(ge.collision_point_intersections[pair_idx],max_point_intersections_external[i]);
+                            max_point_intersections_external[j] = std::max(ge.collision_point_intersections[pair_idx],max_point_intersections_external[j]);
+
+
+                        }else{
+                            max_point_intersections_internal[i] = std::max(ge.collision_point_intersections[pair_idx],max_point_intersections_internal[i]);
+                            max_point_intersections_internal[j] = std::max(ge.collision_point_intersections[pair_idx],max_point_intersections_internal[j]);
+                        }
+                        pair_idx++;
+                    }
+                }
+
 
                 for (int i = 0; i < ideal_chromosome.size(); i++, rowIdx++) {
                     csvDoc.SetCell(csvDoc.GetColumnIdx("objName"), rowIdx, obj->name);
@@ -111,5 +124,5 @@ int main() {
     }
 
 
-    csvDoc.Save("/home/jens/masterRepo/test/dataset/analysis_of_tp_and_fp_"+std::to_string(t_thresh)+"_"+std::to_string(r_thresh)+".csv");
+    csvDoc.Save("/home/jens/masterRepo/test/dataset/analysis_of_tp_and_fp_"+std::to_string(t_thresh)+"_"+std::to_string(r_thresh)+"_test.csv");
 }
