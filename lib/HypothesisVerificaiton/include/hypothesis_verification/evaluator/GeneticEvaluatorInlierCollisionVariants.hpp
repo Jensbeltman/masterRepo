@@ -45,6 +45,14 @@ public:
 };
 typedef std::shared_ptr<GeneticEvaluatorLR> GeneticEvaluatorLRPtr;
 
+class GeneticEvaluatorLRC: public GeneticEvaluatorLR{
+public:
+    GeneticEvaluatorLRC();
+    virtual double evaluate_chromosome(chromosomeT &chromosome) override;
+
+};
+typedef std::shared_ptr<GeneticEvaluatorLRC> GeneticEvaluatorLRCPtr;
+
 class GeneticEvaluatorLRS: public GeneticEvaluatorLR{
 public:
     GeneticEvaluatorLRS();
@@ -57,6 +65,7 @@ public:
     GeneticEvaluatorF1();
     double t_thresh, r_thresh;
     int tp,tn,fp,fn;
+    std::vector<int> correct_oc_indices;
     void init_datapoint(DataPoint &datapoint) override;
     virtual double evaluate_chromosome(chromosomeT &chromosome) override;
 };

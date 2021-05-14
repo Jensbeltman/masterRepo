@@ -33,7 +33,7 @@ double GeneticEvaluatorInlierCollisionScaled::evaluate_chromosome(chromosomeT &c
         }
     }
 
-    double cost = 1 - (vis_inlier_pt_cnt_tot / (n_pc_points + std::max(oc_inlier_threshold*vis_pt_cnt_tot - vis_inlier_pt_cnt_tot,0.0)));
+    double cost = (n_pc_points + (oc_inlier_threshold*vis_pt_cnt_tot - vis_inlier_pt_cnt_tot))/n_pc_points;
 
     return cost;
 }
@@ -95,11 +95,12 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
     // Check if ocs are in collision
     std::vector<bool> in_collision(chromosome.size(), false);
     std::vector<double> penetration(chromosome.size(), 0);
+    std::vector<int> intersecting_inliers(chromosome.size(), 0);
     get_max_collisions_in_chromosome(chromosome, in_collision, penetration);
-    for (int i = 0; i < collisions.pairs.size(); i++) {
-        auto &cp = collisions.pairs[i];
-        if(chromosome[cp.first] && chromosome[cp.second]) {
-            n_point_intersections_tot += inlier_overlap_penalty_factor * collision_point_intersections[i];
+    get_max_intersection_in_chromosome(chromosome,intersecting_inliers);
+    {
+        for (int i = 0; i < chromosome.size(); i++) {
+            n_point_intersections_tot += inlier_overlap_penalty_factor * intersecting_inliers[i];
         }
     }
 
@@ -111,7 +112,8 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
         }
     }
 
-    double cost = 1 - ((vis_inlier_pt_cnt_tot-n_point_intersections_tot) / (n_pc_points + std::max(oc_inlier_threshold*vis_pt_cnt_tot - vis_inlier_pt_cnt_tot,0.0)));
+
+    double cost =  (n_pc_points + (oc_inlier_threshold*vis_pt_cnt_tot - (vis_inlier_pt_cnt_tot-n_point_intersections_tot)))/n_pc_points;
 
     return cost;
 }
@@ -148,11 +150,45 @@ double GeneticEvaluatorLR::evaluate_chromosome(chromosomeT &chromosome) {
                        penetration[i] * penetration_w +
                        (intersections[i] / visibleInliers) * intersectingInliersFrac_w
                        + intercept;
-            cost -= (1.0/(1.0+std::exp(-x)))-0.5;;
+            cost -=int((1.0/(1.0+std::exp(-x))) >= 0.5)-0.5;;
         }
     }
     return cost;
 }
+
+GeneticEvaluatorLRC::GeneticEvaluatorLRC() {
+    type = "GELRC";
+}
+
+double GeneticEvaluatorLRC::evaluate_chromosome(chromosomeT &chromosome) {
+    if (!sanityCheck(chromosome))
+        return 0.0;
+
+    std::vector<bool> inCollision;
+    std::vector<double> penetration;
+    std::vector<int> intersections;
+    get_max_collisions_in_chromosome(chromosome,inCollision,penetration);
+    get_max_intersection_in_chromosome(chromosome,intersections);
+
+    double model_points =pcm->size();
+    double cost=0;
+    for (int i = 0; i < chromosome.size(); i++) {
+        if(chromosome[i] && mask[i]) {
+            double visiblePoints = visible_oc_pcs[i]->size();
+            double visibleInliers = oc_visible_inlier_pt_idxs[i]->size();
+
+            double x = dp.oc_scores[i] * score_w +
+                       (visiblePoints / model_points) * visiblePointsFrac_w +
+                       (visibleInliers / visiblePoints) * visibleInlierFrac_w +
+                       penetration[i] * penetration_w +
+                       (intersections[i] / visibleInliers) * intersectingInliersFrac_w
+                       + intercept;
+            cost -= std::round(1.0/(1.0+std::exp(-x)))-0.5;;
+        }
+    }
+    return cost;
+}
+
 GeneticEvaluatorLRS::GeneticEvaluatorLRS() {
     type = "GELRS";
 
@@ -188,6 +224,9 @@ double GeneticEvaluatorLRS::evaluate_chromosome(chromosomeT &chromosome) {
     return cost;
 }
 
+
+
+
 GeneticEvaluatorF1::GeneticEvaluatorF1() {
     type = "GEF1";
 }
@@ -195,11 +234,10 @@ GeneticEvaluatorF1::GeneticEvaluatorF1() {
 void GeneticEvaluatorF1::init_datapoint(DataPoint &datapoint) {
     dp = datapoint;
     pc = datasetObjectPtr->get_pcd(dp);
+    tu::find_correct_ocs(dp.ocs, dp.gts, t_thresh, r_thresh, correct_oc_indices, datasetObjectPtr->symmetry_transforms);
 }
 
 double GeneticEvaluatorF1::evaluate_chromosome(chromosomeT &chromosome) {
-    std::vector<int> correct_oc_indices;
-    tu::find_correct_ocs(dp.ocs, dp.gts, t_thresh, r_thresh, correct_oc_indices, datasetObjectPtr->symmetry_transforms);
     tp = 0;
     tn = 0;
     fp = 0;
@@ -207,6 +245,8 @@ double GeneticEvaluatorF1::evaluate_chromosome(chromosomeT &chromosome) {
     tu::getFPTN(tp,tn,fp,fn,chromosome,correct_oc_indices);
     if(tp)
         return 1.0 - (static_cast<double>(2*tp) / static_cast<double>(2*tp + fp + fn));
+    else if(tn==chromosome.size())
+        return 0;
     else
         return 1;
 }

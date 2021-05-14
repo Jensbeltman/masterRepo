@@ -1,5 +1,6 @@
 #include "hypothesis_verification/hv_alg/ga.hpp"
 #include "hypothesis_verification/hv_alg/ga_functions.hpp"
+#include "hypothesis_verification/hv_alg/bf.hpp"
 #include <iostream>
 #include <ostream>
 
@@ -27,8 +28,8 @@ void GA::initialize() {
     rng.seed(ss);
 
     // Set and validate parameters
-    elite_cnt = static_cast<int>(elite_pct * n_genes);
-    parent_pool_cnt = static_cast<int>(parent_pool_pct * n_genes);
+    elite_cnt = std::max(1,static_cast<int>(elite_pct * population_size));
+    parent_pool_cnt = std::max(1,static_cast<int>(parent_pool_pct * population_size));
     assert(population_size || parent_pool_cnt);
     assert(elite_cnt <= population_size);
 
@@ -38,10 +39,13 @@ void GA::initialize() {
     population_costs.resize(population_size);
     std::fill(population_costs.begin(), population_costs.end(), std::numeric_limits<double>::infinity());
 
-    uniform_dist_int_parent_pool = std::uniform_int_distribution<int>(0, parent_pool_cnt);
+    uniform_dist_int_parent_pool = std::uniform_int_distribution<int>(0, parent_pool_cnt-1);
 }
 
 void GA::solve_init() {
+    // Initialize mask if non exists
+    if(geneticEvaluatorPtr->mask.size() != geneticEvaluatorPtr->dp.ocs.size())
+        geneticEvaluatorPtr->mask.resize(geneticEvaluatorPtr->dp.ocs.size(),true);
     // If initial population generator specified generate population
     if (generate_initial_population != nullptr) {
         generate_initial_population(this);
@@ -52,20 +56,29 @@ void GA::solve_init() {
 }
 
 GAResult GA::solve() {
-    initialize();
-    solve_init();
-    generation = 1;
+    //if(! ((n_genes<32) && (std::pow(2,n_genes)<=(generation_max*population_size)))) {
+        initialize();
+        solve_init();
+        generation = 1;
 
-    for (; generation < generation_max; generation++) {
-        population.clear();
-        elite_transfer();
-        crossover_and_mutation();
-        calculate_population_cost(population_costs);
-        last_population = population;
-    }
+        for (; generation < generation_max; generation++) {
+            population.clear();
+            elite_transfer();
+            crossover_and_mutation();
+            calculate_population_cost(population_costs);
+            last_population = population;
+        }
 
-    result.chromosome = population[population_sorted_indices[0]];
+        result.chromosome = population[population_sorted_indices[0]];
 
+//
+//    }else{
+//        BF bf;
+//        std::cout<<"running bf"<<std::endl;
+//        bf.geneticEvaluatorPtr = geneticEvaluatorPtr;
+//        result.chromosome = bf.run();
+//        result.cost = bf.best_cost;
+//    }
     return result;
 }
 
