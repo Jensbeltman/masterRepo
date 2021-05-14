@@ -26,3 +26,4 @@ void Collision::get_max_collisions_in_chromosome(chromosomeT &chromosome, std::v
         }
     }
 }
+

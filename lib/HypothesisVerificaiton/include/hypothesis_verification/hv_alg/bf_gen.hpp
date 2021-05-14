@@ -8,7 +8,7 @@ public:
     int n_max;
     int N = 0;
     int n=-1;
-    const std::bitset<64> bs;
+    const std::bitset<32> bs;
     chromosomeT chromosome;
 
     BF_GEN(unsigned int N):N(N){
@@ -20,7 +20,7 @@ public:
         if(n==n_max)
             return false;
 
-        std::bitset<64> bs((n >> 1) ^ n);
+        std::bitset<32> bs((n >> 1) ^ n);
 
         for(int i = 0;i<N;i++)
             chromosome[i]=bs[i];

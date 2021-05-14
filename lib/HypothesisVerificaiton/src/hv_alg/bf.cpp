@@ -16,7 +16,6 @@ chromosomeT BF::run() {
                 best_chromosome=bf_gen.chromosome;
                 best_cost=cost;
             }
-            std::cout<<bf_gen.n<<std::endl;
         }
         return best_chromosome;
     }
