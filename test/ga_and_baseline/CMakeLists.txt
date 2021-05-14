@@ -9,6 +9,9 @@ target_link_libraries(ga_scape_test PRIVATE GA)
 add_executable(comp comp.cpp include/test_util.hpp)
 target_link_libraries(comp PUBLIC Chronometer DataUtil Matplot++::matplot)
 
+add_executable(optimization_algorithm_test.cpp optimization_algorithm_test.cpp)
+target_link_libraries(optimization_algorithm_test.cpp PUBLIC Chronometer Dataset DataUtil HV)
+
 add_executable(baseline_ga_diff)
 target_sources(baseline_ga_diff PRIVATE baseline_ga_diff.cpp)
 target_include_directories(baseline_ga_diff PRIVATE include)

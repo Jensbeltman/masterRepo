@@ -21,6 +21,12 @@ public:
 };
 typedef std::shared_ptr<SPInterface> SPInterfacePtr;
 
+class BLSPInterface: public SPInterface {
+public:
+    BLSPInterface();
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
+};
+typedef std::shared_ptr<BLSPInterface> BLSPInterfacePtr;
 
 class GAInterface : public HVInterface {
 public:

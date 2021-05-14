@@ -35,6 +35,11 @@ public:
     GeneticEvaluatorLRInterface();
     GeneticEvaluatorLRPtr geneticEvaluatorLRPtr;
 };
+class GeneticEvaluatorLRCInterface: public EvaluatorInterface {
+public:
+    GeneticEvaluatorLRCInterface();
+    GeneticEvaluatorLRCPtr geneticEvaluatorLRCPtr;
+};
 
 class GeneticEvaluatorLRSInterface: public EvaluatorInterface {
 public:

@@ -17,10 +17,10 @@ void BFInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hvResu
 }
 
 
-//BA
+//SP
 SPInterface::SPInterface(): HVInterface()  {
     name="SP";
-    parameters_d.emplace_back(param_d{&sequentialPrior.score_threshold, new QDoubleSpinBox, "Score Threshold", std::to_string(sequentialPrior.score_threshold)});
+    sequentialPrior.score_threshold = 0;
 }
 
 void SPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) {
@@ -29,6 +29,16 @@ void SPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResul
     hvResult = sequentialPrior.solve();
     hvResult.time = chronometer.toc();
 }
+BLSPInterface::BLSPInterface() {
+    name="BLSP";
+    parameters_d.emplace_back(param_d{&sequentialPrior.score_threshold, new QDoubleSpinBox, "Score Threshold", std::to_string(sequentialPrior.score_threshold)});
+}
+
+void BLSPInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hvResult) {
+    SPInterface::run(geneticEvaluatorPtr, hvResult);
+}
+
+
 
 // GA
 GAInterface::GAInterface(): HVInterface() {
@@ -89,9 +99,17 @@ void BLGAInterface::run(GeneticEvaluatorPtr &geneticEvaluatorPtr, HVResult &hvRe
 
 
     GAInterface::run(geneticEvaluatorPtr,hvResult);
-    for(int i = 0;i<mask.size();i++)
-        if(!mask[i])
-            hvResult.chromosome[i]=false;
+    for(int i = 0;i<mask.size();i++) {
+        if (!mask[i]) {
+            if (hvResult.chromosome[i])
+                std::cout << "Shitt" << std::endl;
+            hvResult.chromosome[i] = false;
+        }
+    }
+
+    std::fill(mask.begin(),mask.end(),true);
+    geneticEvaluatorPtr->set_dp_mask(mask);
+
 }
 
 

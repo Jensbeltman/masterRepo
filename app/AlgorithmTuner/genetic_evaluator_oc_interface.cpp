@@ -64,6 +64,20 @@ GeneticEvaluatorLRInterface::GeneticEvaluatorLRInterface() {
     parameters_d.emplace_back(param_d{&geneticEvaluatorLRPtr->nn_inlier_threshold, new QDoubleSpinBox, "NN inlier threshold", std::to_string(geneticEvaluatorLRPtr->nn_inlier_threshold)});
     parameters_d.emplace_back(param_d{&geneticEvaluatorLRPtr->vg_leaf_size, new QDoubleSpinBox, "VoxelGrid leaf size", std::to_string(geneticEvaluatorLRPtr->vg_leaf_size)});
 }
+GeneticEvaluatorLRCInterface::GeneticEvaluatorLRCInterface() {
+    geneticEvaluatorLRCPtr = std::make_shared<GeneticEvaluatorLRC>();
+    geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorLRCPtr);
+    name=geneticEvaluatorLRCPtr->type;
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRCPtr->score_w, getNewDoubleSpinBox(-1000,1000,4), "score_w", std::to_string(geneticEvaluatorLRCPtr->score_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRCPtr->visiblePointsFrac_w, getNewDoubleSpinBox(-1000,1000,4), "visiblePointsFrac_w", std::to_string(geneticEvaluatorLRCPtr->visiblePointsFrac_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRCPtr->visibleInlierFrac_w, getNewDoubleSpinBox(-1000,1000,4), "visibleInlierFrac_w", std::to_string(geneticEvaluatorLRCPtr->visibleInlierFrac_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRCPtr->penetration_w, getNewDoubleSpinBox(-1000,1000,4), "penetration_w", std::to_string(geneticEvaluatorLRCPtr->penetration_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRCPtr->intersectingInliersFrac_w, getNewDoubleSpinBox(-1000,1000,4), "intersectingInliersFrac_w", std::to_string(geneticEvaluatorLRCPtr->intersectingInliersFrac_w)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRCPtr->intercept, getNewDoubleSpinBox(-1000,1000,4), "intercept", std::to_string(geneticEvaluatorLRCPtr->intercept)});
+
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRCPtr->nn_inlier_threshold, new QDoubleSpinBox, "NN inlier threshold", std::to_string(geneticEvaluatorLRCPtr->nn_inlier_threshold)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorLRCPtr->vg_leaf_size, new QDoubleSpinBox, "VoxelGrid leaf size", std::to_string(geneticEvaluatorLRCPtr->vg_leaf_size)});
+}
 
 GeneticEvaluatorLRSInterface::GeneticEvaluatorLRSInterface() {
     geneticEvaluatorLRSPtr = std::make_shared<GeneticEvaluatorLRS>();
