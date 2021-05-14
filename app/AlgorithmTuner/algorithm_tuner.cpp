@@ -67,14 +67,15 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     progressBar->hide();
 
     // Create algorithms and evaluator interfaces and add variables to GUI
+    hv_algorithms.push_back(std::make_shared<GAInterface>());
+    hv_algorithms.push_back(std::make_shared<BLGAInterface>());
+    hv_algorithms.push_back(std::make_shared<SPInterface>());
+    hv_algorithms.push_back(std::make_shared<BLSPInterface>());
     hv_algorithms.push_back(std::make_shared<LogisticRegressionInterface>());
     hv_algorithms.push_back(std::make_shared<BFInterface>());
-    hv_algorithms.push_back(std::make_shared<GAInterface>());
     hv_algorithms.push_back(std::make_shared<GAWInterface>());
-    hv_algorithms.push_back(std::make_shared<GASPInterface>());
-    hv_algorithms.push_back(std::make_shared<SPInterface>());
     hv_algorithms.push_back(std::make_shared<BaselineInterface>());
-    hv_algorithms.push_back(std::make_shared<BLGAInterface>());
+    hv_algorithms.push_back(std::make_shared<GASPInterface>());
     hv_algorithms.push_back(std::make_shared<RandomInterface>());
     algorithms.insert(algorithms.end(), hv_algorithms.begin(), hv_algorithms.end());
     evaluators.push_back(std::make_shared<GeneticEvaluatorInlierCollisionInterface>());
@@ -84,6 +85,7 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     evaluators.push_back(std::make_shared<GeneticEvaluatorF1Interface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorPrecisionInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorLRInterface>());
+    evaluators.push_back(std::make_shared<GeneticEvaluatorLRCInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorLRSInterface>());
 
 
