@@ -61,6 +61,7 @@ namespace tu {
     void find_correct_ocs(std::vector<T4> ocs, std::vector<T4> gts, double t_thresh, double r_thresh,
                           std::vector<int> &correct_oc_indices, std::vector<double> &t_dists,
                           std::vector<double> &r_dists, std::vector<T4> symmetry_transforms) {
+        correct_oc_indices.clear();
         for (auto gt:gts) {
             int best_i = -1;
             double best_t_diff = std::numeric_limits<double>::max();
