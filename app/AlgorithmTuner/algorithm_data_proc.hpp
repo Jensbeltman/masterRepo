@@ -22,6 +22,7 @@ public:
     std::map<std::string,int> column_name_indices;
     void set_column_names(rapidcsv::CSVDocPtr &csvDoc);
     void append_processed_data_to_doc(rapidcsv::CSVDocPtr &csvDoc,int row_i,std::string &alg_name,DatasetObjectPtr &objPtr,int dpI, HVResult &hvResult);
+    void t_r_dist(chromosomeT &chromosome,std::vector<int> &correct_oc_i,std::vector<double> &t_dists, std::vector<double> &r_dists, double &t_dist_avr, double &r_dist_avr, double &t_dist_std, double &r_dist_std);
 };
 
 
