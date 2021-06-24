@@ -67,21 +67,23 @@ AlgorithmTuner::AlgorithmTuner(QMainWindow *parent) : QMainWindow(parent) {
     progressBar->hide();
 
     // Create algorithms and evaluator interfaces and add variables to GUI
+    hv_algorithms.push_back(std::make_shared<BaselineInterface>());
     hv_algorithms.push_back(std::make_shared<GAInterface>());
     hv_algorithms.push_back(std::make_shared<BLGAInterface>());
     hv_algorithms.push_back(std::make_shared<SPInterface>());
     hv_algorithms.push_back(std::make_shared<BLSPInterface>());
+    hv_algorithms.push_back(std::make_shared<SMCInterface>());
+    hv_algorithms.push_back(std::make_shared<BLSMCInterface>());
     hv_algorithms.push_back(std::make_shared<LogisticRegressionInterface>());
     hv_algorithms.push_back(std::make_shared<BFInterface>());
     hv_algorithms.push_back(std::make_shared<GAWInterface>());
-    hv_algorithms.push_back(std::make_shared<BaselineInterface>());
     hv_algorithms.push_back(std::make_shared<GASPInterface>());
     hv_algorithms.push_back(std::make_shared<RandomInterface>());
     algorithms.insert(algorithms.end(), hv_algorithms.begin(), hv_algorithms.end());
-    evaluators.push_back(std::make_shared<GeneticEvaluatorInlierCollisionInterface>());
+    evaluators.push_back(std::make_shared<GeneticEvaluatorInlierScaledInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorInlierCollisionScaledInterface>());
-    evaluators.push_back(std::make_shared<GeneticEvaluatorScoreCollisionInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorUniqueInlierCollisionScaledInterface>());
+    evaluators.push_back(std::make_shared<GeneticEvaluatorScoreCollisionInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorF1Interface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorPrecisionInterface>());
     evaluators.push_back(std::make_shared<GeneticEvaluatorLRInterface>());
@@ -267,7 +269,7 @@ void AlgorithmTuner::run_enabled_algorithms(GeneticEvaluatorPtr &geneticEvaluato
             for(int i = 0;i<repetitionSpinBox->value();i++)
             {
                 alg->run(geneticEvaluatorPtr, hvResult);
-                algorithmDataProc.append_processed_data_to_doc(data_doc, row_i, alg->name, obj, dpI, hvResult);
+                algorithmDataProc.append_processed_data_to_doc(data_doc, row_i, alg->name, obj, dpI, hvResult,i);
                 set_doc_alg_variables(data_doc, row_i++);
             }
         }

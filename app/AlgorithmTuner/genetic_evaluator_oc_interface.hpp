@@ -12,6 +12,12 @@ public:
 
 };
 
+class GeneticEvaluatorInlierScaledInterface: public EvaluatorInterface {
+public:
+    GeneticEvaluatorInlierScaledInterface();
+    GeneticEvaluatorInlierScaledPtr geneticEvaluatorInlierScaledPtr;
+};
+
 class GeneticEvaluatorInlierCollisionScaledInterface: public EvaluatorInterface {
 public:
     GeneticEvaluatorInlierCollisionScaledInterface();

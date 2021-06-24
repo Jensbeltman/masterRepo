@@ -15,6 +15,16 @@ GeneticEvaluatorInlierCollisionInterface::GeneticEvaluatorInlierCollisionInterfa
     parameters_d.emplace_back(param_d{&geneticEvaluatorOcPtr->oc_inlier_threshold, new QDoubleSpinBox, "Inlier threshold pct", std::to_string(geneticEvaluatorOcPtr->oc_inlier_threshold)});
     parameters_d.emplace_back(param_d{&geneticEvaluatorOcPtr->vg_leaf_size, new QDoubleSpinBox, "VoxelGrid leaf size", std::to_string(geneticEvaluatorOcPtr->vg_leaf_size)});
 }
+GeneticEvaluatorInlierScaledInterface::GeneticEvaluatorInlierScaledInterface() {
+    name="GEIS";
+    geneticEvaluatorInlierScaledPtr = std::make_shared<GeneticEvaluatorInlierScaled>();
+    geneticEvaluatorPtr = std::dynamic_pointer_cast<GeneticEvaluator>(geneticEvaluatorInlierScaledPtr);
+    // Creating Variables
+    parameters_d.emplace_back(param_d{&geneticEvaluatorInlierScaledPtr->nn_inlier_threshold, new QDoubleSpinBox, "NN inlier threshold", std::to_string(geneticEvaluatorInlierScaledPtr->nn_inlier_threshold)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorInlierScaledPtr->oc_inlier_threshold, new QDoubleSpinBox, "Inlier threshold pct", std::to_string(geneticEvaluatorInlierScaledPtr->oc_inlier_threshold)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorInlierScaledPtr->vg_leaf_size, new QDoubleSpinBox, "VoxelGrid leaf size", std::to_string(geneticEvaluatorInlierScaledPtr->vg_leaf_size)});
+}
+
 
 GeneticEvaluatorInlierCollisionScaledInterface::GeneticEvaluatorInlierCollisionScaledInterface() {
     name="GEICS";
@@ -49,6 +59,8 @@ GeneticEvaluatorUniqueInlierCollisionScaledInterface::GeneticEvaluatorUniqueInli
     parameters_d.emplace_back(param_d{&geneticEvaluatorUniqueInlierCollisionScaledPtr->inlier_overlap_penalty_factor, getNewDoubleSpinBox(0,100000), "Inlier Overlap Penalty Factor", std::to_string(geneticEvaluatorUniqueInlierCollisionScaledPtr->inlier_overlap_penalty_factor)});
     parameters_d.emplace_back(param_d{&geneticEvaluatorUniqueInlierCollisionScaledPtr->oc_inlier_threshold, new QDoubleSpinBox, "Inlier threshold pct", std::to_string(geneticEvaluatorUniqueInlierCollisionScaledPtr->oc_inlier_threshold)});
     parameters_d.emplace_back(param_d{&geneticEvaluatorUniqueInlierCollisionScaledPtr->vg_leaf_size, new QDoubleSpinBox, "VoxelGrid leaf size", std::to_string(geneticEvaluatorUniqueInlierCollisionScaledPtr->vg_leaf_size)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorUniqueInlierCollisionScaledPtr->sigmoid_center, new QDoubleSpinBox, "Sigmoid center", std::to_string(geneticEvaluatorUniqueInlierCollisionScaledPtr->sigmoid_center)});
+    parameters_d.emplace_back(param_d{&geneticEvaluatorUniqueInlierCollisionScaledPtr->sigmoid_growth_rate, new QDoubleSpinBox, "Sigmoid growth rate", std::to_string(geneticEvaluatorUniqueInlierCollisionScaledPtr->sigmoid_growth_rate)});
 }
 GeneticEvaluatorLRInterface::GeneticEvaluatorLRInterface() {
     geneticEvaluatorLRPtr = std::make_shared<GeneticEvaluatorLR>();

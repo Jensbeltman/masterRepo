@@ -6,14 +6,25 @@
 
 chromosomeT BF::run() {
     if(geneticEvaluatorPtr!= nullptr) {
+        chromosomeT chromosome(geneticEvaluatorPtr->dp.ocs.size(),false);
         best_chromosome.resize(geneticEvaluatorPtr->dp.ocs.size(),false);
         best_cost=std::numeric_limits<double>::max();
+        std::vector<int> mask_idx;
+        for(int i = 0;i<geneticEvaluatorPtr->dp.ocs.size();i++){
+            if(geneticEvaluatorPtr->mask[i]){
+                mask_idx.emplace_back(i);
+            }
+        }
 
-        BF_GEN bf_gen(geneticEvaluatorPtr->dp.ocs.size());
+        BF_GEN bf_gen(geneticEvaluatorPtr->active_mask_size);
         while (bf_gen.next()){
-            double cost = geneticEvaluatorPtr->evaluate_chromosome(bf_gen.chromosome);
+
+            for(int i =0;i<mask_idx.size();i++)
+                chromosome[mask_idx[i]]=bf_gen.chromosome[i];
+
+            double cost = geneticEvaluatorPtr->evaluate_chromosome(chromosome);
             if(cost<best_cost){
-                best_chromosome=bf_gen.chromosome;
+                best_chromosome=chromosome;
                 best_cost=cost;
             }
         }

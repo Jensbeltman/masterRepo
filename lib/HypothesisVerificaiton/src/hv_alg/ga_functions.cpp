@@ -27,7 +27,7 @@ void mutation_flip(GA *ga, chromosomeT &c) {
 }
 
 void initialize_population_bernoulli(GA* ga){
-    ga->population.resize(ga->population_size);
+    ga->population.resize(ga->effective_population_size);
     for (chromosomeT &c: ga->population) {
         c.clear();
         for (int i = 0; i < ga->n_genes; i++) {
@@ -56,7 +56,7 @@ void initialize_population_score_sampling(GA* ga){
         val = cummulative_sum/score_sum;
     }
 
-    ga->population.resize(ga->population_size);
+    ga->population.resize(ga->effective_population_size);
     for (chromosomeT &c: ga->population) {
         c.clear();
         for (int i = 0; i < ga->n_genes; i++) {

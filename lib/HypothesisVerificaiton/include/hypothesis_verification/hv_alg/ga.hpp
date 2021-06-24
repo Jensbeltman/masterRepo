@@ -48,6 +48,9 @@ public:
     int n_genes;
     int population_size;
     int generation_max;
+    int effective_population_size;
+    int effective_generation_max;
+    int n_genes_in_mask;
     double mutation_rate;
     double elite_pct;
     double parent_pool_pct;

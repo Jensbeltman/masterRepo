@@ -54,6 +54,13 @@ bool GeneticEvaluator::sanityCheck(chromosomeT &chromosome) {
 void GeneticEvaluator::set_dp_mask(chromosomeT &new_mask){
     mask_set = true;
     mask = new_mask;
+    active_mask_size=0;
+    for(auto b:mask) {
+        if (b) {
+            active_mask_size++;
+        }
+    }
+
 }
 
 

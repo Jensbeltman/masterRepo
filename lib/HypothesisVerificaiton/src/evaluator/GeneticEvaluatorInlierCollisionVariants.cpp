@@ -1,6 +1,37 @@
 #include "hypothesis_verification/evaluator/GeneticEvaluatorInlierCollisionVariants.hpp"
 #include "dataset/transform_utility.hpp"
 
+GeneticEvaluatorInlierScaled::GeneticEvaluatorInlierScaled() {
+    type="GEIS";
+}
+
+double GeneticEvaluatorInlierScaled::evaluate_chromosome(chromosomeT &chromosome) {
+    if (!sanityCheck(chromosome))
+        return 0.0;
+
+    double n_pc_points = pc->size();
+    int n_active_genes = 0;
+    int vis_inlier_pt_cnt_tot = 0;
+    int vis_pt_cnt_tot = 0;
+
+    for (int i = 0; i < chromosome.size(); i++) {
+        if (chromosome[i] && mask[i]) {
+            int vis_inlier_pt_cnt = oc_visible_inlier_pt_idxs[i]->size();
+            vis_pt_cnt_tot += visible_oc_pcs[i]->points.size();
+
+                vis_inlier_pt_cnt_tot += vis_inlier_pt_cnt;
+
+            n_active_genes++;
+        }
+    }
+
+    double cost = (n_pc_points + (oc_inlier_threshold*vis_pt_cnt_tot - vis_inlier_pt_cnt_tot))/n_pc_points;
+
+    return cost;
+}
+
+
+
 GeneticEvaluatorInlierCollisionScaled::GeneticEvaluatorInlierCollisionScaled() {
     type="GEICS";
 }
@@ -99,7 +130,9 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
     get_max_collisions_in_chromosome(chromosome, in_collision, penetration);
     get_max_intersection_in_chromosome(chromosome,intersecting_inliers);
     {
+
         for (int i = 0; i < chromosome.size(); i++) {
+
             n_point_intersections_tot += inlier_overlap_penalty_factor * intersecting_inliers[i];
         }
     }
@@ -107,7 +140,12 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
     for (int i = 0; i < chromosome.size(); i++) {
         if (chromosome[i] && mask[i]) {
             vis_pt_cnt_tot += visible_oc_pcs[i]->points.size();
-            vis_inlier_pt_cnt_tot +=  oc_visible_inlier_pt_idxs[i]->size();
+
+            if (!in_collision[i]) {
+                vis_inlier_pt_cnt_tot += oc_visible_inlier_pt_idxs[i]->size();;
+            } else {
+                vis_inlier_pt_cnt_tot += sigmoid_fall_off(penetration[i]) * oc_visible_inlier_pt_idxs[i]->size();;
+            }
             n_active_genes++;
         }
     }
@@ -116,6 +154,10 @@ double GeneticEvaluatorUniqueInlierCollisionScaled::evaluate_chromosome(chromoso
     double cost =  (n_pc_points + (oc_inlier_threshold*vis_pt_cnt_tot - (vis_inlier_pt_cnt_tot-n_point_intersections_tot)))/n_pc_points;
 
     return cost;
+}
+
+double GeneticEvaluatorUniqueInlierCollisionScaled::sigmoid_fall_off(double x) {
+    return 1 - ( 1 / ( 1 + std::exp( -sigmoid_growth_rate * ( x - sigmoid_center ) ) ) );
 }
 
 GeneticEvaluatorLR::GeneticEvaluatorLR() {
@@ -150,7 +192,7 @@ double GeneticEvaluatorLR::evaluate_chromosome(chromosomeT &chromosome) {
                        penetration[i] * penetration_w +
                        (intersections[i] / visibleInliers) * intersectingInliersFrac_w
                        + intercept;
-            cost -=int((1.0/(1.0+std::exp(-x))) >= 0.5)-0.5;;
+            cost -=(1.0/(1.0+std::exp(-x))) -0.5;
         }
     }
     return cost;

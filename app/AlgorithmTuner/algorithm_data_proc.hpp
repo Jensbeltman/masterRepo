@@ -18,10 +18,10 @@ public:
     AlgorithmDataProc(double t_thresh, double r_thresh);
     double t_thresh, r_thresh;
 
-    std::vector<std::string> column_names = {"algName","objName","dpI","chromosome","tp","tn","fp","fn","precision","recall","accuracy","f1","time","cost","t_dist_avr","r_dist_avr","t_dist_std","r_dist_std"};
+    std::vector<std::string> column_names = {"algName","objName","dpI","rep","chromosome","tp","tn","fp","fn","precision","recall","accuracy","f1","time","cost","t_dist_avr","r_dist_avr","t_dist_std","r_dist_std"};
     std::map<std::string,int> column_name_indices;
     void set_column_names(rapidcsv::CSVDocPtr &csvDoc);
-    void append_processed_data_to_doc(rapidcsv::CSVDocPtr &csvDoc,int row_i,std::string &alg_name,DatasetObjectPtr &objPtr,int dpI, HVResult &hvResult);
+    void append_processed_data_to_doc(rapidcsv::CSVDocPtr &csvDoc,int row_i,std::string &alg_name,DatasetObjectPtr &objPtr,int dpI, HVResult &hvResult,int rep);
     void t_r_dist(chromosomeT &chromosome,std::vector<int> &correct_oc_i,std::vector<double> &t_dists, std::vector<double> &r_dists, double &t_dist_avr, double &r_dist_avr, double &t_dist_std, double &r_dist_std);
 };
 

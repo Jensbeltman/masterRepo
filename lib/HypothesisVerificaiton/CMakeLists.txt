@@ -12,6 +12,7 @@ target_sources(HV
         src/hv_alg/bf_gen.cpp
         src/hv_alg/ga.cpp
         src/hv_alg/sequential_prior.cpp
+        src/hv_alg/sequential_min_cost.cpp
         src/hv_alg/ga_functions.cpp
         src/visualization/point_cloud_group_visualizer.cpp
         src/evaluator/GeneticEvaluator.cpp

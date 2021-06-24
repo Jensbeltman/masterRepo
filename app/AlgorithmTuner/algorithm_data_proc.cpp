@@ -49,7 +49,7 @@ void AlgorithmDataProc::t_r_dist(chromosomeT &chromosome, std::vector<int> &corr
 }
 
 void AlgorithmDataProc::append_processed_data_to_doc(rapidcsv::CSVDocPtr &csvDoc, int row_i, std::string &algName,
-                                                     DatasetObjectPtr &objPtr, int dpI, HVResult &hvResult) {
+                                                     DatasetObjectPtr &objPtr, int dpI, HVResult &hvResult,int rep) {
     DataPoint &dp = objPtr->data_points[dpI];
     std::vector<int> correct_oc_i;
     std::vector<double> t_dists, r_dists;
@@ -82,6 +82,7 @@ void AlgorithmDataProc::append_processed_data_to_doc(rapidcsv::CSVDocPtr &csvDoc
     csvDoc->SetCell(column_name_indices["algName"], row_i, algName);
     csvDoc->SetCell(column_name_indices["objName"], row_i, objPtr->name);
     csvDoc->SetCell(column_name_indices["dpI"], row_i, dpI);
+    csvDoc->SetCell(column_name_indices["rep"], row_i, rep);
     csvDoc->SetCell(column_name_indices["chromosome"], row_i, hvResult.chromosome);
     csvDoc->SetCell(column_name_indices["tp"], row_i, tp);
     csvDoc->SetCell(column_name_indices["tn"], row_i, tn);

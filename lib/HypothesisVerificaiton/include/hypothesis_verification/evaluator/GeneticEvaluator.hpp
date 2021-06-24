@@ -20,6 +20,7 @@ public:
     bool mask_set = false;
 
     chromosomeT mask;
+    int active_mask_size=0;
 
     PointCloudT::Ptr pc;//point cloud data
     PointCloudT::Ptr pcm;//mesh point cloud

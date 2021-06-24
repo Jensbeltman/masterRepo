@@ -2,6 +2,7 @@
 #define MASTER_HV_INTERFACES_HPP
 #include "algorithm_interface.hpp"
 #include "../../lib/HypothesisVerificaiton/include/hypothesis_verification/hv_alg/sequential_prior.hpp"
+#include "../../lib/HypothesisVerificaiton/include/hypothesis_verification/hv_alg/sequential_min_cost.hpp"
 #include "hypothesis_verification/hv_alg/ga.hpp"
 #include "hypothesis_verification/hv_alg/bf.hpp"
 
@@ -28,10 +29,27 @@ public:
 };
 typedef std::shared_ptr<BLSPInterface> BLSPInterfacePtr;
 
+class SMCInterface: public HVInterface {
+public:
+    SMCInterface();
+    SequentialMinCost sequentialMinCost;
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
+};
+typedef std::shared_ptr<SMCInterface> SMCInterfacePtr;
+
+class BLSMCInterface: public SMCInterface {
+public:
+    BLSMCInterface();
+    void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
+};
+typedef std::shared_ptr<BLSMCInterface> BLSMCInterfacePtr;
+
+
 class GAInterface : public HVInterface {
 public:
     GAInterface();
     GA ga;
+    bool group_optim = false;
     void run(GeneticEvaluatorPtr &geneticEvaluatorPtr,HVResult &hvResult) override;
 };
 typedef std::shared_ptr<GAInterface> GAInterfacePtr;

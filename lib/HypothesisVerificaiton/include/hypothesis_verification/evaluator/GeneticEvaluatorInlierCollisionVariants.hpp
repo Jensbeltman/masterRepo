@@ -6,6 +6,13 @@
 #include "hypothesis_verification/evaluator/functionality/Collision.hpp"
 #include "hypothesis_verification/evaluator/functionality/IntersectingPoints.hpp"
 
+class GeneticEvaluatorInlierScaled: public GeneticEvaluatorInlierCollision{
+public:
+    GeneticEvaluatorInlierScaled();
+    virtual double evaluate_chromosome(chromosomeT &chromosome) override;
+};
+typedef std::shared_ptr<GeneticEvaluatorInlierScaled> GeneticEvaluatorInlierScaledPtr;
+
 class GeneticEvaluatorInlierCollisionScaled: public GeneticEvaluatorInlierCollision{
 public:
     GeneticEvaluatorInlierCollisionScaled();
@@ -27,7 +34,11 @@ public:
     void init_datapoint(DataPoint &datapoint) override;
     virtual double evaluate_chromosome(chromosomeT &chromosome) override;
     double oc_inlier_threshold;
+    double sigmoid_center;
+    double sigmoid_growth_rate;
     double inlier_overlap_penalty_factor=2.0;
+    double sigmoid_fall_off(double x);
+
 };
 typedef std::shared_ptr<GeneticEvaluatorUniqueInlierCollisionScaled> GeneticEvaluatorUniqueInlierCollisionScaledPtr;
 
@@ -49,7 +60,6 @@ class GeneticEvaluatorLRC: public GeneticEvaluatorLR{
 public:
     GeneticEvaluatorLRC();
     virtual double evaluate_chromosome(chromosomeT &chromosome) override;
-
 };
 typedef std::shared_ptr<GeneticEvaluatorLRC> GeneticEvaluatorLRCPtr;
 

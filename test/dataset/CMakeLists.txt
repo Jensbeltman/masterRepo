@@ -17,3 +17,7 @@ target_link_libraries(analysis_of_tp_and_fp PUBLIC Chronometer Dataset DataUtil 
 
 add_executable(dataset_statistics dataset_statistics.cpp)
 target_link_libraries(dataset_statistics PUBLIC Chronometer Dataset DataUtil HV)
+
+
+add_executable(timetest timetest.cpp)
+target_link_libraries(timetest PUBLIC Chronometer Dataset DataUtil HV)

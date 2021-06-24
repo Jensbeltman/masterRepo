@@ -22,30 +22,48 @@ void GA::initialize() {
     // Clear results
     result = GAResult();
 
+    // Initialize mask if non exists
+    if((geneticEvaluatorPtr->mask.size() != geneticEvaluatorPtr->dp.ocs.size()) || (geneticEvaluatorPtr->active_mask_size==0)) {
+        chromosomeT full_mask(geneticEvaluatorPtr->dp.ocs.size(), true);
+        geneticEvaluatorPtr->set_dp_mask(full_mask);
+    }
+    n_genes_in_mask = geneticEvaluatorPtr->active_mask_size;
+
+    if (population_size<0){
+        effective_population_size=abs(population_size)*n_genes_in_mask;
+    }else{
+        effective_population_size=population_size;
+    }
+
+    if(generation_max<0){
+        effective_generation_max=static_cast<int>(std::abs(generation_max)*n_genes_in_mask);
+    }else{
+        effective_generation_max=generation_max;
+    }
+
+
     // initialize the random number generator with time-dependent seed
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
     rng.seed(ss);
 
     // Set and validate parameters
-    elite_cnt = std::max(1,static_cast<int>(elite_pct * population_size));
-    parent_pool_cnt = std::max(1,static_cast<int>(parent_pool_pct * population_size));
-    assert(population_size || parent_pool_cnt);
-    assert(elite_cnt <= population_size);
+    elite_cnt = std::max(1,static_cast<int>(elite_pct * effective_population_size));
+    parent_pool_cnt = std::max(1,static_cast<int>(parent_pool_pct * effective_population_size));
+    assert(effective_population_size || parent_pool_cnt);
+    assert(elite_cnt <= effective_population_size);
 
     //Initialize vectors
-    population_sorted_indices.resize(population_size);
+    population_sorted_indices.resize(effective_population_size);
     std::iota(population_sorted_indices.begin(), population_sorted_indices.end(), 0);
-    population_costs.resize(population_size);
+    population_costs.resize(effective_population_size);
     std::fill(population_costs.begin(), population_costs.end(), std::numeric_limits<double>::infinity());
 
     uniform_dist_int_parent_pool = std::uniform_int_distribution<int>(0, parent_pool_cnt-1);
 }
 
 void GA::solve_init() {
-    // Initialize mask if non exists
-    if(geneticEvaluatorPtr->mask.size() != geneticEvaluatorPtr->dp.ocs.size())
-        geneticEvaluatorPtr->mask.resize(geneticEvaluatorPtr->dp.ocs.size(),true);
+
     // If initial population generator specified generate population
     if (generate_initial_population != nullptr) {
         generate_initial_population(this);
@@ -56,12 +74,14 @@ void GA::solve_init() {
 }
 
 GAResult GA::solve() {
-    //if(! ((n_genes<32) && (std::pow(2,n_genes)<=(generation_max*population_size)))) {
-        initialize();
+    initialize();
+    if(! ((n_genes_in_mask<32) && (std::pow(2,n_genes_in_mask)<=(effective_generation_max*effective_population_size)))) { // 32 as this is the limit of the BF generator
+        //std::cout<<"GA | pop size:"<<effective_population_size<<", gen max:"<<effective_generation_max<<", n_genes_in_mask:"<<n_genes_in_mask<<std::endl;
+
         solve_init();
         generation = 1;
 
-        for (; generation < generation_max; generation++) {
+        for (; generation < effective_generation_max; generation++) {
             population.clear();
             elite_transfer();
             crossover_and_mutation();
@@ -71,14 +91,14 @@ GAResult GA::solve() {
 
         result.chromosome = population[population_sorted_indices[0]];
 
-//
-//    }else{
-//        BF bf;
-//        std::cout<<"running bf"<<std::endl;
-//        bf.geneticEvaluatorPtr = geneticEvaluatorPtr;
-//        result.chromosome = bf.run();
-//        result.cost = bf.best_cost;
-//    }
+
+    }else{
+        //std::cout<<"BF | pop size:"<<effective_population_size<<", gen max:"<<effective_generation_max<<", n_genes_in_mask:"<<n_genes_in_mask<<std::endl;
+        BF bf;
+        bf.geneticEvaluatorPtr = geneticEvaluatorPtr;
+        result.chromosome = bf.run();
+        result.cost = bf.best_cost;
+    }
     return result;
 }
 
@@ -93,7 +113,7 @@ int GA::select_parrent() {
 }
 
 void GA::crossover_and_mutation() {
-    for (int i = 0; i < population_size - elite_cnt; i++) {
+    for (int i = 0; i < effective_population_size - elite_cnt; i++) {
         int p1i = select_parrent();
         int p2i = select_parrent();
         chromosomeT c = crossover(this, p1i, p2i);
