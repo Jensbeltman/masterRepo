@@ -1,0 +1,54 @@
+AngleTubes Train Value At minimum         0.196491
+AngleTubes Validation Value At minimum    0.150685
+AngleTubes Train Value At minimum         0.201987
+AngleTubes Validation Value At minimum    0.142857
+AngleTubes Train Value At minimum         0.198262
+AngleTubes Validation Value At minimum    0.13767
+AngleTubes Train Value At minimum         0.179678
+AngleTubes Validation Value At minimum    0.179678
+AngleTubes Train Value At minimum         0.182254
+AngleTubes Validation Value At minimum    0.182254
+AngleTubes Train Value At minimum                 , min:0.18, avr:0.192, max:0.202
+AngleTubes Validation Value At minimum            , min:0.138, avr:0.159, max:0.182
+AngleTubes,GELR,score_w,0.671
+AngleTubes,GELR,visiblePointsFrac_w,9.97
+AngleTubes,GELR,visibleInlierFrac_w,10
+AngleTubes,GELR,penetration_w,0
+AngleTubes,GELR,intersectingInliersFrac_w,-9.99
+AngleTubes,GELR,intercept,-21
+Ears Train Value At minimum         0.278
+Ears Validation Value At minimum    0.267
+Ears Train Value At minimum         0.251
+Ears Validation Value At minimum    0.22
+Ears Train Value At minimum         0.229
+Ears Validation Value At minimum    0.256
+Ears Train Value At minimum         0.235
+Ears Validation Value At minimum    0.248
+Ears Train Value At minimum         0.246
+Ears Validation Value At minimum    0.246
+Ears Train Value At minimum                 , min:0.229, avr:0.248, max:0.278
+Ears Validation Value At minimum            , min:0.22, avr:0.247, max:0.267
+Ears,GELR,score_w,0.176
+Ears,GELR,visiblePointsFrac_w,9.99
+Ears,GELR,visibleInlierFrac_w,9.76
+Ears,GELR,penetration_w,-9.99
+Ears,GELR,intersectingInliersFrac_w,-10
+Ears,GELR,intercept,-12.1
+Gameboys Train Value At minimum         0.316
+Gameboys Validation Value At minimum    0.263
+Gameboys Train Value At minimum         0.316
+Gameboys Validation Value At minimum    0.28
+Gameboys Train Value At minimum         0.31
+Gameboys Validation Value At minimum    0.28
+Gameboys Train Value At minimum         0.297
+Gameboys Validation Value At minimum    0.291
+Gameboys Train Value At minimum         0.312
+Gameboys Validation Value At minimum    0.312
+Gameboys Train Value At minimum                 , min:0.297, avr:0.31, max:0.316
+Gameboys Validation Value At minimum            , min:0.263, avr:0.285, max:0.312
+Gameboys,GELR,score_w,0.23
+Gameboys,GELR,visiblePointsFrac_w,0.00216
+Gameboys,GELR,visibleInlierFrac_w,10
+Gameboys,GELR,penetration_w,-10
+Gameboys,GELR,intersectingInliersFrac_w,-9.99
+Gameboys,GELR,intercept,-10.4
